@@ -1,0 +1,311 @@
+:root {
+  /* Paleta de cores baseada no verde científico/natural da LATEC.IN */
+  --color-ink: #051612;
+  --color-forest: #0D2916;
+  --color-deep-green: #0C321C;
+  --color-leaf-dark: #2A4F22;
+  --color-moss: #3A651E;
+  --color-fresh-green: #719639;
+  --color-sage: #8CA685;
+  --color-bg: #F6F7F2;
+  --color-bg-soft: #EBEEE6;
+  --color-border: #D4D8CE;
+  --color-white: #FFFFFF;
+  /* Gradiente institucional para seções de destaque */
+  --gradient-brand: linear-gradient(135deg, var(--color-forest) 0%, var(--color-leaf-dark) 55%, var(--color-fresh-green) 100%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+  line-height: 1.6;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+/* Cabeçalho */
+.site-header {
+  background: var(--color-forest);
+  color: var(--color-white);
+  position: sticky;
+  top: 0;
+  width: 100%;
+  z-index: 1000;
+}
+
+.site-header .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+}
+
+.logo {
+  font-size: 1.6rem;
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--color-white);
+}
+
+.logo .dot {
+  color: var(--color-fresh-green);
+}
+
+.main-nav ul {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.main-nav li {
+  margin-left: 24px;
+}
+
+.main-nav a {
+  text-decoration: none;
+  color: var(--color-white);
+  font-size: 1rem;
+  position: relative;
+}
+
+.main-nav a:hover,
+.main-nav a.active {
+  color: var(--color-fresh-green);
+}
+
+.mobile-menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--color-white);
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.site-main {
+  padding: 24px 0;
+  min-height: calc(100vh - 120px);
+}
+
+/* Rodapé */
+.site-footer {
+  background: var(--color-forest);
+  color: var(--color-white);
+  padding: 16px 0;
+  text-align: center;
+}
+
+/* Seção Hero */
+.hero {
+  background: var(--gradient-brand);
+  color: var(--color-white);
+  padding: 80px 16px;
+  text-align: center;
+}
+
+.hero h1 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 2.2rem;
+  font-weight: 700;
+}
+
+.hero p {
+  margin-bottom: 24px;
+  font-size: 1.2rem;
+}
+
+.btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+.btn-primary {
+  background: var(--color-deep-green);
+  color: var(--color-white);
+}
+
+.btn-primary:hover {
+  background: var(--color-moss);
+}
+
+.btn-secondary {
+  background: var(--color-bg-soft);
+  color: var(--color-leaf-dark);
+  border: 1px solid var(--color-leaf-dark);
+}
+
+.btn-secondary:hover {
+  background: var(--color-sage);
+}
+
+.section-title {
+  margin: 40px 0 16px;
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--color-forest);
+  text-align: center;
+}
+
+/* Grades de cartões */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.card {
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 180px;
+  transition: box-shadow 0.3s ease;
+}
+
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.card h3 {
+  margin-top: 0;
+  font-size: 1.2rem;
+  margin-bottom: 8px;
+}
+
+.card p {
+  flex-grow: 1;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.card .tags {
+  margin: 8px 0;
+}
+
+.tag {
+  display: inline-block;
+  padding: 2px 6px;
+  margin-right: 4px;
+  font-size: 0.75rem;
+  border-radius: 4px;
+  background: var(--color-bg-soft);
+  color: var(--color-leaf-dark);
+}
+
+/* Números de impacto */
+.impact-grid {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin: 40px 0;
+  flex-wrap: wrap;
+}
+
+.impact-item {
+  text-align: center;
+  padding: 8px 16px;
+}
+
+.impact-item .number {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-deep-green);
+}
+
+.impact-item .label {
+  font-size: 0.9rem;
+  color: var(--color-leaf-dark);
+}
+
+/* Formulário de contato */
+.contact-form {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.contact-form label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.contact-form input,
+.contact-form select,
+.contact-form textarea {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+}
+
+.contact-form button {
+  display: block;
+  width: 100%;
+}
+
+/* Área administrativa */
+.admin-area {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.error {
+  color: red;
+  margin-top: 8px;
+}
+
+/* Responsividade para mobile */
+@media (max-width: 768px) {
+  .main-nav {
+    display: none;
+    position: absolute;
+    top: 60px;
+    right: 0;
+    background: var(--color-forest);
+    width: 200px;
+    border-left: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .main-nav.open {
+    display: block;
+  }
+  .main-nav ul {
+    flex-direction: column;
+  }
+  .main-nav li {
+    margin: 0;
+    border-bottom: 1px solid var(--color-bg-soft);
+  }
+  .main-nav a {
+    display: block;
+    padding: 12px 16px;
+  }
+  .mobile-menu-toggle {
+    display: block;
+  }
+  .site-header .container {
+    justify-content: space-between;
+  }
+}
