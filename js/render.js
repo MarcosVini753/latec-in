@@ -121,9 +121,9 @@ function renderQuemSomos() {
           <h3>Linhas de Atuação</h3>
           <ul>
             <li>Inteligência Artificial aplicada à Biotecnologia</li>
-            <li>Cyber Defesa e Segurança de Dados Biológicos</li>
-            <li>Governança de TI no setor acadêmico</li>
-            <li>Desenvolvimento de Software para pesquisas científicas</li>
+            <li>Bootcamp de Startups</li>
+            <li>Biodiversidade no setor acadêmico</li>
+            <li>Farmacologia e biotecnologia para pesquisas científicas</li>
           </ul>
         </div>
         <div class="content-panel">
