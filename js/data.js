@@ -34,21 +34,78 @@ const members = [
     funcao: 'Ligante',
     bio: 'Estudante de Sistemas de Informação na UFAC, responsável pela criação deste protótipo.',
     foto: 'js/pics/marcos.png'
-  }
+  },
+  {
+    id: 5,
+    nome: 'Kleyton Passos',
+    funcao: 'Professor',
+    bio: 'Dr. em Ciências da Saúde',
+    foto: 'js/pics/kleyton.png'
+  },
+  {
+    id: 6,
+    nome: 'Luciana Castello',
+    funcao: 'Professor',
+    bio: 'Engenheira de alimentos e Dra. em Ciência de Alimentos',
+    foto: 'js/pics/luciana.png'
+  },
+  {
+    id: 7,
+    nome: 'Bruno Favero',
+    funcao: 'Professor',
+    bio: 'Engenheiro Agronômico e Dr. em Botânica',
+    foto: 'js/pics/bruno.png'
+  },
+  {
+    id: 8,
+    nome: 'Dayam Marques',
+    funcao: 'Professor',
+    bio: 'Farmacêutico e Mestre em Quimica',
+    foto: 'js/pics/dayam.png'
+  },
+  {
+    id: 9,
+    nome: 'Anne Grace',
+    funcao: 'Professor',
+    bio: 'Enfermeira, Mestre em Educação e Tecnologias de Enfermagem',
+    foto: 'js/pics/anne.png'
+  },
+  {
+    id: 10,
+    nome: 'Almecina Balbino',
+    funcao: 'Professor',
+    bio: 'Engenheira Agrônoma e Dra. em Horticultura',
+    foto: 'js/pics/almecina.png'
+  },
+  {
+    id: 11,
+    nome: 'Marilene Lima',
+    funcao: 'Professor',
+    bio: 'Engenheira Agrônoma e Dra. em Fitotecnia',
+    foto: 'js/pics/marilene.png'
+  },
+  {
+    id: 12,
+    nome: 'Bruna Viana',
+    funcao: 'Professor',
+    bio: 'Nutricionista, Dra. em sanidade e produção animal sustentável na Amazônia Ocidental',
+    foto: 'js/pics/bruna.png'
+  },
+  
 ];
 
 // Projetos desenvolvidos
 const projects = [
   {
     id: 1,
-    titulo: 'Fábrica de Ensino: Bootcamp de Python',
+    titulo: 'Fábrica de Ensino: Bootcamp de Startups',
     categoria: 'Ensino',
     area: 'Fábrica de Ensino',
     status: 'Concluído',
     ano: 2025,
-    resumo: 'Bootcamp intensivo de Python para novos membros da LATEC.IN.',
-    problema: 'Falta de capacitação em programação entre os integrantes.',
-    solucao: 'Proporcionar um treinamento prático e imersivo em Python.',
+    resumo: 'Bootcamp intensivo de Startups para novos membros da LATEC.IN.',
+    problema: 'Falta de capacitação em desenvolvimento de negócios entre os integrantes.',
+    solucao: 'Proporcionar um treinamento prático e imersivo em desenvolvimento de startups.',
     resultados: ['Relatório de atividades', 'Apostila digital'],
     equipe: [1, 2, 3],
     link: ''
@@ -87,11 +144,11 @@ const projects = [
 const news = [
   {
     id: 1,
-    titulo: 'Edital de Ingresso 2026 aberto',
-    data: '2026-06-01',
-    resumo: 'Está aberto o edital para novos membros da LATEC.IN. Participe e faça parte da inovação na UFAC!',
-    conteudo: 'O edital de ingresso para o ano de 2026 encontra-se disponível. Alunos de graduação e pós-graduação interessados em biotecnologia, biodiversidade e inovação podem se inscrever até o dia 15 de julho. Consulte o edital completo para mais informações.',
-    imagem: 'https://via.placeholder.com/400x200?text=Edital'
+    titulo: 'Coordenadora do LATEC.IN é premiada por inovação tecnológica',
+    data: '2026-05-29',
+    resumo: 'A professora Marta Adelino recebeu o prêmio de inovação tecnológica da UFAC por seu trabalho à frente da LATEC.IN.',
+    conteudo: 'A coordenadora da LATEC.IN, professora Marta Adelino, foi reconhecida com o prêmio de inovação tecnológica da Universidade Federal do Acre (UFAC) em 2026. O prêmio destaca sua liderança e os resultados alcançados pela liga em projetos de ensino, pesquisa e extensão. A cerimônia de premiação ocorreu no auditório central da UFAC, onde Marta recebeu um certificado e um troféu em reconhecimento ao seu trabalho inovador.',
+    imagem: 'js/pics/certificado.png'
   },
   {
     id: 2,
@@ -107,16 +164,16 @@ const news = [
 const courses = [
   {
     id: 1,
-    titulo: 'Bootcamp de Python',
-    descricao: 'Aprenda Python do zero ao avançado em um bootcamp intensivo.',
+    titulo: 'Nanotecnologias de cosméticos',
+    descricao: 'Aprenda sobre as aplicações de nanotecnologia na indústria cosmética.',
     data: '2026-07-10',
     status: 'Inscrições abertas',
-    materiais: ['Apostila Python.pdf'],
+    materiais: ['Apostila Nanotecnologia.pdf'],
     link: ''
   },
   {
     id: 2,
-    titulo: 'Workshop de Inteligência Artificial',
+    titulo: 'Workshop de ML em Biotecnologia',
     descricao: 'Fundamentos de IA e Machine Learning aplicados à biotecnologia.',
     data: '2026-08-15',
     status: 'Em breve',
@@ -129,9 +186,9 @@ const courses = [
 const materials = [
   {
     id: 1,
-    titulo: 'Apostila de Python',
-    descricao: 'Apostila utilizada no bootcamp de Python da LATEC.IN.',
-    arquivo: 'assets/images/apostila-python.pdf'
+    titulo: 'Apostila de Nanotecnologia',
+    descricao: 'Apostila utilizada no curso de Nanotecnologia da LATEC.IN.',
+    arquivo: 'assets/images/apostila-nanotecnologia.pdf'
   }
 ];
 
