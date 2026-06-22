@@ -85,6 +85,14 @@ textarea:focus-visible {
   letter-spacing: 0;
   text-decoration: none;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+}
+
+.logo img {
+  max-height: 42px;
+  width: auto;
+  display: block;
 }
 
 .logo .dot {
