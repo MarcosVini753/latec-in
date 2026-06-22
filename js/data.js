@@ -12,28 +12,28 @@ const members = [
     nome: 'Marta Adelino',
     funcao: 'Coordenadora',
     bio: 'Professora doutora e coordenadora da LATEC.IN, com larga experiência em biotecnologia e gestão de projetos.',
-    foto: 'https://via.placeholder.com/150?text=Marta'
+    foto: 'js/pics/marta.png'
   },
   {
     id: 2,
     nome: 'Gabriel Daniel',
     funcao: 'Estagiário',
     bio: 'Estudante de Sistemas de Informação na UFAC, responsável pela criação deste protótipo.',
-    foto: 'https://via.placeholder.com/150?text=Gabriel'
+    foto: 'js/pics/gabriel.png'
   },
   {
     id: 3,
     nome: 'Ana Souza',
     funcao: 'Pesquisadora',
     bio: 'Discente pesquisadora focada em bioinformática e biodiversidade amazônica.',
-    foto: 'https://via.placeholder.com/150?text=Ana'
+    foto: 'js/pics/ana.png'
   },
   {
     id: 4,
     nome: 'Marcos Moraes',
     funcao: 'Ligante',
     bio: 'Estudante de Sistemas de Informação na UFAC, responsável pela criação deste protótipo.',
-    foto: 'https://via.placeholder.com/150?text=Marcos'
+    foto: 'js/pics/marcos.png'
   }
 ];
 

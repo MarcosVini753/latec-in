@@ -338,7 +338,7 @@ textarea:focus-visible {
 }
 
 .card-media {
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 1 / 1;
   border-radius: 18px;
   margin: -8px -8px 4px;
   object-fit: cover;
