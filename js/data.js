@@ -27,6 +27,13 @@ const members = [
     funcao: 'Pesquisadora',
     bio: 'Discente pesquisadora focada em bioinformática e biodiversidade amazônica.',
     foto: 'https://via.placeholder.com/150?text=Ana'
+  },
+  {
+    id: 4,
+    nome: 'Marcos Moraes',
+    funcao: 'Ligante',
+    bio: 'Estudante de Sistemas de Informação na UFAC, responsável pela criação deste protótipo.',
+    foto: 'https://via.placeholder.com/150?text=Marcos'
   }
 ];
 
