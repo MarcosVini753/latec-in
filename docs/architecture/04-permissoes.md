@@ -1,16 +1,30 @@
 # Permissões e acesso administrativo
 
+## Princípios
+
+O visitante público acessa apenas conteúdos publicados. A equipe autorizada acessa o Django Admin conforme seu papel.
+
+O modelo público de pessoas será separado do usuário administrativo.
+
 ## Papéis iniciais
 
 - Administrador: acesso completo ao Django Admin.
 - Coordenador: gerencia conteúdos institucionais, projetos, notícias, membros, cursos e parceiros.
-- Editor: cadastra e edita notícias, cursos, materiais e projetos, conforme permissão.
+- Editor: cadastra e edita notícias, cursos, materiais e projetos conforme permissão.
 - Leitor administrativo: visualiza registros internos, sem alterar conteúdo.
 
-## Decisões
+## Conteúdos públicos
 
-Nem toda pessoa exibida no site será usuária administrativa. O modelo de pessoas será separado do modelo de usuários. Mensagens de contato não devem ser públicas. Conteúdos editoriais devem ter controle de publicação.
+Conteúdos públicos devem possuir controle de publicação por `is_published`, `published_at`, `status` e `slug`, quando aplicável.
 
-## Segurança
+A API pública deve retornar apenas itens publicados e ativos.
 
-A produção deve usar HTTPS, variáveis de ambiente para segredos, permissões explícitas no admin e proteção básica contra vulnerabilidades comuns. A plataforma deve respeitar princípios da LGPD, evitando coleta desnecessária de dados pessoais.
+## Mensagens de contato
+
+Mensagens de contato não devem ser públicas. Devem ficar restritas à área administrativa.
+
+## Decisões abertas
+
+- Definir se o projeto usará usuário customizado ou o `User` padrão do Django.
+- Definir o nível de auditoria necessário para alterações editoriais.
+- Definir a política de retenção de mensagens de contato.
