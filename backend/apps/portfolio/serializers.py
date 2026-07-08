@@ -1,0 +1,69 @@
+from rest_framework import serializers
+
+from apps.axes.serializers import ResearchAxisSerializer
+from apps.people.serializers import PersonSerializer
+from apps.portfolio.models import Project, ProjectCategory, ProjectLink, ProjectResult, ProjectStatus, ProjectTeamMember
+
+
+class ProjectCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProjectCategory
+        fields = ("id", "name", "slug", "description", "display_order")
+
+
+class ProjectStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProjectStatus
+        fields = ("name", "slug", "display_order")
+
+
+class ProjectTeamMemberSerializer(serializers.ModelSerializer):
+    person = PersonSerializer(read_only=True)
+
+    class Meta:
+        model = ProjectTeamMember
+        fields = ("person", "role", "is_lead", "display_order")
+
+
+class ProjectResultSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProjectResult
+        fields = ("title", "description", "result_type", "file", "external_url", "display_order")
+
+
+class ProjectLinkSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProjectLink
+        fields = ("label", "url", "link_type", "display_order")
+
+
+class ProjectSerializer(serializers.ModelSerializer):
+    axis = ResearchAxisSerializer(read_only=True)
+    category = ProjectCategorySerializer(read_only=True)
+    status = ProjectStatusSerializer(read_only=True)
+    team_members = ProjectTeamMemberSerializer(many=True, read_only=True)
+    results = ProjectResultSerializer(many=True, read_only=True)
+    links = ProjectLinkSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Project
+        fields = (
+            "id",
+            "title",
+            "slug",
+            "axis",
+            "category",
+            "area",
+            "status",
+            "year",
+            "summary",
+            "problem",
+            "solution",
+            "cover_image",
+            "published_at",
+            "is_featured",
+            "display_order",
+            "team_members",
+            "results",
+            "links",
+        )
