@@ -2,9 +2,21 @@
 
 ```mermaid
 flowchart TB
-  Frontend[Frontend público HTML/CSS/JS] --> API[API REST DRF]
-  Admin[Django Admin] --> Django[Aplicação Django]
+  Browser[Navegador do usuário]
+  Frontend[Frontend público HTML CSS JS]
+  Admin[Django Admin]
+  API[API REST /api/v1]
+  Django[Aplicação Django]
+  DB[(PostgreSQL)]
+  Media[Volume de mídia]
+
+  Browser --> Frontend
+  Frontend --> API
+  Browser --> Admin
+  Admin --> Django
   API --> Django
-  Django --> DB[(PostgreSQL)]
-  Django --> Media[Arquivos e imagens]
+  Django --> DB
+  Django --> Media
 ```
+
+Containers principais: frontend público, API REST versionada, Django Admin, aplicação Django, PostgreSQL e volume de mídia.

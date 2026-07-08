@@ -4,10 +4,17 @@
 flowchart LR
   Visitor[Visitante público] --> Site[Portal LATEC.IN]
   Member[Membro da liga] --> Site
-  Coordinator[Coordenador/Editor] --> Admin[Django Admin]
+  Partner[Parceiro institucional] --> Site
+  Mentor[Professor ou mentor] --> Admin[Django Admin]
+  Coordinator[Coordenadora] --> Admin
+
+  Site --> API[API pública /api/v1]
   Admin --> Backend[Backend Django]
-  Site --> API[API pública]
   API --> Backend
+
   Backend --> DB[(PostgreSQL)]
-  Backend --> Media[Armazenamento de mídia]
+  Backend --> Media[Volume de mídia]
+  Site --> Social[Redes sociais e canais oficiais]
 ```
+
+O visitante público consome páginas e dados publicados. Mentores e coordenadora usam o Django Admin. O backend persiste dados em PostgreSQL e gerencia arquivos no volume de mídia.
