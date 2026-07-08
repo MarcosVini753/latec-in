@@ -1,5 +1,6 @@
 from django.contrib import admin
 
+from apps.common.admin_actions import EDITORIAL_ADMIN_ACTIONS
 from apps.transparency.models import TransparencyDocument
 
 
@@ -9,3 +10,9 @@ class TransparencyDocumentAdmin(admin.ModelAdmin):
     list_filter = ("document_type", "status", "is_published", "is_featured")
     search_fields = ("title", "description", "related_process")
     prepopulated_fields = {"slug": ("title",)}
+    actions = EDITORIAL_ADMIN_ACTIONS
+    fieldsets = (
+        ("Identificação", {"fields": ("title", "slug", "document_type", "related_process")}),
+        ("Conteúdo", {"fields": ("description", "file", "publication_date")}),
+        ("Publicação", {"fields": ("status", "is_published", "published_at", "is_featured", "display_order")}),
+    )

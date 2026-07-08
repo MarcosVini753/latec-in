@@ -1,5 +1,6 @@
 from django.contrib import admin
 
+from apps.common.admin_actions import EDITORIAL_ADMIN_ACTIONS
 from apps.news.models import Post, PostCategory, Tag
 
 
@@ -25,3 +26,9 @@ class PostAdmin(admin.ModelAdmin):
     search_fields = ("title", "summary", "content")
     prepopulated_fields = {"slug": ("title",)}
     autocomplete_fields = ("axis", "category", "authors", "tags")
+    actions = EDITORIAL_ADMIN_ACTIONS
+    fieldsets = (
+        ("Identificação", {"fields": ("title", "slug", "axis", "category", "tags", "authors")}),
+        ("Conteúdo", {"fields": ("summary", "content", "cover_image")}),
+        ("Publicação", {"fields": ("status", "is_published", "published_at", "is_featured", "display_order")}),
+    )

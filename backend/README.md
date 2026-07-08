@@ -17,6 +17,16 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
+O seed inicial popula eixos, papéis públicos, pessoas, projetos, notícias, cursos, métricas, hero e seções institucionais com base nos dados do protótipo atual.
+
+## Validação
+
+```bash
+python manage.py test
+python manage.py check
+python manage.py spectacular --file /tmp/latec-openapi.yaml --validate
+```
+
 Endpoints principais:
 
 - Admin: `http://127.0.0.1:8000/admin/`

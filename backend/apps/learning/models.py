@@ -20,6 +20,12 @@ class LearningTrack(BaseModel):
 
 
 class Course(BaseModel):
+    class EnrollmentStatus(models.TextChoices):
+        OPEN = "open", "Inscrições abertas"
+        COMING_SOON = "coming_soon", "Em breve"
+        CLOSED = "closed", "Inscrições encerradas"
+        COMPLETED = "completed", "Concluído"
+
     title = models.CharField(max_length=180)
     slug = models.SlugField(max_length=200, unique=True)
     track = models.ForeignKey(LearningTrack, on_delete=models.SET_NULL, related_name="courses", blank=True, null=True)
@@ -29,7 +35,8 @@ class Course(BaseModel):
     start_date = models.DateField(blank=True, null=True)
     end_date = models.DateField(blank=True, null=True)
     workload_hours = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
-    status = models.CharField(max_length=32, choices=EditorialStatus.choices, default=EditorialStatus.DRAFT)
+    enrollment_status = models.CharField(max_length=32, choices=EnrollmentStatus.choices, default=EnrollmentStatus.COMING_SOON)
+    editorial_status = models.CharField(max_length=32, choices=EditorialStatus.choices, default=EditorialStatus.DRAFT)
     registration_url = models.URLField(blank=True)
     cover_image = models.ImageField(upload_to="learning/courses/", blank=True)
     is_published = models.BooleanField(default=False)
@@ -65,6 +72,12 @@ class CourseMaterial(BaseModel):
 
 
 class Event(BaseModel):
+    class EventStatus(models.TextChoices):
+        SCHEDULED = "scheduled", "Agendado"
+        OPEN = "open", "Inscrições abertas"
+        COMPLETED = "completed", "Realizado"
+        CANCELED = "canceled", "Cancelado"
+
     title = models.CharField(max_length=180)
     slug = models.SlugField(max_length=200, unique=True)
     event_type = models.CharField(max_length=80)
@@ -74,7 +87,8 @@ class Event(BaseModel):
     end_date = models.DateTimeField(blank=True, null=True)
     location = models.CharField(max_length=180, blank=True)
     registration_url = models.URLField(blank=True)
-    status = models.CharField(max_length=32, choices=EditorialStatus.choices, default=EditorialStatus.DRAFT)
+    event_status = models.CharField(max_length=32, choices=EventStatus.choices, default=EventStatus.SCHEDULED)
+    editorial_status = models.CharField(max_length=32, choices=EditorialStatus.choices, default=EditorialStatus.DRAFT)
     is_published = models.BooleanField(default=False)
     published_at = models.DateTimeField(blank=True, null=True)
     is_featured = models.BooleanField(default=False)

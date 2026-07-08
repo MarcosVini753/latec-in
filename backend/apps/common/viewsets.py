@@ -17,7 +17,7 @@ class PublicReadOnlyModelViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(is_published=True)
         if "editorial_status" in model_fields:
             queryset = queryset.filter(editorial_status=EditorialStatus.PUBLISHED)
-        if "status" in model_fields and model_fields["status"].choices:
+        if self._is_editorial_status_field(model_fields.get("status")):
             queryset = queryset.filter(status=EditorialStatus.PUBLISHED)
 
         axis = self.request.query_params.get("axis")
@@ -28,9 +28,19 @@ class PublicReadOnlyModelViewSet(viewsets.ReadOnlyModelViewSet):
         if category and "category" in model_fields:
             queryset = queryset.filter(category__slug=category)
 
+        status = self.request.query_params.get("status")
+        if status and "status" in model_fields and not self._is_editorial_status_field(model_fields["status"]):
+            queryset = queryset.filter(status__slug=status)
+
         year = self.request.query_params.get("year")
         if year and "year" in model_fields:
             queryset = queryset.filter(year=year)
+        elif year and "start_date" in model_fields:
+            queryset = queryset.filter(start_date__year=year)
+        elif year and "publication_date" in model_fields:
+            queryset = queryset.filter(publication_date__year=year)
+        elif year and "published_at" in model_fields:
+            queryset = queryset.filter(published_at__year=year)
 
         featured = self.request.query_params.get("featured")
         if featured in {"true", "1"} and "is_featured" in model_fields:
@@ -47,3 +57,9 @@ class PublicReadOnlyModelViewSet(viewsets.ReadOnlyModelViewSet):
                 queryset = search_query.distinct()
 
         return queryset
+
+    def _is_editorial_status_field(self, field):
+        if not field or not field.choices:
+            return False
+        choice_values = {value for value, _label in field.choices}
+        return EditorialStatus.PUBLISHED in choice_values and EditorialStatus.ARCHIVED in choice_values

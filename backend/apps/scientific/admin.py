@@ -1,5 +1,6 @@
 from django.contrib import admin
 
+from apps.common.admin_actions import EDITORIAL_ADMIN_ACTIONS
 from apps.scientific.models import ScientificOutput
 
 
@@ -10,3 +11,9 @@ class ScientificOutputAdmin(admin.ModelAdmin):
     search_fields = ("title", "authors", "abstract")
     prepopulated_fields = {"slug": ("title",)}
     autocomplete_fields = ("axis",)
+    actions = EDITORIAL_ADMIN_ACTIONS
+    fieldsets = (
+        ("Identificação", {"fields": ("title", "slug", "output_type", "axis", "authors")}),
+        ("Conteúdo", {"fields": ("abstract", "publication_date", "file", "external_url")}),
+        ("Publicação", {"fields": ("status", "is_published", "published_at", "is_featured", "display_order")}),
+    )

@@ -1,5 +1,6 @@
 from django.contrib import admin
 
+from apps.common.admin_actions import EDITORIAL_ADMIN_ACTIONS
 from apps.portfolio.models import Project, ProjectCategory, ProjectLink, ProjectResult, ProjectStatus, ProjectTeamMember
 
 
@@ -41,6 +42,12 @@ class ProjectAdmin(admin.ModelAdmin):
     search_fields = ("title", "summary", "area", "problem", "solution")
     prepopulated_fields = {"slug": ("title",)}
     autocomplete_fields = ("axis", "category", "status")
+    actions = EDITORIAL_ADMIN_ACTIONS
+    fieldsets = (
+        ("Identificação", {"fields": ("title", "slug", "axis", "category", "area", "status", "year")}),
+        ("Conteúdo", {"fields": ("summary", "problem", "solution", "cover_image")}),
+        ("Publicação", {"fields": ("editorial_status", "is_published", "published_at", "is_featured", "display_order")}),
+    )
     inlines = (ProjectTeamMemberInline, ProjectResultInline, ProjectLinkInline)
 
 

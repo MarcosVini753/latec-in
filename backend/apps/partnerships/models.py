@@ -30,12 +30,20 @@ class Partner(BaseModel):
 
 
 class ContactMessage(BaseModel):
+    class ContactType(models.TextChoices):
+        QUESTIONS = "questions", "Dúvidas"
+        PRESS = "press", "Imprensa"
+        PARTNERSHIP = "partnership", "Quero ser parceiro"
+        SELECTION_PROCESS = "selection_process", "Processo seletivo"
+        OTHER = "other", "Outro"
+
     class MessageStatus(models.TextChoices):
         NEW = "new", "Nova"
         IN_PROGRESS = "in_progress", "Em atendimento"
         ANSWERED = "answered", "Respondida"
         ARCHIVED = "archived", "Arquivada"
 
+    contact_type = models.CharField(max_length=32, choices=ContactType.choices, default=ContactType.OTHER)
     subject = models.CharField(max_length=160)
     name = models.CharField(max_length=140)
     email = models.EmailField()
@@ -50,4 +58,4 @@ class ContactMessage(BaseModel):
         verbose_name_plural = "mensagens de contato"
 
     def __str__(self) -> str:
-        return f"{self.subject} - {self.name}"
+        return f"{self.get_contact_type_display()} - {self.subject} - {self.name}"

@@ -1,5 +1,6 @@
 from django.contrib import admin
 
+from apps.common.admin_actions import EDITORIAL_ADMIN_ACTIONS
 from apps.core.models import HeroBanner, InstitutionalSection, SiteSettings, SocialLink
 
 
@@ -15,6 +16,12 @@ class HeroBannerAdmin(admin.ModelAdmin):
     list_display = ("title", "is_published", "display_order", "updated_at")
     list_filter = ("is_published",)
     search_fields = ("title", "subtitle")
+    actions = EDITORIAL_ADMIN_ACTIONS
+    fieldsets = (
+        ("Conteúdo", {"fields": ("title", "subtitle", "image")}),
+        ("Chamada para ação", {"fields": ("cta_label", "cta_url")}),
+        ("Publicação", {"fields": ("is_published", "display_order")}),
+    )
 
 
 @admin.register(InstitutionalSection)
@@ -23,6 +30,12 @@ class InstitutionalSectionAdmin(admin.ModelAdmin):
     list_filter = ("section_type", "is_published")
     search_fields = ("title", "content")
     prepopulated_fields = {"slug": ("title",)}
+    actions = EDITORIAL_ADMIN_ACTIONS
+    fieldsets = (
+        ("Identificação", {"fields": ("section_type", "title", "slug")}),
+        ("Conteúdo", {"fields": ("content", "image")}),
+        ("Publicação", {"fields": ("is_published", "display_order")}),
+    )
 
 
 @admin.register(SocialLink)

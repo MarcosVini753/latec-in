@@ -36,6 +36,7 @@ class CourseSerializer(serializers.ModelSerializer):
             "start_date",
             "end_date",
             "workload_hours",
+            "enrollment_status",
             "registration_url",
             "cover_image",
             "published_at",

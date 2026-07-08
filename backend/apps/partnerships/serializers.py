@@ -12,4 +12,4 @@ class PartnerSerializer(serializers.ModelSerializer):
 class ContactMessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ContactMessage
-        fields = ("subject", "name", "email", "organization", "message")
+        fields = ("contact_type", "subject", "name", "email", "organization", "message")
