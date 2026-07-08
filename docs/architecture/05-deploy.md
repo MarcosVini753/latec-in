@@ -12,6 +12,7 @@ Características:
 - `DEBUG=True`.
 - arquivos locais para mídia.
 - CORS liberado apenas para frontend local.
+- armazenamento de mídia em diretório local via `MEDIA_ROOT`.
 
 ### Homologação
 
@@ -24,6 +25,7 @@ Características:
 - domínio ou subdomínio de teste.
 - dados próximos da produção.
 - validação de fluxo administrativo e API.
+- armazenamento de mídia em volume persistente no servidor.
 
 ### Produção institucional
 
@@ -37,6 +39,7 @@ Características:
 - backups.
 - configuração de arquivos estáticos e mídia.
 - domínio institucional quando definido.
+- armazenamento de mídia em volume persistente no servidor inicialmente.
 
 ## Stack recomendada
 
@@ -49,6 +52,14 @@ Características:
 - `Pillow` para campos de imagem.
 - `drf-spectacular` para documentação OpenAPI.
 - Servidor WSGI/ASGI conforme estratégia de implantação.
+
+## Política de mídia
+
+- Desenvolvimento: armazenamento local.
+- Homologação: volume persistente no servidor.
+- Produção: volume persistente no servidor inicialmente.
+
+A migração futura para storage externo poderá ser avaliada se houver crescimento relevante de arquivos, necessidade de CDN ou necessidade institucional específica.
 
 ## Configurações mínimas de produção
 
