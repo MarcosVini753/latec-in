@@ -91,7 +91,153 @@ const members = [
     bio: 'Nutricionista, Dra. em sanidade e produção animal sustentável na Amazônia Ocidental',
     foto: 'js/pics/bruna.png'
   },
-  
+  {
+    id: 13,
+    nome: 'Adson Jhonnata Lima Ferreira',
+    funcao: 'Ligante',
+    bio: '',
+    foto: 'js/pics/Adson Jhonnata Lima Ferreira.jpeg'
+  },
+  {
+    id: 14,
+    nome: 'Ana Clara Souza',
+    funcao: 'Ligante',
+    bio: '',
+    foto: 'js/pics/Ana Clara Souza.jpeg'
+  },
+  {
+    id: 15,
+    nome: 'Ana Vivyan Ferreira Cavalcante',
+    funcao: 'Ligante',
+    bio: '',
+    foto: 'js/pics/Ana Vivyan Ferreira Cavalcante.jpeg'
+  },
+  {
+    id: 16,
+    nome: 'Andrick Alexandre de Oliveira',
+    funcao: 'Ligante',
+    bio: '',
+    foto: 'js/pics/Andrick Alexandre de Oliveira.jpeg'
+  },
+  {
+    id: 17,
+    nome: 'Bruno Carvalho dos Santos',
+    funcao: 'Ligante',
+    bio: '',
+    foto: 'js/pics/Bruno Carvalho dos Santos.jpeg'
+  },
+  {
+    id: 18,
+    nome: 'Cristielen Frota',
+    funcao: 'Ligante',
+    bio: '',
+    foto: 'js/pics/Cristielen Frota.jpeg'
+  },
+  {
+    id: 19,
+    nome: 'Débora Rocha de Mesquita',
+    funcao: 'Ligante',
+    bio: '',
+    foto: 'js/pics/Débora Rocha de Mesquita.jpeg'
+  },
+  {
+    id: 20,
+    nome: 'Deborah da Silva Lima',
+    funcao: 'Ligante',
+    bio: '',
+    foto: 'js/pics/Deborah da Silva Lima.jpeg'
+  },
+  {
+    id: 21,
+    nome: 'Eduardo dos Santos Feitosa',
+    funcao: 'Ligante',
+    bio: '',
+    foto: 'js/pics/Eduardo dos Santos Feitosa.jpeg'
+  },
+  {
+    id: 22,
+    nome: 'Eshyla Maria da Silva Maia',
+    funcao: 'Ligante',
+    bio: '',
+    foto: 'js/pics/Eshyla Maria da Silva Maia.jpeg'
+  },
+  {
+    id: 23,
+    nome: 'Felipe Gabriel Dantas Azevedo',
+    funcao: 'Ligante',
+    bio: '',
+    foto: 'js/pics/Felipe Gabriel Dantas Azevedo.jpeg'
+  },
+  {
+    id: 24,
+    nome: 'Laíza Rivera de Sousa',
+    funcao: 'Ligante',
+    bio: '',
+    foto: 'js/pics/Laíza Rivera de Sousa.jpeg'
+  },
+  {
+    id: 25,
+    nome: 'Lougan Coelho Alves',
+    funcao: 'Ligante',
+    bio: '',
+    foto: 'js/pics/Lougan Coelho Alves.jpeg'
+  },
+  {
+    id: 26,
+    nome: 'Mary Anny Mariscal',
+    funcao: 'Ligante',
+    bio: '',
+    foto: 'js/pics/Mary Anny Mariscal.jpeg'
+  },
+  {
+    id: 27,
+    nome: 'Mirela Brito',
+    funcao: 'Ligante',
+    bio: '',
+    foto: 'js/pics/Mirela Brito.jpeg'
+  },
+  {
+    id: 28,
+    nome: 'Sabrina Brasil de Oliveira',
+    funcao: 'Ligante',
+    bio: '',
+    foto: 'js/pics/Sabrina Brasil de Oliveira.jpeg'
+  },
+  {
+    id: 29,
+    nome: 'Salvino de Castro',
+    funcao: 'Ligante',
+    bio: '',
+    foto: 'js/pics/Salvino de Castro.jpeg'
+  },
+  {
+    id: 30,
+    nome: 'Stéphany Portela',
+    funcao: 'Ligante',
+    bio: '',
+    foto: 'js/pics/Stéphany Portela.jpeg'
+  },
+  {
+    id: 31,
+    nome: 'Suzanne Hadassa Da Silva Lima',
+    funcao: 'Ligante',
+    bio: '',
+    foto: 'js/pics/Suzanne Hadassa Da Silva Lima.jpeg'
+  },
+  {
+    id: 32,
+    nome: 'Thais Cristina Silva Filgueira Monteiro',
+    funcao: 'Ligante',
+    bio: '',
+    foto: 'js/pics/Thais Cristina Silva Filgueira Monteiro.jpeg'
+  },
+  {
+    id: 33,
+    nome: 'Thiago Schuster Casas',
+    funcao: 'Ligante',
+    bio: '',
+    foto: 'js/pics/Thiago Schuster Casas.jpeg'
+  }
 ];
 
 // Projetos desenvolvidos
@@ -204,7 +350,7 @@ const awards = [
 
 // Números de impacto para o painel dinâmico
 const impactNumbers = {
-  membros: 15,
+  membros: 33,
   projetos: 20,
   artigos: 12,
   parcerias: 5
