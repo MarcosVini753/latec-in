@@ -2,6 +2,8 @@
   latec-app
   Ponto de entrada da aplicação.
 */
+import './app/core/router.js';
+
 document.addEventListener('DOMContentLoaded', function() {
   const toggle = document.getElementById('mobile-menu-toggle');
   const nav = document.getElementById('main-nav');

@@ -1,5 +1,5 @@
-import { members, projects, news, courses, materials, impactNumbers } from '../../data/data.js';
-import { escapeHTML, renderTags, renderNewsCards, renderProjectCards } from '../components/ui.mjs';
+import { members, projects, news, courses, materials, impactNumbers } from '../../data/data.mjs';
+import { escapeHTML, renderTags, renderNewsCards, renderProjectCards, setActiveLink } from '../components/ui.mjs';
 import { formatDate } from '../core/utils.js';
 
 export function renderHome() {

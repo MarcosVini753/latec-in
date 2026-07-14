@@ -1,4 +1,4 @@
-import { members } from '../../data/data.js';
+import { members } from '../../data/data.mjs';
 import { escapeHTML, renderTags, setActiveLink } from '../components/ui.mjs';
 
 export function renderQuemSomos() {

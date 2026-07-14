@@ -1,5 +1,5 @@
-import { courses, materials } from '../../data/data.js';
-import { escapeHTML, setActiveLink } from '../components/ui.mjs';
+import { courses, materials } from '../../data/data.mjs';
+import { escapeHTML, renderTags, setActiveLink } from '../components/ui.mjs';
 import { formatDate } from '../core/utils.js';
 
 export function renderCapacitacao() {

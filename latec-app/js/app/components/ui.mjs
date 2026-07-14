@@ -1,4 +1,4 @@
-import { members, projects, news, courses, materials, awards, impactNumbers } from '../../data/data.js';
+import { members, projects, news, courses, materials, awards, impactNumbers } from '../../data/data.mjs';
 import { formatDate } from '../core/utils.js';
 
 export function escapeHTML(value) {

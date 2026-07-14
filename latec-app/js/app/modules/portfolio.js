@@ -1,4 +1,4 @@
-import { projects as projectsData, members } from '../../data/data.js';
+import { projects as projectsData, members } from '../../data/data.mjs';
 import { escapeHTML, renderProjectCards, setActiveLink } from '../components/ui.mjs';
 import { filtrarPorCategoria, filtrarPorBusca } from '../core/filters.js';
 

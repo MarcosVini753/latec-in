@@ -1,4 +1,4 @@
-import { news } from '../../data/data.js';
+import { news } from '../../data/data.mjs';
 import { escapeHTML, setActiveLink, renderNewsCards } from '../components/ui.mjs';
 import { formatDate } from '../core/utils.js';
 
