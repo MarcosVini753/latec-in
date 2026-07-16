@@ -3,6 +3,7 @@ from rest_framework.routers import DefaultRouter
 
 from apps.axes.views import ResearchAxisViewSet
 from apps.core.views import HomeAPIView, SiteSettingsViewSet
+from apps.institutional.views import InstitutionalUnitViewSet
 from apps.learning.views import CourseViewSet
 from apps.metrics.views import ImpactMetricViewSet
 from apps.news.views import PostTagViewSet, PostViewSet
@@ -15,6 +16,7 @@ from apps.transparency.views import TransparencyDocumentViewSet
 
 router = DefaultRouter()
 router.register("site/settings", SiteSettingsViewSet, basename="site-settings")
+router.register("institutional-units", InstitutionalUnitViewSet, basename="institutional-units")
 router.register("people", PersonViewSet, basename="people")
 router.register("axes", ResearchAxisViewSet, basename="axes")
 router.register("projects/categories", ProjectCategoryViewSet, basename="project-categories")

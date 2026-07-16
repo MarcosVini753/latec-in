@@ -12,6 +12,7 @@ python manage.py seed_initial_data
 
 Ele cria ou atualiza, sem duplicação:
 
+- 2 unidades institucionais;
 - 7 papéis públicos;
 - 33 pessoas;
 - 7 eixos;
@@ -22,7 +23,7 @@ Ele cria ou atualiza, sem duplicação:
 - 7 métricas;
 - configurações do site, 1 hero e 3 seções institucionais.
 
-Esse seed ainda usa a identidade histórica da LATEC.IN como raiz, mantém pesquisa e produção científica como categorias de portfólio e não possui unidades, memberships, pesquisas formais ou trabalhos acadêmicos.
+O seed cria LABTEC.IN como raiz, LATEC como filha e associa as configurações, o hero e as seções iniciais ao laboratório. Ainda não cria memberships, pesquisas formais ou trabalhos acadêmicos e mantém pesquisa e produção científica como categorias históricas do portfólio.
 
 ## Estratégia alvo
 

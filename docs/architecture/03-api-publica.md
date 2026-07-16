@@ -4,9 +4,9 @@ A API pública permite que o frontend substitua gradualmente os dados locais de 
 
 ## Estado implementado
 
-O backend atual já expõe `/api/v1/`, paginação, schema OpenAPI e endpoints públicos para configurações, Home, pessoas, eixos, projetos, produções científicas, posts, cursos, transparência, parceiros, métricas e contato.
+O backend atual já expõe `/api/v1/`, paginação, schema OpenAPI e endpoints públicos para unidades institucionais, configurações, Home, pessoas, eixos, projetos, produções científicas, posts, cursos, transparência, parceiros, métricas e contato.
 
-Ainda não existem endpoints de unidades institucionais, pesquisas, trabalhos acadêmicos ou eventos. Os conteúdos atuais também não aceitam filtro por unidade nem retornam uma representação de `InstitutionalUnit`.
+Ainda não existem endpoints de pesquisas, trabalhos acadêmicos ou eventos. Os demais conteúdos atuais também não aceitam filtro por unidade nem retornam uma representação de `InstitutionalUnit`; essa adição foi adiada para preservar os payloads existentes na primeira fase.
 
 ## Política de versionamento
 
@@ -30,6 +30,8 @@ Não será aberta uma nova versão durante esta etapa de arquitetura porque a AP
 ```txt
 GET  /api/v1/site/settings/
 GET  /api/v1/site/home/
+GET  /api/v1/institutional-units/
+GET  /api/v1/institutional-units/{slug}/
 GET  /api/v1/people/
 GET  /api/v1/people/{slug}/
 GET  /api/v1/axes/
@@ -53,9 +55,6 @@ POST /api/v1/contact/
 ## Endpoints planejados
 
 ```txt
-GET /api/v1/institutional-units/
-GET /api/v1/institutional-units/{slug}/
-
 GET /api/v1/research-projects/
 GET /api/v1/research-projects/{slug}/
 

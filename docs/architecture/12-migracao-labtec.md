@@ -1,20 +1,21 @@
 # Migração para a arquitetura institucional LABTEC.IN
 
-Este plano documenta a transição do backend atual para LABTEC.IN como instituição raiz e LATEC como unidade filha. Nenhuma migration ou alteração de código é executada nesta tarefa.
+Este plano documenta a transição do backend para LABTEC.IN como instituição raiz e LATEC como unidade filha. A primeira etapa institucional está implementada; as demais etapas continuam pendentes.
 
 ## Estado atual
 
 - O backend Django e a API `/api/v1/` estão implementados.
-- Nomes históricos ainda tratam a LATEC.IN como instituição principal.
-- `SiteSettings` não se relaciona com uma unidade.
+- LABTEC.IN e LATEC já existem como unidades institucionais criadas pelo seed.
+- `SiteSettings`, heroes, seções e links sociais já possuem unidade opcional.
+- O nome padrão de `SiteSettings` já é LABTEC.IN.
 - `Person` possui um único papel público.
 - `Profile` possui papel administrativo global, sem escopo institucional.
-- Eixos, conteúdos, parceiros e métricas não possuem `unit`.
+- Eixos, conteúdos fora de `core`, parceiros e métricas não possuem `unit`.
 - Os sete eixos são implicitamente ligados à Liga, mas isso não está modelado.
-- Não existem os apps `institutional` e `research`.
+- `institutional` está implementado; `research` ainda não existe.
 - Pesquisa e produção científica podem estar misturadas ao portfólio.
 - Autoria científica ainda é textual.
-- O seed atual reproduz essa estrutura.
+- O seed atual cria a estrutura institucional e associa `core`; os demais dados ainda reproduzem a classificação histórica.
 
 ## Arquitetura alvo
 
@@ -46,14 +47,14 @@ Este plano documenta a transição do backend atual para LABTEC.IN como institui
 
 ## Etapa 1 — estrutura institucional
 
-1. Criar o app `institutional`.
-2. Criar `InstitutionalUnit`.
-3. Criar LABTEC.IN como unidade raiz.
-4. Criar LATEC como unidade filha.
-5. Criar `InstitutionMembership`.
-6. Validar slugs estáveis `labtec-in` e `latec`.
+1. Criar o app `institutional`. **Concluído.**
+2. Criar `InstitutionalUnit`. **Concluído.**
+3. Criar LABTEC.IN como unidade raiz. **Concluído.**
+4. Criar LATEC como unidade filha. **Concluído.**
+5. Criar `InstitutionMembership`. **Concluído.**
+6. Validar slugs estáveis `labtec-in` e `latec`. **Concluído.**
 
-Essa migration deve adicionar estrutura sem alterar os dados existentes.
+As migrations desta etapa adicionam a estrutura sem remover dados existentes.
 
 ## Etapa 2 — campos de unidade opcionais
 

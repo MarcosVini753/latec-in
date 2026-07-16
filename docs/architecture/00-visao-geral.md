@@ -10,10 +10,10 @@ O repositório possui:
 
 - frontend em HTML, CSS e JavaScript puro, com rotas por hash e dados históricos em `js/data.js`;
 - backend Django com Django REST Framework, Django Admin e API `/api/v1/`;
-- apps para conteúdo institucional, pessoas, eixos, portfólio, produção científica, notícias, aprendizagem, transparência, mídia, parcerias e métricas;
+- apps para estrutura institucional, conteúdo institucional, pessoas, eixos, portfólio, produção científica, notícias, aprendizagem, transparência, mídia, parcerias e métricas;
 - workflow editorial e comando idempotente `seed_initial_data`.
 
-O backend ainda reflete parcialmente o estado institucional anterior, no qual a LATEC.IN era tratada como proprietária do portal. Ainda não existem unidades institucionais genéricas, memberships por unidade, módulo próprio de pesquisas e trabalhos acadêmicos ou vínculo institucional nos conteúdos.
+O app `institutional` já possui unidades e memberships, o seed cria LABTEC.IN como raiz e LATEC como filha, e os conteúdos de `core` possuem vínculo opcional com unidade. O backend ainda reflete parcialmente o estado institucional anterior: memberships ainda não foram preenchidos, os demais conteúdos não possuem unidade e não existe módulo próprio de pesquisas e trabalhos acadêmicos.
 
 ## Arquitetura alvo
 

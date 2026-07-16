@@ -13,13 +13,18 @@ Este documento descreve o estado implementado, a arquitetura alvo e a sequência
 
 ## Estado implementado
 
-O backend atual possui models nos apps `accounts`, `core`, `people`, `axes`, `portfolio`, `scientific`, `news`, `learning`, `transparency`, `mediahub`, `partnerships` e `metrics`.
+O backend atual possui models nos apps `institutional`, `accounts`, `core`, `people`, `axes`, `portfolio`, `scientific`, `news`, `learning`, `transparency`, `mediahub`, `partnerships` e `metrics`.
 
-As principais incompatibilidades com a arquitetura alvo são:
+Situação após a primeira fase:
 
-- `SiteSettings.site_name` ainda usa `LATEC.IN` como padrão histórico;
-- não existe `InstitutionalUnit`;
-- não existe `InstitutionMembership`;
+- `InstitutionalUnit` e `InstitutionMembership` estão implementados;
+- `SiteSettings.site_name` usa `LABTEC.IN` como padrão;
+- `SiteSettings`, `HeroBanner`, `InstitutionalSection` e `SocialLink` possuem `unit` opcional;
+- o seed cria LABTEC.IN e LATEC e associa os conteúdos centrais conhecidos ao laboratório;
+- memberships ainda não foram preenchidos;
+
+As incompatibilidades restantes são:
+
 - `Person` possui um único `role`;
 - `Profile` não possui escopo por unidade;
 - os sete eixos não possuem unidade proprietária;
@@ -99,8 +104,9 @@ Quando uma pessoa exercer mais de um papel simultâneo na mesma unidade, cada pa
 
 ### Estado implementado
 
-- `SiteSettings` usa campos textuais para nome e instituição.
-- `HeroBanner`, `InstitutionalSection` e `SocialLink` são globais.
+- `SiteSettings` usa LABTEC.IN como padrão e possui unidade opcional.
+- `HeroBanner`, `InstitutionalSection` e `SocialLink` possuem unidade opcional.
+- O seed associa `SiteSettings`, o hero principal e as seções iniciais ao LABTEC.IN.
 
 ### Arquitetura alvo
 

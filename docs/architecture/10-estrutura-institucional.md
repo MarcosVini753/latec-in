@@ -14,10 +14,12 @@ Essa mudança exige uma camada institucional genérica, em vez de renomear texto
 
 O backend atual:
 
-- não possui app `institutional`;
-- guarda nome e instituição em campos textuais de `SiteSettings`;
+- possui o app `institutional`, com `InstitutionalUnit` e `InstitutionMembership`;
+- cria LABTEC.IN e LATEC por seed idempotente;
+- expõe unidades ativas e públicas em `/api/v1/institutional-units/`;
+- associa opcionalmente `SiteSettings`, heroes, seções e links sociais a unidades;
 - representa uma pessoa com um papel público principal;
-- não associa conteúdos a uma unidade;
+- ainda não possui memberships preenchidos nem classifica os demais conteúdos por unidade;
 - trata os sete eixos como estrutura central sem vínculo explícito com a LATEC.
 
 As referências à LATEC.IN como instituição raiz são históricas e deverão ser migradas gradualmente no código e nos dados.

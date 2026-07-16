@@ -15,7 +15,7 @@ from apps.core.serializers import (
 
 class SiteSettingsViewSet(PublicReadOnlyModelViewSet):
     lookup_field = "pk"
-    queryset = SiteSettings.objects.all()
+    queryset = SiteSettings.objects.order_by("pk")
     serializer_class = SiteSettingsSerializer
 
 

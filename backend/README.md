@@ -1,6 +1,6 @@
-# Backend LATEC.IN
+# Backend do portal LABTEC.IN
 
-Backend Django para atuar como CMS institucional e API pública do portal LATEC.IN.
+Backend Django para atuar como CMS institucional e API pública do LABTEC.IN, tendo a LATEC como unidade vinculada.
 
 ## Rodando localmente
 
@@ -17,7 +17,7 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
-O seed inicial popula eixos, papéis públicos, pessoas, projetos, notícias, cursos, métricas, hero e seções institucionais com base nos dados do protótipo atual.
+O seed inicial cria LABTEC.IN e LATEC, associa as configurações centrais ao laboratório e popula eixos, papéis públicos, pessoas, projetos, notícias, cursos, métricas, hero e seções institucionais com base nos dados do protótipo atual.
 
 ## Validação
 

@@ -4,9 +4,9 @@ O backend é dividido em apps Django por domínio. A arquitetura alvo acrescenta
 
 ## Estado implementado
 
-Estão instalados e implementados: `accounts`, `core`, `people`, `axes`, `mediahub`, `portfolio`, `scientific`, `news`, `learning`, `transparency`, `partnerships` e `metrics`, além de utilidades em `common`.
+Estão instalados e implementados: `institutional`, `accounts`, `core`, `people`, `axes`, `mediahub`, `portfolio`, `scientific`, `news`, `learning`, `transparency`, `partnerships` e `metrics`, além de utilidades em `common`.
 
-Ainda não existem os apps `institutional` e `research`. Os módulos atuais também não possuem vínculo genérico com unidade institucional.
+`institutional` já fornece `InstitutionalUnit`, `InstitutionMembership`, Admin, seed e endpoints públicos. `core` possui vínculos opcionais com unidade. Ainda não existe o app `research`, e os demais módulos ainda não possuem vínculo institucional.
 
 ## Apps na arquitetura alvo
 
@@ -70,9 +70,9 @@ Os detalhes estão em [Pesquisas e trabalhos acadêmicos](11-pesquisas-e-trabalh
 
 ## Sequência de migração
 
-1. Criar `institutional`.
+1. Criar `institutional`. **Concluído.**
 2. Ajustar `people` e `accounts`.
-3. Vincular `core` e `axes` às unidades.
+3. Vincular `core` e `axes` às unidades. **`core` concluído com vínculo opcional; `axes` pendente.**
 4. Criar `research`.
 5. Ajustar os demais módulos.
 6. Executar backfill, aplicar permissões e retirar campos legados.

@@ -12,9 +12,9 @@ Os documentos distinguem três situações:
 - **Arquitetura alvo:** desenho aprovado para a evolução institucional LABTEC.IN/LATEC.
 - **Migração:** sequência planejada para sair do estado atual e alcançar o desenho alvo.
 
-O backend Django e a API `/api/v1/` já estão implementados. Entretanto, o código ainda reflete parcialmente a arquitetura anterior: usa nomes históricos da LATEC.IN como instituição principal, não possui os apps `institutional` e `research`, não vincula conteúdos a unidades institucionais e ainda representa o papel público de uma pessoa por um único campo.
+O backend Django e a API `/api/v1/` já estão implementados. A primeira fase da migração institucional também está concluída no código: o app `institutional` modela LABTEC.IN e LATEC, `core` possui vínculos opcionais por unidade e a API expõe as unidades públicas. O restante do backend ainda reflete parcialmente a arquitetura anterior: não possui o app `research`, não classifica os demais conteúdos por unidade e ainda representa o papel público de uma pessoa por um único campo.
 
-Esta atualização é exclusivamente documental. Ela descreve a arquitetura alvo e o plano de migração, sem implementar models, migrations, backfill, seed, endpoints ou alterações no frontend.
+Esta documentação registra a arquitetura alvo e o plano de migração. A primeira fase institucional já está implementada no backend; as fases seguintes permanecem planejadas. O frontend continua inalterado.
 
 ## Estrutura
 

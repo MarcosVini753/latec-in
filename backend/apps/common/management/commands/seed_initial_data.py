@@ -11,6 +11,7 @@ from django.utils.text import slugify
 from apps.axes.models import AxisMentorship, ResearchAxis
 from apps.common.models import EditorialStatus
 from apps.core.models import HeroBanner, InstitutionalSection, SiteSettings
+from apps.institutional.models import InstitutionalUnit
 from apps.learning.models import Course, CourseMaterial, LearningTrack
 from apps.metrics.models import ImpactMetric
 from apps.news.models import Post, PostCategory
@@ -153,6 +154,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         self.person_by_source_id = {}
+        self.seed_institutional_units()
         self.seed_roles()
         self.seed_people()
         self.seed_axes()
@@ -167,6 +169,34 @@ class Command(BaseCommand):
         self.seed_metrics()
         self.seed_site_settings()
         self.stdout.write(self.style.SUCCESS("Seed inicial concluído."))
+
+    def seed_institutional_units(self):
+        self.labtec_unit, _created = InstitutionalUnit.objects.update_or_create(
+            slug="labtec-in",
+            defaults={
+                "name": "LABTEC.IN",
+                "acronym": "LABTEC.IN",
+                "unit_type": InstitutionalUnit.UnitType.LABORATORY,
+                "parent": None,
+                "description": "Laboratório de Biotecnologia, Biodiversidade e Inovação.",
+                "is_active": True,
+                "is_public": True,
+                "display_order": 1,
+            },
+        )
+        self.latec_unit, _created = InstitutionalUnit.objects.update_or_create(
+            slug="latec",
+            defaults={
+                "name": "LATEC",
+                "acronym": "LATEC",
+                "unit_type": InstitutionalUnit.UnitType.ACADEMIC_LEAGUE,
+                "parent": self.labtec_unit,
+                "description": "Liga acadêmica vinculada ao LABTEC.IN.",
+                "is_active": True,
+                "is_public": True,
+                "display_order": 2,
+            },
+        )
 
     def seed_roles(self):
         roles = [
@@ -390,17 +420,26 @@ class Command(BaseCommand):
             )
 
     def seed_site_settings(self):
-        SiteSettings.objects.update_or_create(
-            site_name="LATEC.IN",
-            defaults={
-                "description": "Liga Acadêmica de Biotecnologia, Biodiversidade e Inovação.",
-                "institution": "LATEC.IN",
-                "is_active": True,
-            },
+        site_settings = (
+            SiteSettings.objects.filter(unit=self.labtec_unit).order_by("id").first()
+            or SiteSettings.objects.filter(site_name__in=("LABTEC.IN", "LATEC.IN")).order_by("id").first()
+            or SiteSettings()
         )
+        site_settings.unit = self.labtec_unit
+        site_settings.site_name = "LABTEC.IN"
+        site_settings.institution = "Laboratório de Biotecnologia, Biodiversidade e Inovação"
+        site_settings.is_active = True
+        if (
+            not site_settings.description
+            or site_settings.description == "Liga Acadêmica de Biotecnologia, Biodiversidade e Inovação."
+        ):
+            site_settings.description = "Portal institucional do LABTEC.IN."
+        site_settings.save()
+
         HeroBanner.objects.update_or_create(
             title="Biotecnologia, biodiversidade e inovação",
             defaults={
+                "unit": self.labtec_unit,
                 "subtitle": "Uma liga acadêmica conectando ensino, pesquisa e extensão para transformar ciência em soluções para a Amazônia.",
                 "cta_label": "Conheça os projetos",
                 "cta_url": "#portfolio",
@@ -417,6 +456,7 @@ class Command(BaseCommand):
             InstitutionalSection.objects.update_or_create(
                 slug=slugify(title),
                 defaults={
+                    "unit": self.labtec_unit,
                     "section_type": section_type,
                     "title": title,
                     "content": content,
