@@ -2,46 +2,82 @@
 
 ## Princípios
 
-O visitante público acessa apenas conteúdos publicados. A equipe autorizada acessa o Django Admin conforme seu papel.
+- Visitantes acessam somente conteúdo público e publicado.
+- Pessoas públicas continuam separadas de usuários administrativos.
+- O sistema mantém o `User` padrão do Django.
+- O Django Admin continua sendo o CMS inicial.
+- Toda autorização administrativa deve combinar papel e escopo institucional.
+- A unidade raiz pode conceder acesso às unidades descendentes quando configurado.
 
-O modelo público de pessoas será separado do usuário administrativo. O sistema usará o usuário padrão do Django, com autenticação básica por usuário e senha.
+## Estado implementado
 
-## Papéis iniciais
+`accounts.Profile` possui hoje um papel global entre administrador, coordenadora, mentor/professor, editor e leitor administrativo. Ainda não existem unidade principal, unidades autorizadas ou herança para descendentes.
 
-- Administrador: acesso completo ao Django Admin.
-- Coordenadora: gerencia conteúdos institucionais, usuários administrativos, eixos, publicações, mensagens de contato e publicação final.
-- Mentor/Professor: cria e edita conteúdos referentes aos próprios eixos de atuação.
-- Editor: cadastra e edita notícias, cursos, materiais e projetos conforme permissão.
-- Leitor administrativo: visualiza registros internos, sem alterar conteúdo.
+Mentorias são vinculadas aos eixos, mas o backend ainda não aplica um escopo institucional genérico.
+
+## Papéis na arquitetura alvo
+
+| Papel | Escopo |
+| --- | --- |
+| Administrador | Acesso completo ao sistema. |
+| Coordenador do laboratório | LABTEC.IN e unidades descendentes; gestão institucional e publicação final. |
+| Coordenador de unidade | Conteúdos da unidade atribuída e, quando autorizado, de suas descendentes. |
+| Mentor/professor | Conteúdos dos próprios eixos da LATEC e das unidades autorizadas. |
+
+## Escopo institucional
+
+O perfil administrativo deverá informar:
+
+- unidade principal;
+- conjunto de unidades autorizadas;
+- possibilidade de herdar acesso para unidades descendentes;
+- papel administrativo;
+- vínculo opcional com `people.Person`.
+
+Exemplo:
+
+- a coordenação do LABTEC.IN acessa o laboratório e a LATEC;
+- a coordenação da LATEC acessa somente a LATEC, salvo autorização adicional;
+- um mentor da LATEC atua apenas nos eixos aos quais está vinculado.
 
 ## Regras por eixo
 
-- Cada professor, orientador ou mentor pode ser vinculado a um ou mais eixos.
-- O mentor pode criar e editar publicações, projetos, cursos ou produções científicas referentes aos seus eixos.
+- Cada professor, orientador ou mentor pode ser vinculado a um ou mais eixos da LATEC.
+- O mentor pode criar e editar conteúdo relacionado aos próprios eixos e à unidade autorizada.
 - O mentor pode enviar conteúdo para revisão.
-- A publicação final cabe à coordenadora.
-- Visitantes públicos só visualizam conteúdos publicados.
+- O mentor não realiza publicação final, salvo permissão adicional explícita.
+- Um eixo não amplia acesso para outros conteúdos do LABTEC.IN.
 
-## Conteúdos públicos
+## Publicação
 
-Conteúdos públicos devem possuir controle de publicação por `is_published`, `published_at`, `status` e `slug`, quando aplicável.
-
-O workflow editorial inicial será `draft`, `in_review`, `published` e `archived`.
+- A coordenação do laboratório pode realizar publicação final no LABTEC.IN e nas unidades descendentes.
+- A coordenação de unidade pode realizar publicação final em sua unidade quando essa permissão for concedida.
+- Mentores seguem o workflow e não publicam por padrão.
+- A API pública filtra conteúdos não publicados independentemente do papel administrativo.
 
 ## Mensagens de contato
 
-Mensagens de contato não devem ser públicas.
+A decisão existente permanece:
 
-Na fase inicial, mensagens de contato ficarão armazenadas por tempo indeterminado e serão acessíveis somente pela coordenadora. Superusuários técnicos podem ter acesso operacional ao banco e ao admin, mas a regra funcional de uso será acesso restrito à coordenação.
+- mensagens não são públicas;
+- são armazenadas por tempo indeterminado na fase inicial;
+- o acesso funcional é restrito à coordenação do LABTEC.IN;
+- superusuários técnicos podem ter acesso operacional ao admin ou ao banco.
 
-## Decisões consolidadas
+Coordenadores de unidades filhas não recebem acesso automático às mensagens.
 
-- Não haverá login por e-mail.
-- Não haverá múltiplos tipos de autenticação na primeira versão.
-- O sistema usará `User` padrão do Django.
-- O vínculo entre usuário administrativo e pessoa pública será opcional via `Profile`.
+## Migração
+
+1. Manter os papéis atuais durante a transição.
+2. Criar unidade principal e unidades autorizadas.
+3. Mapear coordenadores e mentores para seus escopos.
+4. Aplicar filtros no Django Admin, serviços e serializers administrativos.
+5. Habilitar herança apenas para papéis explicitamente autorizados.
+6. Reclassificar ou desativar contas legadas de editor e leitor.
+7. Retirar regras que dependam exclusivamente do papel global legado.
 
 ## Decisões futuras
 
-- Definir o nível de auditoria necessário para alterações editoriais.
-- Definir política formal de revisão periódica das mensagens de contato.
+- Definir o nível necessário de auditoria editorial.
+- Formalizar revisão periódica da retenção das mensagens.
+- Validar institucionalmente quais coordenadores de unidade terão publicação final.

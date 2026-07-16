@@ -1,4 +1,4 @@
-# ADR 0009: Adotar eixos de atuação como entidade central
+# ADR 0009: Adotar os eixos de atuação da LATEC
 
 ## Status
 
@@ -6,21 +6,27 @@ Aceita
 
 ## Contexto
 
-As imagens institucionais da LATEC.IN definem sete eixos de atuação e associam cada eixo a mentorias. Os eixos organizam ensino, pesquisa, extensão, produção científica e publicações.
+A LATEC possui sete eixos de atuação e mentorias associadas. A nova hierarquia estabelece que a Liga é unidade filha do LABTEC.IN.
+
+Os eixos organizam prioritariamente atividades e conteúdos da LATEC; eles não representam a estrutura global do laboratório.
 
 ## Decisão
 
-Criar o app `axes` e modelar os eixos por meio de `ResearchAxis` e `AxisMentorship`.
+Manter o app `axes` e os models `ResearchAxis` e `AxisMentorship`.
 
-Projetos, publicações científicas, posts, cursos e eventos poderão ser vinculados a um eixo.
+- `ResearchAxis` terá vínculo obrigatório com `InstitutionalUnit`.
+- Os sete eixos existentes pertencerão à unidade LATEC.
+- Projetos, publicações, cursos, eventos e pesquisas poderão se relacionar com eixo quando aplicável.
+- Pesquisas do LABTEC.IN terão eixo opcional.
 
 ## Consequências positivas
 
-- A modelagem passa a refletir a organização real da LATEC.IN.
-- Mentores podem publicar conteúdos vinculados aos próprios eixos.
-- O frontend poderá filtrar conteúdos por eixo.
+- Preserva a organização real da LATEC.
+- Permite mentorias e filtros por eixo.
+- Evita impor os eixos a todos os conteúdos do LABTEC.IN.
 
 ## Riscos e cuidados
 
-- É necessário evitar inconsistência entre eixo, mentor e permissão editorial.
-- A grafia de nomes de mentores deve ser validada antes do seed definitivo.
+- Validar compatibilidade entre unidade e eixo.
+- Aplicar permissões de mentores somente aos próprios eixos.
+- Confirmar nomes de mentores antes do seed definitivo.

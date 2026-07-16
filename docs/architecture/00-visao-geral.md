@@ -1,71 +1,111 @@
-# Visão geral da arquitetura — LATEC.IN
+# Visão geral da arquitetura — Portal LABTEC.IN
 
-A LATEC.IN é a Liga Acadêmica de Biotecnologia, Biodiversidade e Inovação. O portal deve funcionar como site institucional, vitrine de projetos e canal de comunicação entre a liga, a comunidade acadêmica, parceiros, setor produtivo e sociedade.
+O LABTEC.IN — Laboratório de Biotecnologia, Biodiversidade e Inovação — é a instituição raiz, proprietária do portal, do backend e dos conteúdos institucionais.
 
-O projeto atual possui um protótipo frontend em HTML, CSS e JavaScript puro. O frontend simula uma SPA com rotas por hash e dados locais em `js/data.js`. A próxima etapa é criar um backend em Django para persistir os dados e permitir administração de conteúdo.
+A LATEC é uma liga acadêmica ou iniciativa vinculada ao LABTEC.IN. Ela será apresentada como uma aba ou seção do portal do laboratório e terá conteúdo identificado pelo vínculo com sua unidade institucional.
+
+## Estado implementado
+
+O repositório possui:
+
+- frontend em HTML, CSS e JavaScript puro, com rotas por hash e dados históricos em `js/data.js`;
+- backend Django com Django REST Framework, Django Admin e API `/api/v1/`;
+- apps para conteúdo institucional, pessoas, eixos, portfólio, produção científica, notícias, aprendizagem, transparência, mídia, parcerias e métricas;
+- workflow editorial e comando idempotente `seed_initial_data`.
+
+O backend ainda reflete parcialmente o estado institucional anterior, no qual a LATEC.IN era tratada como proprietária do portal. Ainda não existem unidades institucionais genéricas, memberships por unidade, módulo próprio de pesquisas e trabalhos acadêmicos ou vínculo institucional nos conteúdos.
+
+## Arquitetura alvo
+
+```txt
+LABTEC.IN
+├── conteúdos institucionais do laboratório
+├── pessoas e vínculos institucionais
+├── pesquisas
+├── TCCs e trabalhos acadêmicos
+├── produções científicas
+├── projetos e soluções
+├── notícias
+├── cursos e capacitações
+├── eventos
+├── transparência
+├── parceiros
+└── LATEC
+    ├── ligantes
+    ├── mentores
+    ├── sete eixos de atuação
+    ├── projetos específicos
+    ├── publicações específicas
+    ├── cursos específicos
+    └── atividades próprias da Liga
+```
+
+Todo conteúdo será gerenciado dentro da estrutura do LABTEC.IN e poderá pertencer diretamente ao laboratório, à LATEC ou a futuras unidades. Esse vínculo será feito por relacionamento com `institutional.InstitutionalUnit`, sem booleanos específicos para cada unidade.
 
 ## Objetivo do backend
 
-Construir uma plataforma backend para atuar como CMS institucional e API pública da LATEC.IN.
+Atuar como CMS institucional e API pública do portal LABTEC.IN, permitindo administrar:
 
-O backend deverá permitir gerenciar informações institucionais, membros, professores, coordenadores, ligantes, pesquisadores, eixos de atuação, projetos, produções científicas, notícias, cursos, eventos, materiais, arquivos, parceiros, documentos de transparência, mensagens de contato, métricas e permissões administrativas.
+- identidade, missão, visão, histórico e canais institucionais;
+- pessoas e seus diferentes vínculos com unidades;
+- pesquisas, TCCs e outros trabalhos acadêmicos;
+- produções científicas;
+- projetos, soluções, ações de extensão e inovação;
+- notícias, cursos, eventos e materiais;
+- transparência, parceiros, mídia, métricas e mensagens de contato;
+- conteúdo próprio da LATEC, incluindo ligantes, mentores e sete eixos.
 
 ## Áreas públicas previstas
 
-- Home, com hero section, destaques e números de impacto.
-- Quem Somos, com histórico, propósito, missão, visão, valores, linhas de atuação e equipe.
-- Eixos de Atuação, com os sete eixos institucionais e suas mentorias.
-- Portfólio, como vitrine central de projetos, pesquisas, extensão, produção científica, startups e premiações.
-- Repositório Científico, com artigos, resumos, patentes e produções vinculadas aos eixos.
-- Transparência, com editais, atas, homologações, julgamentos de recursos, resultados e comunicados.
-- Capacitação & Cursos, com trilhas, bootcamps, workshops, simpósios, palestras e materiais.
-- Notícias / Blog / Jornal Trimestral, com artigos, eventos, premiações e registros da rotina da liga.
-- Contato & Parcerias, com formulário parametrizado e canais oficiais.
+- Home do LABTEC.IN, com conteúdo institucional, destaques e métricas do laboratório.
+- Institucional, com missão, visão, valores, histórico, pessoas e unidades.
+- Pesquisas, com projetos científicos formais.
+- Trabalhos acadêmicos, incluindo TCCs e demais tipos previstos.
+- Produções científicas, com artigos, resumos, patentes, livros, e-books e relatórios.
+- Portfólio, com soluções, produtos, iniciativas práticas, extensão, startups e inovação.
+- Notícias, cursos, capacitações e eventos.
+- Transparência, parceiros e canais de contato.
+- Seção LATEC, como recorte institucional com ligantes, mentores, eixos e conteúdos próprios.
+
+Eventos terão somente dados gerais de divulgação, como título, tipo, período, local e inscrição. O detalhamento interno por horários e atividades não integra esta arquitetura.
 
 ## Eixos de atuação
 
-Os eixos de atuação são parte central da arquitetura informacional da plataforma. Eles devem organizar projetos, publicações, cursos, eventos e produções científicas.
+Os sete eixos pertencem à LATEC e organizam prioritariamente as atividades da Liga. Eles não são a estrutura global do LABTEC.IN.
 
-Eixos iniciais:
-
-1. Etnobotânica e Pós-Colheita.
-2. Práticas em Laboratório e Nanotecnologia.
-3. Nutrição e Ciências dos Alimentos.
-4. Saúde e bem-estar.
-5. Produção Vegetal e Biotecnologia.
-6. Agroindustrialização.
-7. Redação Científica.
+Pesquisas do laboratório podem se relacionar opcionalmente com um eixo quando houver vínculo acadêmico com a LATEC. Conteúdos gerais do LABTEC.IN não precisam de eixo.
 
 ## Papel da plataforma web
 
-A plataforma web deve cumprir quatro funções institucionais:
+A plataforma mantém quatro funções institucionais:
 
-- Transparência: editais, atas, homologações e julgamentos de recursos.
-- Repositório científico: artigos, resumos, patentes e produções vinculadas aos eixos.
-- Vitrine biotecnológica: patentes, bioprodutos e soluções das startups ou projetos parceiros.
-- Difusão e extensão: inscrições e divulgação de simpósios, cursos e palestras abertas.
+- transparência;
+- repositório científico e acadêmico;
+- vitrine de projetos, produtos e soluções;
+- difusão, capacitação e extensão.
+
+Essas funções passam a existir no contexto institucional do LABTEC.IN, com possibilidade de recortes por unidade.
 
 ## Direção técnica
 
-- Linguagem principal: Python.
-- Framework backend: Django.
-- API: Django REST Framework.
-- API pública versionada em `/api/v1/`.
-- Administração inicial: Django Admin.
-- Autenticação administrativa com usuário padrão do Django.
-- Banco de dados em produção: PostgreSQL.
-- Banco de dados local inicial: SQLite.
-- Armazenamento local em desenvolvimento.
-- Volumes persistentes no servidor para homologação e produção.
-- Documentação de API: OpenAPI, preferencialmente com `drf-spectacular`.
+- Python e Django.
+- Django REST Framework.
+- API pública em `/api/v1/`.
+- Django Admin como CMS inicial.
+- `User` padrão do Django.
+- PostgreSQL em homologação e produção.
+- SQLite no desenvolvimento local inicial.
+- mídia local em desenvolvimento e volumes persistentes nos demais ambientes.
+- OpenAPI, preferencialmente com `drf-spectacular`.
 
 ## Premissas
 
-- O Django Admin será suficiente para o CMS inicial.
-- Nem toda pessoa cadastrada como membro da liga será usuária administrativa.
-- Professores, orientadores e mentores poderão cadastrar publicações referentes aos seus eixos de atuação.
-- A publicação final ficará sob responsabilidade da coordenação.
-- Conteúdos públicos devem possuir controle de publicação.
-- Conteúdos com página própria devem possuir `slug`.
-- Arquivos e imagens devem ser tratados como parte relevante da plataforma.
-- A API pública deve facilitar a migração do atual `js/data.js` para chamadas HTTP.
+- `institutional` será a dependência central de organização.
+- LABTEC.IN será a unidade raiz; LATEC será sua unidade filha.
+- Uma pessoa poderá ter múltiplos papéis em múltiplas unidades.
+- Conteúdos aplicáveis terão vínculo institucional.
+- A Home principal usará conteúdo do LABTEC.IN; a seção LATEC usará conteúdo filtrado por `latec`.
+- Mentores da LATEC atuarão sobre os próprios eixos e unidades autorizadas.
+- A publicação final ficará com a coordenação competente.
+- Conteúdos públicos terão controle editorial, publicação e `slug` quando possuírem página própria.
+- A migração será gradual, com campos inicialmente opcionais, backfill e retirada posterior de legados.

@@ -1,92 +1,108 @@
-# Transparência, repositório científico e vitrine biotecnológica
+# Transparência, repositório científico e vitrine do LABTEC.IN
 
-As imagens institucionais definem a plataforma web da LATEC.IN como mais do que um site institucional. A plataforma deve cumprir funções públicas específicas.
+O portal do LABTEC.IN cumpre funções públicas de transparência, preservação acadêmica, difusão científica e apresentação de soluções. Conteúdos específicos da LATEC são identificados pela unidade `latec`.
 
-## Funções da plataforma
+## Estado implementado
 
-### Transparência
+O backend já possui:
 
-Área destinada a editais, atas, homologações, julgamentos de recursos, resultados e comunicados.
+- `transparency.TransparencyDocument`;
+- `scientific.ScientificOutput`;
+- `portfolio.Project`;
+- cursos e eventos em `learning`;
+- arquivos em `mediahub`.
 
-Essa área será modelada pelo app `transparency`.
+Esses models ainda não possuem unidade institucional. Também não existem models próprios para pesquisas e trabalhos acadêmicos, nem autoria científica estruturada.
 
-### Repositório científico
+## Transparência
 
-Área destinada a artigos, resumos, patentes e produções vinculadas aos eixos de atuação.
+O app `transparency` mantém editais, atas, homologações, julgamentos de recursos, resultados e comunicados.
 
-Essa área será modelada pelo app `scientific`.
+Na arquitetura alvo:
 
-### Vitrine biotecnológica
+- cada documento possui `unit`;
+- o padrão institucional é LABTEC.IN;
+- a LATEC e futuras unidades podem possuir documentos próprios;
+- a API pública expõe apenas documentos publicados;
+- a política de armazenamento permanece inalterada.
 
-Área destinada a patentes, bioprodutos, soluções e entregas de projetos ou startups parceiras.
+## Repositório de pesquisas e trabalhos acadêmicos
 
-Essa função será contemplada principalmente por `portfolio` e `scientific`.
+O app `research` passa a registrar:
 
-### Difusão e extensão
+- pesquisas formais em `ResearchProject`;
+- TCCs e outros trabalhos acadêmicos em `AcademicWork`;
+- equipes e contribuições por relações com `Person`;
+- arquivos e links externos;
+- vínculo institucional e relação opcional com eixos da LATEC.
 
-Área destinada a inscrições e divulgação de simpósios, cursos, palestras e ações abertas.
+## Produção científica
 
-Essa função será contemplada principalmente por `learning`.
+O app `scientific` mantém resultados publicados:
 
-## Papel da LATEC.IN
+- artigos;
+- resumos;
+- patentes;
+- livros;
+- e-books;
+- relatórios.
 
-A atuação da liga será organizada em três frentes:
+`ScientificOutput` recebe unidade, autoria estruturada e relações opcionais com `ResearchProject` e `AcademicWork`.
 
-- Ensino: inovação regional.
-- Pesquisa: propriedade intelectual.
-- Extensão: impacto social.
+## Vitrine de projetos e soluções
 
-## Entidades novas
+O app `portfolio` apresenta:
 
-### `ScientificOutput`
+- ações de extensão;
+- produtos e serviços;
+- startups;
+- soluções tecnológicas;
+- protótipos e projetos de inovação.
 
-Representa produção científica vinculada a eixo, autores e arquivo ou link externo.
+Portfólio não substitui pesquisas, TCCs ou produções científicas. Categorias históricas incompatíveis serão revisadas durante a migração.
 
-Campos mínimos:
+## Exemplo de encadeamento
 
-- `title`;
-- `slug`;
-- `output_type`;
-- `axis`;
-- `authors`;
-- `abstract`;
-- `publication_date`;
-- `file`;
-- `external_url`;
-- `status`;
-- `is_published`;
-- `is_featured`.
+- Pesquisa: “Desenvolvimento de bioativo amazônico”.
+- Trabalho acadêmico: “Avaliação fitoquímica da espécie X”.
+- Produção científica: “Artigo com os resultados da avaliação fitoquímica”.
+- Portfólio: “Protótipo de bioproduto desenvolvido a partir do bioativo”.
 
-### `TransparencyDocument`
+## Difusão, capacitação e extensão
 
-Representa documento público de transparência.
+O app `learning` contempla cursos, trilhas, materiais e eventos.
 
-Campos mínimos:
+`Event` pode representar simpósios, palestras, cursos abertos, inaugurações, visitas institucionais, divulgação e extensão. O registro contém somente informações gerais; não existe modelagem prevista para atividades internas por horário.
 
-- `title`;
-- `slug`;
-- `document_type`;
-- `description`;
-- `file`;
-- `publication_date`;
-- `related_process`;
-- `status`;
-- `is_published`.
+## Recorte LATEC
 
-### `Event`
+A seção LATEC reúne:
 
-Representa simpósio, curso, palestra ou ação de difusão/extensão.
+- ligantes e mentores;
+- sete eixos;
+- projetos, publicações, cursos e eventos específicos;
+- documentos de transparência próprios, quando existirem.
 
-Campos mínimos:
+Pesquisas e produções do LABTEC.IN só aparecem no recorte da LATEC quando estiverem vinculadas à unidade ou relacionadas explicitamente a um de seus eixos.
 
-- `title`;
-- `slug`;
-- `event_type`;
-- `description`;
-- `axis`;
-- `start_date`;
-- `end_date`;
-- `location`;
-- `registration_url`;
-- `status`;
-- `is_published`.
+## Relações entre módulos
+
+- `institutional` define a unidade proprietária.
+- `research` registra o processo de pesquisa e os trabalhos acadêmicos.
+- `scientific` registra resultados publicados.
+- `portfolio` registra soluções e iniciativas práticas.
+- `mediahub` armazena arquivos reutilizáveis.
+- `transparency` publica documentos institucionais.
+- `learning` promove difusão, cursos e eventos.
+- `metrics` consolida indicadores por unidade.
+
+## Páginas e filtros públicos
+
+- `/api/v1/research-projects/?unit=labtec-in`;
+- `/api/v1/academic-works/?work_type=tcc`;
+- `/api/v1/scientific-outputs/?unit=labtec-in`;
+- `/api/v1/projects/?unit=latec`;
+- `/api/v1/transparency-documents/?unit=labtec-in`;
+- `/api/v1/events/?unit=labtec-in`.
+
+Todas essas rotas são alvo documental; somente os endpoints já identificados em [API pública](03-api-publica.md) estão implementados hoje.

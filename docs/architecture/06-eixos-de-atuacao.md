@@ -1,12 +1,18 @@
-# Eixos de atuação — LATEC.IN
+# Eixos de atuação da LATEC
 
-As imagens institucionais da LATEC.IN definem os eixos de atuação como parte central da identidade da liga. Portanto, os eixos não devem ser tratados apenas como texto estático: eles serão modelados como entidades do backend.
+A LATEC é uma unidade filha apoiada pelo LABTEC.IN. Seus sete eixos organizam prioritariamente mentorias e atividades próprias da Liga; eles não representam a estrutura global do laboratório.
 
-## Decisão de modelagem
+## Estado implementado
 
-Será criado o app `axes`, responsável por `ResearchAxis` e `AxisMentorship`.
+O app `axes` já possui `ResearchAxis` e `AxisMentorship`, com sete eixos e nove vínculos de mentoria carregados pelo seed atual.
 
-`ResearchAxis` representa um eixo formal de atuação. `AxisMentorship` representa a relação entre um eixo e seus professores, orientadores ou mentores.
+Os eixos ainda não possuem `unit`. A associação institucional à LATEC existe apenas de forma implícita no conteúdo histórico.
+
+## Arquitetura alvo
+
+`ResearchAxis` terá vínculo obrigatório com `institutional.InstitutionalUnit`. Os sete registros existentes receberão a unidade `latec`.
+
+`AxisMentorship` continuará representando a relação entre eixo e pessoa. O papel institucional geral da pessoa será representado separadamente por `InstitutionMembership`.
 
 ## Eixos iniciais
 
@@ -52,10 +58,11 @@ Produção acadêmica, escrita de artigos, resumos, projetos e revisão de liter
 
 Mentoria inicial: Prof. Dayam/Dayan e Profa. Anne.
 
-Observação: a grafia `Dayam` ou `Dayan` deve ser validada antes da carga definitiva dos dados.
+A grafia `Dayam` ou `Dayan` ainda exige validação institucional antes da carga definitiva.
 
-## Campos mínimos de `ResearchAxis`
+## Campos de `ResearchAxis`
 
+- `unit`;
 - `number`;
 - `title`;
 - `slug`;
@@ -66,7 +73,7 @@ Observação: a grafia `Dayam` ou `Dayan` deve ser validada antes da carga defin
 - `created_at`;
 - `updated_at`.
 
-## Campos mínimos de `AxisMentorship`
+## Campos de `AxisMentorship`
 
 - `axis`;
 - `person`;
@@ -78,7 +85,20 @@ Observação: a grafia `Dayam` ou `Dayan` deve ser validada antes da carga defin
 
 ## Regras de negócio
 
+- Cada eixo pertence à LATEC.
 - Um eixo pode ter um ou mais mentores.
 - Uma pessoa pode atuar em mais de um eixo.
-- Projetos, cursos, posts e produções científicas podem ser vinculados a um eixo.
-- Professores, orientadores e mentores poderão criar publicações associadas aos seus próprios eixos.
+- Projetos, cursos, posts, eventos e produções específicas da LATEC podem usar eixo.
+- Uma pesquisa do LABTEC.IN pode se relacionar opcionalmente com um eixo.
+- Conteúdo geral do laboratório não precisa de eixo.
+- O acesso editorial de mentores combina unidade autorizada e vínculo com eixo.
+
+## Migração
+
+1. Criar a unidade LATEC como filha do LABTEC.IN.
+2. Adicionar `unit` opcional a `ResearchAxis`.
+3. Associar os sete eixos existentes à LATEC.
+4. Atualizar consultas, serializers, filtros e permissões.
+5. Tornar `unit` obrigatório.
+
+Nenhum eixo deve ser reclassificado para o LABTEC.IN sem validação institucional.

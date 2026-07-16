@@ -1,24 +1,41 @@
-# Mapa de módulos
+# Mapa de módulos alvo
 
 ```mermaid
 flowchart LR
-  accounts --> core
+  institutional --> accounts
+  institutional --> core
+  institutional --> people
+  institutional --> axes
+  institutional --> research
+  institutional --> portfolio
+  institutional --> scientific
+  institutional --> news
+  institutional --> learning
+  institutional --> transparency
+  institutional --> mediahub
+  institutional --> partnerships
+  institutional --> metrics
+
   accounts --> people
-  accounts --> axes
-  accounts --> portfolio
-  accounts --> scientific
-  accounts --> news
-  accounts --> learning
-  accounts --> transparency
-  accounts --> partnerships
 
   people --> axes
+  people --> research
+  people --> portfolio
+  people --> scientific
+  people --> news
+  people --> learning
+
+  axes --> research
   axes --> portfolio
   axes --> scientific
   axes --> news
   axes --> learning
 
+  research --> scientific
+  research --> portfolio
+
   mediahub --> core
+  mediahub --> research
   mediahub --> portfolio
   mediahub --> scientific
   mediahub --> news
@@ -27,13 +44,15 @@ flowchart LR
 
   partnerships --> portfolio
 
+  people --> metrics
+  axes --> metrics
+  research --> metrics
   portfolio --> metrics
   scientific --> metrics
   news --> metrics
   learning --> metrics
   transparency --> metrics
-  people --> metrics
   partnerships --> metrics
 ```
 
-`axes` passa a ser módulo central de organização institucional. `mediahub` centraliza arquivos. `metrics` agrega dados públicos dos demais apps para a Home.
+As setas indicam conceitos fornecidos ou relações consumidas pelo módulo de destino. `institutional` é a raiz organizacional; `axes` organiza a LATEC; `research` separa pesquisa e trabalhos acadêmicos; `metrics` consolida indicadores por unidade.

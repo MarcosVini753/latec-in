@@ -6,21 +6,33 @@ Aceita
 
 ## Contexto
 
-O protótipo já possui dados simulados em `js/data.js`, e as imagens institucionais definem eixos, frentes de atuação e funções da plataforma.
+O backend já possui um comando idempotente `seed_initial_data`, derivado do protótipo e da estrutura institucional anterior.
 
-O backend precisa nascer com dados mínimos para desenvolvimento e homologação.
+A arquitetura alvo precisa representar LABTEC.IN como raiz, LATEC como filha e classificar conteúdos por unidade, sem perder a reprodutibilidade do ambiente.
 
 ## Decisão
 
-Criar fixtures e/ou comando idempotente `seed_initial_data` para popular dados básicos.
+Manter um seed idempotente e evoluí-lo para incluir:
+
+- LABTEC.IN e LATEC;
+- memberships;
+- sete eixos da LATEC e mentorias;
+- configurações do portal vinculadas ao LABTEC.IN;
+- perfil institucional da LATEC;
+- pesquisas e tipos de trabalhos acadêmicos;
+- conteúdos classificados por unidade;
+- métricas separadas por unidade e modo de agregação.
+
+Registros históricos de projetos serão revisados manualmente antes de reclassificação.
 
 ## Consequências positivas
 
-- Facilita desenvolvimento local.
-- Facilita homologação com dados próximos do conteúdo real.
-- Reduz trabalho manual no Django Admin.
+- Desenvolvimento e homologação reproduzíveis.
+- Estrutura institucional disponível desde a carga inicial.
+- Backfill testável com dados conhecidos.
 
 ## Riscos e cuidados
 
-- O seed deve ser idempotente para evitar duplicações.
-- Dados de nomes, mentores e eixos devem ser revisados antes de produção.
+- Preservar idempotência.
+- Não sobrescrever conteúdo editorial manual fora da responsabilidade do seed.
+- Validar nomes, papéis, projetos, autoria e métricas antes de produção.
