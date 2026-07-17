@@ -1,14 +1,17 @@
 from rest_framework import serializers
 
 from apps.axes.serializers import ResearchAxisSerializer
+from apps.institutional.serializers import InstitutionalUnitSummarySerializer
 from apps.learning.models import Course, CourseMaterial, LearningTrack
 from apps.people.serializers import PersonSerializer
 
 
 class LearningTrackSerializer(serializers.ModelSerializer):
+    unit = InstitutionalUnitSummarySerializer(read_only=True, allow_null=True)
+
     class Meta:
         model = LearningTrack
-        fields = ("title", "slug", "description", "display_order")
+        fields = ("unit", "title", "slug", "description", "display_order")
 
 
 class CourseMaterialSerializer(serializers.ModelSerializer):
@@ -18,6 +21,7 @@ class CourseMaterialSerializer(serializers.ModelSerializer):
 
 
 class CourseSerializer(serializers.ModelSerializer):
+    unit = InstitutionalUnitSummarySerializer(read_only=True, allow_null=True)
     track = LearningTrackSerializer(read_only=True)
     axis = ResearchAxisSerializer(read_only=True)
     instructors = PersonSerializer(many=True, read_only=True)
@@ -27,6 +31,7 @@ class CourseSerializer(serializers.ModelSerializer):
         model = Course
         fields = (
             "id",
+            "unit",
             "title",
             "slug",
             "track",

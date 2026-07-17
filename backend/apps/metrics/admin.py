@@ -10,10 +10,17 @@ class MetricSnapshotInline(admin.TabularInline):
 
 @admin.register(ImpactMetric)
 class ImpactMetricAdmin(admin.ModelAdmin):
-    list_display = ("label", "key", "value", "suffix", "is_active", "display_order")
-    list_filter = ("is_active",)
-    search_fields = ("label", "key", "description")
+    list_display = ("label", "unit", "key", "value", "suffix", "is_active", "display_order")
+    list_filter = ("unit", "is_active")
+    search_fields = ("label", "key", "description", "unit__name", "unit__acronym")
     prepopulated_fields = {"key": ("label",)}
+    autocomplete_fields = ("unit",)
+    list_select_related = ("unit",)
+    fieldsets = (
+        ("Identificação", {"fields": ("unit", "label", "key")}),
+        ("Valor", {"fields": ("value", "suffix", "description")}),
+        ("Exibição", {"fields": ("is_active", "display_order")}),
+    )
     inlines = (MetricSnapshotInline,)
 
 

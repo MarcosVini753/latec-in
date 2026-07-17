@@ -6,7 +6,7 @@ from apps.partnerships.serializers import ContactMessageSerializer, PartnerSeria
 
 
 class PartnerViewSet(PublicReadOnlyModelViewSet):
-    queryset = Partner.objects.all()
+    queryset = Partner.objects.prefetch_related("units")
     serializer_class = PartnerSerializer
     search_fields = ("name", "description")
 

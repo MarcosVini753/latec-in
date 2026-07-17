@@ -10,6 +10,7 @@ class PublicReadOnlyModelViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
         model_fields = {field.name: field for field in queryset.model._meta.fields}
+        many_to_many_fields = {field.name for field in queryset.model._meta.many_to_many}
 
         if "is_active" in model_fields:
             queryset = queryset.filter(is_active=True)
@@ -19,6 +20,12 @@ class PublicReadOnlyModelViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(editorial_status=EditorialStatus.PUBLISHED)
         if self._is_editorial_status_field(model_fields.get("status")):
             queryset = queryset.filter(status=EditorialStatus.PUBLISHED)
+
+        unit = self.request.query_params.get("unit")
+        if unit and "unit" in model_fields:
+            queryset = queryset.filter(unit__slug=unit)
+        elif unit and "units" in many_to_many_fields:
+            queryset = queryset.filter(units__slug=unit).distinct()
 
         axis = self.request.query_params.get("axis")
         if axis and "axis" in model_fields:

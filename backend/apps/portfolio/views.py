@@ -10,7 +10,8 @@ class ProjectCategoryViewSet(PublicReadOnlyModelViewSet):
 
 
 class ProjectViewSet(PublicReadOnlyModelViewSet):
-    queryset = Project.objects.select_related("axis", "category", "status").prefetch_related(
+    queryset = Project.objects.select_related("unit", "axis__unit", "category", "status").prefetch_related(
+        "axis__mentorships__person__role",
         "team_members__person__role",
         "results",
         "links",

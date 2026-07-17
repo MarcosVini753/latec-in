@@ -15,6 +15,13 @@ class MediaAsset(BaseModel):
         TECHNICAL = "technical", "Documento técnico"
         OTHER = "other", "Outro"
 
+    unit = models.ForeignKey(
+        "institutional.InstitutionalUnit",
+        on_delete=models.SET_NULL,
+        related_name="media_assets",
+        blank=True,
+        null=True,
+    )
     title = models.CharField(max_length=180)
     description = models.TextField(blank=True)
     file = models.FileField(upload_to="mediahub/")

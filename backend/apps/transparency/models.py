@@ -12,6 +12,13 @@ class TransparencyDocument(BaseModel):
         RESULT = "result", "Resultado"
         STATEMENT = "statement", "Comunicado"
 
+    unit = models.ForeignKey(
+        "institutional.InstitutionalUnit",
+        on_delete=models.SET_NULL,
+        related_name="transparency_documents",
+        blank=True,
+        null=True,
+    )
     title = models.CharField(max_length=180)
     slug = models.SlugField(max_length=200, unique=True)
     document_type = models.CharField(max_length=40, choices=DocumentType.choices)

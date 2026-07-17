@@ -4,6 +4,10 @@ from apps.learning.serializers import CourseSerializer
 
 
 class CourseViewSet(PublicReadOnlyModelViewSet):
-    queryset = Course.objects.select_related("track", "axis").prefetch_related("instructors__role", "materials").all()
+    queryset = Course.objects.select_related("unit", "track__unit", "axis__unit").prefetch_related(
+        "axis__mentorships__person__role",
+        "instructors__role",
+        "materials",
+    )
     serializer_class = CourseSerializer
     search_fields = ("title", "description")

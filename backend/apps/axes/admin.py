@@ -11,10 +11,17 @@ class AxisMentorshipInline(admin.TabularInline):
 
 @admin.register(ResearchAxis)
 class ResearchAxisAdmin(admin.ModelAdmin):
-    list_display = ("number", "title", "is_active", "display_order")
-    list_filter = ("is_active",)
-    search_fields = ("title", "description", "keywords")
+    list_display = ("number", "title", "unit", "is_active", "display_order")
+    list_filter = ("unit", "is_active")
+    search_fields = ("title", "description", "keywords", "unit__name", "unit__acronym")
     prepopulated_fields = {"slug": ("title",)}
+    autocomplete_fields = ("unit",)
+    list_select_related = ("unit",)
+    fieldsets = (
+        ("Identificação", {"fields": ("unit", "number", "title", "slug")}),
+        ("Conteúdo", {"fields": ("description", "keywords")}),
+        ("Exibição", {"fields": ("is_active", "display_order")}),
+    )
     inlines = (AxisMentorshipInline,)
 
 

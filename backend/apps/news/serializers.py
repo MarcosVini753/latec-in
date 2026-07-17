@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from apps.axes.serializers import ResearchAxisSerializer
+from apps.institutional.serializers import InstitutionalUnitSummarySerializer
 from apps.news.models import Post, PostCategory, Tag
 from apps.people.serializers import PersonSerializer
 
@@ -18,6 +19,7 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class PostSerializer(serializers.ModelSerializer):
+    unit = InstitutionalUnitSummarySerializer(read_only=True, allow_null=True)
     axis = ResearchAxisSerializer(read_only=True)
     category = PostCategorySerializer(read_only=True)
     tags = TagSerializer(many=True, read_only=True)
@@ -27,6 +29,7 @@ class PostSerializer(serializers.ModelSerializer):
         model = Post
         fields = (
             "id",
+            "unit",
             "title",
             "slug",
             "axis",

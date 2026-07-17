@@ -4,6 +4,13 @@ from apps.common.models import BaseModel, EditorialStatus
 
 
 class LearningTrack(BaseModel):
+    unit = models.ForeignKey(
+        "institutional.InstitutionalUnit",
+        on_delete=models.SET_NULL,
+        related_name="learning_tracks",
+        blank=True,
+        null=True,
+    )
     title = models.CharField(max_length=160)
     slug = models.SlugField(max_length=180, unique=True)
     description = models.TextField(blank=True)
@@ -26,6 +33,13 @@ class Course(BaseModel):
         CLOSED = "closed", "Inscrições encerradas"
         COMPLETED = "completed", "Concluído"
 
+    unit = models.ForeignKey(
+        "institutional.InstitutionalUnit",
+        on_delete=models.SET_NULL,
+        related_name="courses",
+        blank=True,
+        null=True,
+    )
     title = models.CharField(max_length=180)
     slug = models.SlugField(max_length=200, unique=True)
     track = models.ForeignKey(LearningTrack, on_delete=models.SET_NULL, related_name="courses", blank=True, null=True)
@@ -78,6 +92,13 @@ class Event(BaseModel):
         COMPLETED = "completed", "Realizado"
         CANCELED = "canceled", "Cancelado"
 
+    unit = models.ForeignKey(
+        "institutional.InstitutionalUnit",
+        on_delete=models.SET_NULL,
+        related_name="events",
+        blank=True,
+        null=True,
+    )
     title = models.CharField(max_length=180)
     slug = models.SlugField(max_length=200, unique=True)
     event_type = models.CharField(max_length=80)

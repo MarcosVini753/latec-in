@@ -11,7 +11,7 @@ from django.utils.text import slugify
 from apps.axes.models import AxisMentorship, ResearchAxis
 from apps.common.models import EditorialStatus
 from apps.core.models import HeroBanner, InstitutionalSection, SiteSettings
-from apps.institutional.models import InstitutionalUnit
+from apps.institutional.models import InstitutionMembership, InstitutionalUnit
 from apps.learning.models import Course, CourseMaterial, LearningTrack
 from apps.metrics.models import ImpactMetric
 from apps.news.models import Post, PostCategory
@@ -157,6 +157,7 @@ class Command(BaseCommand):
         self.seed_institutional_units()
         self.seed_roles()
         self.seed_people()
+        self.seed_institution_memberships()
         self.seed_axes()
         self.seed_axis_mentorships()
         self.seed_project_categories()
@@ -231,6 +232,29 @@ class Command(BaseCommand):
             self.attach_local_file(person, "photo", photo_path)
             self.person_by_source_id[source_id] = person
 
+    def seed_institution_memberships(self):
+        units_by_role = {
+            "coordenadora": (self.labtec_unit, self.latec_unit),
+            "estagiario": (self.labtec_unit,),
+            "ligante": (self.latec_unit,),
+            "pesquisador": (self.labtec_unit,),
+            "professor": (self.labtec_unit,),
+        }
+        for person in self.person_by_source_id.values():
+            if not person.role:
+                continue
+            for unit in units_by_role.get(person.role.slug, ()):
+                InstitutionMembership.objects.get_or_create(
+                    person=person,
+                    unit=unit,
+                    role=person.role.name,
+                    defaults={
+                        "is_active": True,
+                        "is_public": True,
+                        "display_order": person.display_order,
+                    },
+                )
+
     def seed_axes(self):
         axes = [
             (1, "Etnobotânica e Pós-Colheita", "Cultivo, manejo e óleos essenciais.", "etnobotânica,pós-colheita,óleos essenciais"),
@@ -245,6 +269,7 @@ class Command(BaseCommand):
             ResearchAxis.objects.update_or_create(
                 number=number,
                 defaults={
+                    "unit": self.latec_unit,
                     "title": title,
                     "slug": slugify(title),
                     "description": description,
@@ -313,6 +338,11 @@ class Command(BaseCommand):
                     "display_order": order,
                 },
             )
+            # Classificação provisória: estes registros vieram do protótipo
+            # histórico da Liga e ainda aguardam revisão institucional manual.
+            if project.unit_id is None:
+                project.unit = self.latec_unit
+                project.save(update_fields=["unit"])
             for result_order, result_title in enumerate(item["results"], start=1):
                 ProjectResult.objects.update_or_create(
                     project=project,
@@ -350,6 +380,7 @@ class Command(BaseCommand):
             post, _created = Post.objects.update_or_create(
                 slug=slugify(item["title"]),
                 defaults={
+                    "unit": self.latec_unit,
                     "title": item["title"],
                     "category": category,
                     "summary": item["summary"],
@@ -368,7 +399,12 @@ class Command(BaseCommand):
         for order, title in enumerate(tracks, start=1):
             LearningTrack.objects.update_or_create(
                 slug=slugify(title),
-                defaults={"title": title, "is_active": True, "display_order": order},
+                defaults={
+                    "unit": self.labtec_unit,
+                    "title": title,
+                    "is_active": True,
+                    "display_order": order,
+                },
             )
 
     def seed_courses(self):
@@ -377,6 +413,7 @@ class Command(BaseCommand):
             course, _created = Course.objects.update_or_create(
                 slug=slugify(item["title"]),
                 defaults={
+                    "unit": self.latec_unit,
                     "title": item["title"],
                     "track": track,
                     "description": item["description"],
@@ -416,7 +453,13 @@ class Command(BaseCommand):
         for order, (key, label, value) in enumerate(metrics, start=1):
             ImpactMetric.objects.update_or_create(
                 key=key,
-                defaults={"label": label, "value": value, "is_active": True, "display_order": order},
+                defaults={
+                    "unit": self.labtec_unit,
+                    "label": label,
+                    "value": value,
+                    "is_active": True,
+                    "display_order": order,
+                },
             )
 
     def seed_site_settings(self):

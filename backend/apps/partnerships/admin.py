@@ -5,10 +5,23 @@ from apps.partnerships.models import ContactMessage, Partner
 
 @admin.register(Partner)
 class PartnerAdmin(admin.ModelAdmin):
-    list_display = ("name", "partner_type", "is_active", "display_order")
-    list_filter = ("partner_type", "is_active")
-    search_fields = ("name", "description", "website")
+    list_display = ("name", "unit_list", "partner_type", "is_active", "display_order")
+    list_filter = ("units", "partner_type", "is_active")
+    search_fields = ("name", "description", "website", "units__name", "units__acronym")
     prepopulated_fields = {"slug": ("name",)}
+    autocomplete_fields = ("units",)
+    fieldsets = (
+        ("Identificação", {"fields": ("units", "name", "slug", "partner_type")}),
+        ("Conteúdo", {"fields": ("description", "logo", "website")}),
+        ("Exibição", {"fields": ("is_active", "display_order")}),
+    )
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).prefetch_related("units")
+
+    @admin.display(description="Unidades")
+    def unit_list(self, obj):
+        return ", ".join(unit.acronym or unit.name for unit in obj.units.all()) or "—"
 
 
 @admin.register(ContactMessage)

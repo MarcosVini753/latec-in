@@ -4,6 +4,6 @@ from apps.transparency.serializers import TransparencyDocumentSerializer
 
 
 class TransparencyDocumentViewSet(PublicReadOnlyModelViewSet):
-    queryset = TransparencyDocument.objects.all()
+    queryset = TransparencyDocument.objects.select_related("unit")
     serializer_class = TransparencyDocumentSerializer
     search_fields = ("title", "description", "related_process")

@@ -14,6 +14,13 @@ class ScientificOutput(BaseModel):
         PROJECT = "project", "Projeto"
         SCIENTIFIC_PRODUCTION = "scientific_production", "Produção científica"
 
+    unit = models.ForeignKey(
+        "institutional.InstitutionalUnit",
+        on_delete=models.SET_NULL,
+        related_name="scientific_outputs",
+        blank=True,
+        null=True,
+    )
     title = models.CharField(max_length=220)
     slug = models.SlugField(max_length=240, unique=True)
     output_type = models.CharField(max_length=40, choices=OutputType.choices)

@@ -2,19 +2,21 @@ import shutil
 import tempfile
 
 from django.core.management import call_command
+from django.db.models import Count
 from django.test import TestCase, override_settings
 from django.utils.text import slugify
 
 from apps.axes.models import AxisMentorship, ResearchAxis
 from apps.common.models import EditorialStatus
-from apps.core.models import HeroBanner, InstitutionalSection, SiteSettings
-from apps.institutional.models import InstitutionalUnit
-from apps.learning.models import Course, CourseMaterial
+from apps.core.models import HeroBanner, InstitutionalSection, SiteSettings, SocialLink
+from apps.institutional.models import InstitutionMembership, InstitutionalUnit
+from apps.learning.models import Course, CourseMaterial, LearningTrack
 from apps.metrics.models import ImpactMetric
 from apps.news.models import Post
-from apps.partnerships.models import ContactMessage
+from apps.partnerships.models import ContactMessage, Partner
 from apps.people.models import Person, Role
 from apps.portfolio.models import Project, ProjectCategory, ProjectResult, ProjectStatus, ProjectTeamMember
+from apps.scientific.models import ScientificOutput
 
 
 TEST_MEDIA_ROOT = tempfile.mkdtemp(prefix="latec-test-media-")
@@ -34,6 +36,7 @@ class CmsApiTests(TestCase):
     def test_seed_initial_data_is_idempotent(self):
         expected_counts = {
             InstitutionalUnit: 2,
+            InstitutionMembership: 34,
             Role: 7,
             Person: 33,
             ResearchAxis: 7,
@@ -56,6 +59,13 @@ class CmsApiTests(TestCase):
             with self.subTest(model=model.__name__):
                 self.assertEqual(model.objects.count(), expected_count)
 
+        duplicate_memberships = (
+            InstitutionMembership.objects.values("person", "unit", "role")
+            .annotate(total=Count("id"))
+            .filter(total__gt=1)
+        )
+        self.assertFalse(duplicate_memberships.exists())
+
     def test_seed_creates_institutional_hierarchy_and_assigns_core_content(self):
         labtec = InstitutionalUnit.objects.get(slug="labtec-in")
         latec = InstitutionalUnit.objects.get(slug="latec")
@@ -70,6 +80,45 @@ class CmsApiTests(TestCase):
         self.assertEqual(settings.unit, labtec)
         self.assertFalse(HeroBanner.objects.exclude(unit=labtec).exists())
         self.assertFalse(InstitutionalSection.objects.exclude(unit=labtec).exists())
+
+    def test_seed_assigns_content_and_basic_memberships_to_units(self):
+        labtec = InstitutionalUnit.objects.get(slug="labtec-in")
+        latec = InstitutionalUnit.objects.get(slug="latec")
+
+        self.assertEqual(ResearchAxis.objects.filter(unit=latec).count(), 7)
+        self.assertFalse(Post.objects.exclude(unit=latec).exists())
+        self.assertFalse(Course.objects.exclude(unit=latec).exists())
+        self.assertFalse(Project.objects.exclude(unit=latec).exists())
+        self.assertFalse(LearningTrack.objects.exclude(unit=labtec).exists())
+        self.assertFalse(ImpactMetric.objects.exclude(unit=labtec).exists())
+
+        self.assertEqual(
+            InstitutionMembership.objects.filter(unit=latec, person__role__slug="ligante").count(),
+            22,
+        )
+        self.assertEqual(
+            InstitutionMembership.objects.filter(
+                unit=labtec,
+                person__role__slug__in=("professor", "pesquisador", "estagiario"),
+            ).count(),
+            10,
+        )
+        coordinator = Person.objects.get(slug=slugify("Marta Adelino"))
+        self.assertEqual(
+            set(coordinator.institution_memberships.values_list("unit__slug", "role")),
+            {("labtec-in", "Coordenadora"), ("latec", "Coordenadora")},
+        )
+
+    def test_seed_preserves_manual_project_unit_classification(self):
+        project = Project.objects.order_by("pk").first()
+        labtec = InstitutionalUnit.objects.get(slug="labtec-in")
+        project.unit = labtec
+        project.save(update_fields=["unit"])
+
+        call_command("seed_initial_data", verbosity=0)
+
+        project.refresh_from_db()
+        self.assertEqual(project.unit, labtec)
 
     def test_seed_reuses_legacy_site_settings_without_losing_custom_data(self):
         SiteSettings.objects.all().delete()
@@ -125,6 +174,47 @@ class CmsApiTests(TestCase):
         self.assertEqual(latec_response.status_code, 200)
         self.assertEqual(latec_response.json()["parent"]["slug"], "labtec-in")
 
+    def test_home_only_returns_labtec_content(self):
+        labtec = InstitutionalUnit.objects.get(slug="labtec-in")
+        latec = InstitutionalUnit.objects.get(slug="latec")
+        SiteSettings.objects.create(unit=latec, site_name="LATEC", is_active=True)
+        SiteSettings.objects.create(site_name="Sem unidade", is_active=True)
+        HeroBanner.objects.create(unit=latec, title="Hero LATEC", is_published=True)
+        HeroBanner.objects.create(title="Hero sem unidade", is_published=True)
+        InstitutionalSection.objects.create(
+            unit=latec,
+            section_type=InstitutionalSection.SectionType.HISTORY,
+            title="Seção LATEC",
+            slug="secao-latec",
+            content="Conteúdo da Liga.",
+            is_published=True,
+        )
+        InstitutionalSection.objects.create(
+            section_type=InstitutionalSection.SectionType.HISTORY,
+            title="Seção sem unidade",
+            slug="secao-sem-unidade",
+            content="Conteúdo ainda não classificado.",
+            is_published=True,
+        )
+        SocialLink.objects.create(unit=labtec, label="LABTEC.IN", url="https://labtec.example.com")
+        SocialLink.objects.create(unit=latec, label="LATEC", url="https://latec.example.com")
+        SocialLink.objects.create(label="Sem unidade", url="https://example.com")
+
+        response = self.client.get("/api/v1/site/home/")
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["settings"]["site_name"], "LABTEC.IN")
+        self.assertEqual(data["settings"]["unit"]["slug"], "labtec-in")
+        for collection in ("heroes", "sections", "social_links"):
+            self.assertTrue(data[collection])
+            self.assertTrue(all(item["unit"]["slug"] == "labtec-in" for item in data[collection]))
+        self.assertNotIn("Hero LATEC", {item["title"] for item in data["heroes"]})
+        self.assertNotIn("Hero sem unidade", {item["title"] for item in data["heroes"]})
+        self.assertNotIn("Seção LATEC", {item["title"] for item in data["sections"]})
+        self.assertNotIn("Seção sem unidade", {item["title"] for item in data["sections"]})
+        self.assertEqual([item["label"] for item in data["social_links"]], ["LABTEC.IN"])
+
     def test_public_endpoints_respond(self):
         urls = [
             "/api/v1/site/home/",
@@ -176,6 +266,88 @@ class CmsApiTests(TestCase):
         self.assertEqual(response.status_code, 200)
         titles = [item["title"] for item in response.json()["results"]]
         self.assertEqual(titles, ["Fábrica de Ensino: Bootcamp de Startups"])
+
+    def test_public_endpoints_filter_by_unit_and_keep_unassigned_content_compatible(self):
+        labtec = InstitutionalUnit.objects.get(slug="labtec-in")
+        latec = InstitutionalUnit.objects.get(slug="latec")
+        category = ProjectCategory.objects.get(slug=slugify("Ensino"))
+        project_status = ProjectStatus.objects.get(slug=slugify("Em andamento"))
+        Project.objects.create(
+            unit=labtec,
+            title="Projeto do LABTEC.IN",
+            slug="projeto-do-labtec-in",
+            category=category,
+            status=project_status,
+            editorial_status=EditorialStatus.PUBLISHED,
+            is_published=True,
+        )
+        unassigned_project = Project.objects.create(
+            title="Projeto sem unidade",
+            slug="projeto-sem-unidade",
+            category=category,
+            status=project_status,
+            editorial_status=EditorialStatus.PUBLISHED,
+            is_published=True,
+        )
+        Post.objects.create(
+            unit=labtec,
+            title="Notícia do LABTEC.IN",
+            slug="noticia-do-labtec-in",
+            content="Conteúdo institucional.",
+            status=EditorialStatus.PUBLISHED,
+            is_published=True,
+        )
+        Course.objects.create(
+            unit=labtec,
+            title="Curso do LABTEC.IN",
+            slug="curso-do-labtec-in",
+            editorial_status=EditorialStatus.PUBLISHED,
+            is_published=True,
+        )
+        for unit in (labtec, latec):
+            ScientificOutput.objects.create(
+                unit=unit,
+                title=f"Produção {unit.acronym}",
+                slug=f"producao-{unit.slug}",
+                output_type=ScientificOutput.OutputType.ARTICLE,
+                status=EditorialStatus.PUBLISHED,
+                is_published=True,
+            )
+
+        for endpoint in ("projects", "posts", "courses", "scientific-outputs"):
+            for unit_slug in ("labtec-in", "latec"):
+                with self.subTest(endpoint=endpoint, unit=unit_slug):
+                    response = self.client.get(f"/api/v1/{endpoint}/", {"unit": unit_slug})
+                    self.assertEqual(response.status_code, 200)
+                    results = response.json()["results"]
+                    self.assertTrue(results)
+                    self.assertTrue(all(item["unit"]["slug"] == unit_slug for item in results))
+                    self.assertEqual(
+                        set(results[0]["unit"]),
+                        {"name", "acronym", "slug", "unit_type"},
+                    )
+
+        unfiltered_response = self.client.get("/api/v1/projects/")
+        unassigned_item = next(
+            item for item in unfiltered_response.json()["results"] if item["slug"] == unassigned_project.slug
+        )
+        self.assertIsNone(unassigned_item["unit"])
+        self.assertEqual(self.client.get(f"/api/v1/projects/{unassigned_project.slug}/").status_code, 200)
+
+    def test_partner_can_belong_to_multiple_units_and_filter_by_each_one(self):
+        units = list(InstitutionalUnit.objects.filter(slug__in=("labtec-in", "latec")))
+        partner = Partner.objects.create(name="UFAC", slug="ufac")
+        partner.units.add(*units)
+
+        response = self.client.get(f"/api/v1/partners/{partner.slug}/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual({item["slug"] for item in response.json()["units"]}, {"labtec-in", "latec"})
+        for unit in units:
+            with self.subTest(unit=unit.slug):
+                filtered = self.client.get("/api/v1/partners/", {"unit": unit.slug})
+                self.assertEqual(filtered.status_code, 200)
+                self.assertIn(partner.slug, {item["slug"] for item in filtered.json()["results"]})
 
     def test_contact_endpoint_only_allows_public_creation(self):
         self.assertEqual(self.client.get("/api/v1/contact/").status_code, 405)

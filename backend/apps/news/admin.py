@@ -21,14 +21,15 @@ class TagAdmin(admin.ModelAdmin):
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
-    list_display = ("title", "category", "axis", "status", "is_published", "is_featured", "published_at")
-    list_filter = ("category", "status", "axis", "is_published", "is_featured")
-    search_fields = ("title", "summary", "content")
+    list_display = ("title", "unit", "category", "axis", "status", "is_published", "is_featured", "published_at")
+    list_filter = ("unit", "category", "status", "axis", "is_published", "is_featured")
+    search_fields = ("title", "summary", "content", "unit__name", "unit__acronym")
     prepopulated_fields = {"slug": ("title",)}
-    autocomplete_fields = ("axis", "category", "authors", "tags")
+    autocomplete_fields = ("unit", "axis", "category", "authors", "tags")
+    list_select_related = ("unit", "category", "axis")
     actions = EDITORIAL_ADMIN_ACTIONS
     fieldsets = (
-        ("Identificação", {"fields": ("title", "slug", "axis", "category", "tags", "authors")}),
+        ("Identificação", {"fields": ("unit", "title", "slug", "axis", "category", "tags", "authors")}),
         ("Conteúdo", {"fields": ("summary", "content", "cover_image")}),
         ("Publicação", {"fields": ("status", "is_published", "published_at", "is_featured", "display_order")}),
     )

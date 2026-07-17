@@ -5,7 +5,13 @@ from apps.mediahub.models import MediaAsset
 
 @admin.register(MediaAsset)
 class MediaAssetAdmin(admin.ModelAdmin):
-    list_display = ("title", "asset_type", "is_public", "uploaded_by", "updated_at")
-    list_filter = ("asset_type", "is_public")
-    search_fields = ("title", "description", "alt_text", "credit")
-    autocomplete_fields = ("uploaded_by",)
+    list_display = ("title", "unit", "asset_type", "is_public", "uploaded_by", "updated_at")
+    list_filter = ("unit", "asset_type", "is_public")
+    search_fields = ("title", "description", "alt_text", "credit", "unit__name", "unit__acronym")
+    autocomplete_fields = ("unit", "uploaded_by")
+    list_select_related = ("unit", "uploaded_by")
+    fieldsets = (
+        ("Identificação", {"fields": ("unit", "title", "asset_type")}),
+        ("Arquivo", {"fields": ("file", "description", "alt_text", "credit")}),
+        ("Controle", {"fields": ("is_public", "uploaded_by")}),
+    )

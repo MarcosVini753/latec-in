@@ -34,6 +34,13 @@ class ProjectStatus(BaseModel):
 
 
 class Project(BaseModel):
+    unit = models.ForeignKey(
+        "institutional.InstitutionalUnit",
+        on_delete=models.SET_NULL,
+        related_name="projects",
+        blank=True,
+        null=True,
+    )
     title = models.CharField(max_length=180)
     slug = models.SlugField(max_length=200, unique=True)
     axis = models.ForeignKey("axes.ResearchAxis", on_delete=models.SET_NULL, related_name="projects", blank=True, null=True)

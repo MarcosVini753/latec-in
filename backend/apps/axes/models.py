@@ -4,6 +4,13 @@ from apps.common.models import BaseModel
 
 
 class ResearchAxis(BaseModel):
+    unit = models.ForeignKey(
+        "institutional.InstitutionalUnit",
+        on_delete=models.SET_NULL,
+        related_name="research_axes",
+        blank=True,
+        null=True,
+    )
     number = models.PositiveSmallIntegerField(unique=True)
     title = models.CharField(max_length=180)
     slug = models.SlugField(max_length=200, unique=True)

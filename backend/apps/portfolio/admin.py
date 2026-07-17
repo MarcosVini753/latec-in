@@ -37,14 +37,15 @@ class ProjectLinkInline(admin.TabularInline):
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
-    list_display = ("title", "axis", "category", "status", "editorial_status", "is_published", "is_featured", "year")
-    list_filter = ("axis", "category", "status", "editorial_status", "is_published", "is_featured", "year")
-    search_fields = ("title", "summary", "area", "problem", "solution")
+    list_display = ("title", "unit", "axis", "category", "status", "editorial_status", "is_published", "is_featured", "year")
+    list_filter = ("unit", "axis", "category", "status", "editorial_status", "is_published", "is_featured", "year")
+    search_fields = ("title", "summary", "area", "problem", "solution", "unit__name", "unit__acronym")
     prepopulated_fields = {"slug": ("title",)}
-    autocomplete_fields = ("axis", "category", "status")
+    autocomplete_fields = ("unit", "axis", "category", "status")
+    list_select_related = ("unit", "axis", "category", "status")
     actions = EDITORIAL_ADMIN_ACTIONS
     fieldsets = (
-        ("Identificação", {"fields": ("title", "slug", "axis", "category", "area", "status", "year")}),
+        ("Identificação", {"fields": ("unit", "title", "slug", "axis", "category", "area", "status", "year")}),
         ("Conteúdo", {"fields": ("summary", "problem", "solution", "cover_image")}),
         ("Publicação", {"fields": ("editorial_status", "is_published", "published_at", "is_featured", "display_order")}),
     )

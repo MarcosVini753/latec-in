@@ -10,6 +10,10 @@ class PostTagViewSet(PublicReadOnlyModelViewSet):
 
 
 class PostViewSet(PublicReadOnlyModelViewSet):
-    queryset = Post.objects.select_related("axis", "category").prefetch_related("tags", "authors__role").all()
+    queryset = Post.objects.select_related("unit", "axis__unit", "category").prefetch_related(
+        "axis__mentorships__person__role",
+        "tags",
+        "authors__role",
+    )
     serializer_class = PostSerializer
     search_fields = ("title", "summary", "content")
