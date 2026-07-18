@@ -1,11 +1,12 @@
 from django.contrib import admin
 
 from apps.common.admin_actions import EDITORIAL_ADMIN_ACTIONS
+from apps.common.admin_scoping import UnitScopedAdminMixin
 from apps.core.models import HeroBanner, InstitutionalSection, SiteSettings, SocialLink
 
 
 @admin.register(SiteSettings)
-class SiteSettingsAdmin(admin.ModelAdmin):
+class SiteSettingsAdmin(UnitScopedAdminMixin, admin.ModelAdmin):
     list_display = ("site_name", "unit", "institution", "contact_email", "is_active", "updated_at")
     list_filter = ("unit", "is_active")
     search_fields = ("site_name", "institution", "description")
@@ -13,7 +14,7 @@ class SiteSettingsAdmin(admin.ModelAdmin):
 
 
 @admin.register(HeroBanner)
-class HeroBannerAdmin(admin.ModelAdmin):
+class HeroBannerAdmin(UnitScopedAdminMixin, admin.ModelAdmin):
     list_display = ("title", "unit", "is_published", "display_order", "updated_at")
     list_filter = ("unit", "is_published")
     search_fields = ("title", "subtitle")
@@ -27,7 +28,7 @@ class HeroBannerAdmin(admin.ModelAdmin):
 
 
 @admin.register(InstitutionalSection)
-class InstitutionalSectionAdmin(admin.ModelAdmin):
+class InstitutionalSectionAdmin(UnitScopedAdminMixin, admin.ModelAdmin):
     list_display = ("title", "unit", "section_type", "is_published", "display_order")
     list_filter = ("unit", "section_type", "is_published")
     search_fields = ("title", "content")
@@ -42,7 +43,7 @@ class InstitutionalSectionAdmin(admin.ModelAdmin):
 
 
 @admin.register(SocialLink)
-class SocialLinkAdmin(admin.ModelAdmin):
+class SocialLinkAdmin(UnitScopedAdminMixin, admin.ModelAdmin):
     list_display = ("label", "unit", "url", "is_active", "display_order")
     list_filter = ("unit", "is_active")
     search_fields = ("label", "url")

@@ -1,10 +1,11 @@
 from django.contrib import admin
 
+from apps.common.admin_scoping import UnitScopedAdminMixin
 from apps.mediahub.models import MediaAsset
 
 
 @admin.register(MediaAsset)
-class MediaAssetAdmin(admin.ModelAdmin):
+class MediaAssetAdmin(UnitScopedAdminMixin, admin.ModelAdmin):
     list_display = ("title", "unit", "asset_type", "is_public", "uploaded_by", "updated_at")
     list_filter = ("unit", "asset_type", "is_public")
     search_fields = ("title", "description", "alt_text", "credit", "unit__name", "unit__acronym")

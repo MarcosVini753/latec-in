@@ -1,11 +1,12 @@
 from django.contrib import admin
 
 from apps.common.admin_actions import EDITORIAL_ADMIN_ACTIONS
+from apps.common.admin_scoping import UnitScopedAdminMixin
 from apps.transparency.models import TransparencyDocument
 
 
 @admin.register(TransparencyDocument)
-class TransparencyDocumentAdmin(admin.ModelAdmin):
+class TransparencyDocumentAdmin(UnitScopedAdminMixin, admin.ModelAdmin):
     list_display = ("title", "unit", "document_type", "status", "is_published", "is_featured", "publication_date")
     list_filter = ("unit", "document_type", "status", "is_published", "is_featured")
     search_fields = ("title", "description", "related_process", "unit__name", "unit__acronym")

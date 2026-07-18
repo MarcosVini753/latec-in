@@ -1,11 +1,12 @@
 from django.contrib import admin
 
 from apps.common.admin_actions import EDITORIAL_ADMIN_ACTIONS
+from apps.common.admin_scoping import UnitScopedAdminMixin, UnitScopedInlineMixin
 from apps.learning.models import Course, CourseMaterial, Event, LearningTrack
 
 
 @admin.register(LearningTrack)
-class LearningTrackAdmin(admin.ModelAdmin):
+class LearningTrackAdmin(UnitScopedAdminMixin, admin.ModelAdmin):
     list_display = ("title", "unit", "is_active", "display_order")
     list_filter = ("unit", "is_active")
     search_fields = ("title", "description", "unit__name", "unit__acronym")
@@ -19,13 +20,14 @@ class LearningTrackAdmin(admin.ModelAdmin):
     )
 
 
-class CourseMaterialInline(admin.TabularInline):
+class CourseMaterialInline(UnitScopedInlineMixin, admin.TabularInline):
     model = CourseMaterial
     extra = 0
 
 
 @admin.register(Course)
-class CourseAdmin(admin.ModelAdmin):
+class CourseAdmin(UnitScopedAdminMixin, admin.ModelAdmin):
+    axis_lookup = "axis"
     list_display = ("title", "unit", "track", "axis", "enrollment_status", "editorial_status", "is_published", "is_featured", "start_date")
     list_filter = ("unit", "track", "axis", "enrollment_status", "editorial_status", "is_published", "is_featured")
     search_fields = ("title", "description", "unit__name", "unit__acronym")
@@ -43,7 +45,10 @@ class CourseAdmin(admin.ModelAdmin):
 
 
 @admin.register(CourseMaterial)
-class CourseMaterialAdmin(admin.ModelAdmin):
+class CourseMaterialAdmin(UnitScopedAdminMixin, admin.ModelAdmin):
+    unit_lookup = "course__unit"
+    axis_lookup = "course__axis"
+    publication_lookup = "course"
     list_display = ("title", "course", "is_public", "display_order")
     list_filter = ("is_public",)
     search_fields = ("title", "description", "course__title")
@@ -51,7 +56,8 @@ class CourseMaterialAdmin(admin.ModelAdmin):
 
 
 @admin.register(Event)
-class EventAdmin(admin.ModelAdmin):
+class EventAdmin(UnitScopedAdminMixin, admin.ModelAdmin):
+    axis_lookup = "axis"
     list_display = ("title", "unit", "event_type", "axis", "event_status", "editorial_status", "is_published", "is_featured", "start_date")
     list_filter = ("unit", "event_type", "axis", "event_status", "editorial_status", "is_published", "is_featured")
     search_fields = ("title", "description", "location", "unit__name", "unit__acronym")

@@ -1,11 +1,13 @@
 from django.contrib import admin
 
 from apps.common.admin_actions import EDITORIAL_ADMIN_ACTIONS
+from apps.common.admin_scoping import ReferenceAdminMixin, UnitScopedAdminMixin, UnitScopedInlineMixin
 from apps.portfolio.models import Project, ProjectCategory, ProjectLink, ProjectResult, ProjectStatus, ProjectTeamMember
 
 
 @admin.register(ProjectCategory)
-class ProjectCategoryAdmin(admin.ModelAdmin):
+class ProjectCategoryAdmin(ReferenceAdminMixin, admin.ModelAdmin):
+    management_access = "lab"
     list_display = ("name", "slug", "is_active", "display_order")
     list_filter = ("is_active",)
     search_fields = ("name", "description")
@@ -13,30 +15,32 @@ class ProjectCategoryAdmin(admin.ModelAdmin):
 
 
 @admin.register(ProjectStatus)
-class ProjectStatusAdmin(admin.ModelAdmin):
+class ProjectStatusAdmin(ReferenceAdminMixin, admin.ModelAdmin):
+    management_access = "lab"
     list_display = ("name", "slug", "display_order")
     search_fields = ("name",)
     prepopulated_fields = {"slug": ("name",)}
 
 
-class ProjectTeamMemberInline(admin.TabularInline):
+class ProjectTeamMemberInline(UnitScopedInlineMixin, admin.TabularInline):
     model = ProjectTeamMember
     extra = 0
     autocomplete_fields = ("person",)
 
 
-class ProjectResultInline(admin.TabularInline):
+class ProjectResultInline(UnitScopedInlineMixin, admin.TabularInline):
     model = ProjectResult
     extra = 0
 
 
-class ProjectLinkInline(admin.TabularInline):
+class ProjectLinkInline(UnitScopedInlineMixin, admin.TabularInline):
     model = ProjectLink
     extra = 0
 
 
 @admin.register(Project)
-class ProjectAdmin(admin.ModelAdmin):
+class ProjectAdmin(UnitScopedAdminMixin, admin.ModelAdmin):
+    axis_lookup = "axis"
     list_display = ("title", "unit", "axis", "category", "status", "editorial_status", "is_published", "is_featured", "year")
     list_filter = ("unit", "axis", "category", "status", "editorial_status", "is_published", "is_featured", "year")
     search_fields = ("title", "summary", "area", "problem", "solution", "unit__name", "unit__acronym")
@@ -53,7 +57,10 @@ class ProjectAdmin(admin.ModelAdmin):
 
 
 @admin.register(ProjectTeamMember)
-class ProjectTeamMemberAdmin(admin.ModelAdmin):
+class ProjectTeamMemberAdmin(UnitScopedAdminMixin, admin.ModelAdmin):
+    unit_lookup = "project__unit"
+    axis_lookup = "project__axis"
+    publication_lookup = "project"
     list_display = ("project", "person", "role", "is_lead", "display_order")
     list_filter = ("is_lead", "role")
     search_fields = ("project__title", "person__full_name", "role")
@@ -61,7 +68,10 @@ class ProjectTeamMemberAdmin(admin.ModelAdmin):
 
 
 @admin.register(ProjectResult)
-class ProjectResultAdmin(admin.ModelAdmin):
+class ProjectResultAdmin(UnitScopedAdminMixin, admin.ModelAdmin):
+    unit_lookup = "project__unit"
+    axis_lookup = "project__axis"
+    publication_lookup = "project"
     list_display = ("title", "project", "result_type", "display_order")
     list_filter = ("result_type",)
     search_fields = ("title", "description", "project__title")
@@ -69,7 +79,10 @@ class ProjectResultAdmin(admin.ModelAdmin):
 
 
 @admin.register(ProjectLink)
-class ProjectLinkAdmin(admin.ModelAdmin):
+class ProjectLinkAdmin(UnitScopedAdminMixin, admin.ModelAdmin):
+    unit_lookup = "project__unit"
+    axis_lookup = "project__axis"
+    publication_lookup = "project"
     list_display = ("label", "project", "link_type", "display_order")
     list_filter = ("link_type",)
     search_fields = ("label", "url", "project__title")
