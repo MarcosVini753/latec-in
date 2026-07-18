@@ -17,10 +17,11 @@ from apps.metrics.models import ImpactMetric
 from apps.news.models import Post, PostCategory
 from apps.people.models import Person, Role
 from apps.portfolio.models import Project, ProjectCategory, ProjectLink, ProjectResult, ProjectStatus, ProjectTeamMember
+from apps.research.models import ResearchProject, ResearchProjectMember
 
 
 PEOPLE = [
-    (1, "Marta Adelino", "Coordenadora", "Professora doutora e coordenadora da LATEC.IN, com larga experiência em biotecnologia e gestão de projetos.", "js/pics/marta.png"),
+    (1, "Marta Adelino", "Coordenadora", "Professora doutora e coordenadora do LABTEC.IN e da LATEC, com larga experiência em biotecnologia e gestão de projetos.", "js/pics/marta.png"),
     (2, "Gabriel Daniel", "Estagiário", "Estudante de Sistemas de Informação na UFAC, responsável pela criação deste protótipo.", "js/pics/gabriel.png"),
     (3, "Ana Souza", "Pesquisadora", "Discente pesquisadora focada em bioinformática e biodiversidade amazônica.", "js/pics/ana.png"),
     (4, "Marcos Moraes", "Ligante", "Estudante de Sistemas de Informação na UFAC, responsável pela criação deste protótipo.", "js/pics/marcos.png"),
@@ -63,25 +64,11 @@ PROJECTS = [
         "area": "Fábrica de Ensino",
         "status": "Concluído",
         "year": 2025,
-        "summary": "Bootcamp intensivo de Startups para novos membros da LATEC.IN.",
+        "summary": "Bootcamp intensivo de Startups para novos membros da LATEC.",
         "problem": "Falta de capacitação em desenvolvimento de negócios entre os integrantes.",
         "solution": "Proporcionar um treinamento prático e imersivo em desenvolvimento de startups.",
         "results": ["Relatório de atividades", "Apostila digital"],
         "team": [1, 2, 3],
-        "link": "",
-    },
-    {
-        "source_id": 2,
-        "title": "Pesquisa de Bioativos da Amazônia",
-        "category": "Pesquisa",
-        "area": "Projetos de Pesquisa",
-        "status": "Em andamento",
-        "year": 2026,
-        "summary": "Estudo dos compostos bioativos presentes em espécies amazônicas.",
-        "problem": "Necessidade de explorar novos fármacos e compostos naturais.",
-        "solution": "Investigar propriedades bioativas de plantas da região amazônica.",
-        "results": ["Artigo científico", "Protótipo de extrato"],
-        "team": [1, 3],
         "link": "",
     },
     {
@@ -100,19 +87,32 @@ PROJECTS = [
     },
 ]
 
+RESEARCH_PROJECTS = [
+    {
+        "title": "Pesquisa de Bioativos da Amazônia",
+        "slug": "pesquisa-de-bioativos-da-amazonia",
+        "display_order": 2,
+        "summary": "Estudo dos compostos bioativos presentes em espécies amazônicas.",
+        "project_status": ResearchProject.ProjectStatus.IN_PROGRESS,
+        "team": [1, 3],
+    },
+]
+
 POSTS = [
     {
-        "title": "Coordenadora do LATEC.IN é premiada por inovação tecnológica",
+        "title": "Coordenadora da LATEC é premiada por inovação tecnológica",
+        "slug": "coordenadora-do-latecin-e-premiada-por-inovacao-tecnologica",
         "date": "2026-05-29",
-        "summary": "A professora Marta Adelino recebeu o prêmio de inovação tecnológica da UFAC por seu trabalho à frente da LATEC.IN.",
-        "content": "A coordenadora da LATEC.IN, professora Marta Adelino, foi reconhecida com o prêmio de inovação tecnológica da Universidade Federal do Acre (UFAC) em 2026. O prêmio destaca sua liderança e os resultados alcançados pela liga em projetos de ensino, pesquisa e extensão. A cerimônia de premiação ocorreu no auditório central da UFAC, onde Marta recebeu um certificado e um troféu em reconhecimento ao seu trabalho inovador.",
+        "summary": "A professora Marta Adelino recebeu o prêmio de inovação tecnológica da UFAC por seu trabalho à frente da LATEC.",
+        "content": "A coordenadora da LATEC, professora Marta Adelino, foi reconhecida com o prêmio de inovação tecnológica da Universidade Federal do Acre (UFAC) em 2026. O prêmio destaca sua liderança e os resultados alcançados pela Liga em projetos de ensino, pesquisa e extensão. A cerimônia de premiação ocorreu no auditório central da UFAC, onde Marta recebeu um certificado e um troféu em reconhecimento ao seu trabalho inovador.",
         "image": "js/pics/certificado.png",
     },
     {
-        "title": "LATEC.IN participa do congresso nacional de inovação",
+        "title": "LATEC participa do congresso nacional de inovação",
+        "slug": "latecin-participa-do-congresso-nacional-de-inovacao",
         "date": "2026-05-15",
-        "summary": "A LATEC.IN apresentou três projetos no congresso nacional, recebendo destaque na sessão de biotecnologia.",
-        "content": "No congresso nacional de inovação tecnológica, a LATEC.IN foi representada pelos projetos “Fábrica de Ensino”, “Pesquisa de Bioativos da Amazônia” e “Extensão em Tecnologias Sustentáveis”. As apresentações foram bem recebidas e destacaram o potencial dos alunos da UFAC.",
+        "summary": "A LATEC apresentou três projetos no congresso nacional, recebendo destaque na sessão de biotecnologia.",
+        "content": "No congresso nacional de inovação tecnológica, a LATEC foi representada pelos projetos “Fábrica de Ensino”, “Pesquisa de Bioativos da Amazônia” e “Extensão em Tecnologias Sustentáveis”. As apresentações foram bem recebidas e destacaram o potencial dos alunos da UFAC.",
         "image": "",
     },
 ]
@@ -139,7 +139,7 @@ COURSES = [
 MATERIALS = {
     "Apostila Nanotecnologia.pdf": {
         "title": "Apostila de Nanotecnologia",
-        "description": "Apostila utilizada no curso de Nanotecnologia da LATEC.IN.",
+        "description": "Apostila utilizada no curso de Nanotecnologia da LATEC.",
         "file": "assets/images/apostila-nanotecnologia.pdf",
     }
 }
@@ -160,9 +160,11 @@ class Command(BaseCommand):
         self.seed_institution_memberships()
         self.seed_axes()
         self.seed_axis_mentorships()
+        self.seed_mentor_memberships()
         self.seed_project_categories()
         self.seed_project_statuses()
         self.seed_projects()
+        self.seed_research_projects()
         self.seed_post_categories()
         self.seed_posts()
         self.seed_learning_tracks()
@@ -202,12 +204,12 @@ class Command(BaseCommand):
     def seed_roles(self):
         roles = [
             ("Coordenadora", "Responsável pela coordenação institucional e publicação final."),
-            ("Professor", "Docente, orientador ou mentor vinculado à LATEC.IN."),
+            ("Professor", "Docente ou pesquisador vinculado ao LABTEC.IN, que também pode atuar como mentor da LATEC."),
             ("Ligante", "Membro discente da liga acadêmica."),
             ("Pesquisador", "Pessoa vinculada à pesquisa e produção científica."),
             ("Estagiário", "Pessoa em estágio ou colaboração formativa."),
             ("Colaborador", "Colaborador externo ou institucional."),
-            ("Egresso", "Pessoa que já integrou a LATEC.IN."),
+            ("Egresso", "Pessoa que já integrou o LABTEC.IN ou a LATEC."),
         ]
         for order, (name, description) in enumerate(roles, start=1):
             Role.objects.update_or_create(
@@ -302,6 +304,20 @@ class Command(BaseCommand):
                 defaults={"role": "Mentor", "is_main_mentor": True, "display_order": order},
             )
 
+    def seed_mentor_memberships(self):
+        mentorships = AxisMentorship.objects.filter(axis__unit=self.latec_unit).select_related("person")
+        for mentorship in mentorships:
+            InstitutionMembership.objects.get_or_create(
+                person=mentorship.person,
+                unit=self.latec_unit,
+                role="Mentor",
+                defaults={
+                    "is_active": True,
+                    "is_public": True,
+                    "display_order": mentorship.person.display_order,
+                },
+            )
+
     def seed_project_categories(self):
         categories = ["Ensino", "Pesquisa", "Extensão", "Produção Científica", "Startup", "Premiação"]
         for order, name in enumerate(categories, start=1):
@@ -334,8 +350,8 @@ class Command(BaseCommand):
                     "editorial_status": EditorialStatus.PUBLISHED,
                     "is_published": True,
                     "published_at": self.datetime_from_date(date(item["year"], 1, 1)),
-                    "is_featured": order <= 2,
-                    "display_order": order,
+                    "is_featured": item["source_id"] <= 2,
+                    "display_order": item["source_id"],
                 },
             )
             # Classificação provisória: estes registros vieram do protótipo
@@ -365,6 +381,39 @@ class Command(BaseCommand):
                     defaults={"label": "Link externo", "link_type": "externo", "display_order": 1},
                 )
 
+    def seed_research_projects(self):
+        for order, item in enumerate(RESEARCH_PROJECTS, start=1):
+            research_project, _created = ResearchProject.objects.get_or_create(
+                slug=item["slug"],
+                defaults={
+                    "unit": self.latec_unit,
+                    "title": item["title"],
+                    "summary": item["summary"],
+                    "project_status": item["project_status"],
+                    "editorial_status": EditorialStatus.DRAFT,
+                    "is_published": False,
+                    "is_featured": False,
+                    "display_order": item["display_order"],
+                },
+            )
+            for member_order, source_id in enumerate(item["team"], start=1):
+                person = self.person_by_source_id.get(source_id)
+                if not person:
+                    continue
+                ResearchProjectMember.objects.get_or_create(
+                    research_project=research_project,
+                    person=person,
+                    defaults={
+                        "role": (
+                            ResearchProjectMember.Role.COORDINATOR
+                            if member_order == 1
+                            else ResearchProjectMember.Role.COLLABORATOR
+                        ),
+                        "is_coordinator": member_order == 1,
+                        "display_order": member_order,
+                    },
+                )
+
     def seed_post_categories(self):
         categories = ["Notícia", "Blog", "Jornal", "Evento", "Premiação", "Artigo técnico", "Comunicado"]
         for order, name in enumerate(categories, start=1):
@@ -378,7 +427,7 @@ class Command(BaseCommand):
         for order, item in enumerate(POSTS, start=1):
             published_at = self.datetime_from_iso_date(item["date"])
             post, _created = Post.objects.update_or_create(
-                slug=slugify(item["title"]),
+                slug=item["slug"],
                 defaults={
                     "unit": self.latec_unit,
                     "title": item["title"],
@@ -483,7 +532,7 @@ class Command(BaseCommand):
             title="Biotecnologia, biodiversidade e inovação",
             defaults={
                 "unit": self.labtec_unit,
-                "subtitle": "Uma liga acadêmica conectando ensino, pesquisa e extensão para transformar ciência em soluções para a Amazônia.",
+                "subtitle": "Um laboratório conectando ensino, pesquisa e extensão para transformar ciência em soluções para a Amazônia.",
                 "cta_label": "Conheça os projetos",
                 "cta_url": "#portfolio",
                 "is_published": True,

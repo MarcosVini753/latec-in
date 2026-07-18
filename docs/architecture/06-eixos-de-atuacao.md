@@ -4,15 +4,11 @@ A LATEC é uma unidade filha apoiada pelo LABTEC.IN. Seus sete eixos organizam p
 
 ## Estado implementado
 
-O app `axes` já possui `ResearchAxis` e `AxisMentorship`, com sete eixos e nove vínculos de mentoria carregados pelo seed atual.
+O app `axes` possui `ResearchAxis` e `AxisMentorship`, com sete eixos e nove vínculos de mentoria carregados pelo seed. Todos os sete eixos recebem explicitamente a unidade `latec`.
 
-Os eixos ainda não possuem `unit`. A associação institucional à LATEC existe apenas de forma implícita no conteúdo histórico.
+`ResearchAxis.unit` continua opcional no schema durante a transição, para não quebrar registros antigos sem classificação. O seed garante a classificação dos sete registros canônicos.
 
-## Arquitetura alvo
-
-`ResearchAxis` terá vínculo obrigatório com `institutional.InstitutionalUnit`. Os sete registros existentes receberão a unidade `latec`.
-
-`AxisMentorship` continuará representando a relação entre eixo e pessoa. O papel institucional geral da pessoa será representado separadamente por `InstitutionMembership`.
+`AxisMentorship` representa a relação entre eixo e pessoa. O papel institucional geral da pessoa é representado separadamente por `InstitutionMembership`.
 
 ## Eixos iniciais
 
@@ -91,14 +87,13 @@ A grafia `Dayam` ou `Dayan` ainda exige validação institucional antes da carga
 - Projetos, cursos, posts, eventos e produções específicas da LATEC podem usar eixo.
 - Uma pesquisa do LABTEC.IN pode se relacionar opcionalmente com um eixo.
 - Conteúdo geral do laboratório não precisa de eixo.
-- O acesso editorial de mentores combina unidade autorizada e vínculo com eixo.
+- O acesso editorial de mentores exige perfil ativo, pessoa vinculada e `AxisMentorship`; o eixo não amplia o acesso a outros conteúdos.
 
-## Migração
+## Integridade e transição
 
-1. Criar a unidade LATEC como filha do LABTEC.IN.
-2. Adicionar `unit` opcional a `ResearchAxis`.
-3. Associar os sete eixos existentes à LATEC.
-4. Atualizar consultas, serializers, filtros e permissões.
-5. Tornar `unit` obrigatório.
+- O seed cria nove memberships `Mentor` na LATEC a partir das nove pessoas presentes em `AxisMentorship`.
+- Marta pode acumular `Coordenadora` e `Mentor` na mesma unidade porque a unicidade inclui o papel.
+- O Admin limita mentores aos seus eixos em querysets, formulários, autocomplete, inlines e validação do POST.
+- Tornar `ResearchAxis.unit` obrigatório permanece para uma etapa posterior ao inventário completo.
 
 Nenhum eixo deve ser reclassificado para o LABTEC.IN sem validação institucional.

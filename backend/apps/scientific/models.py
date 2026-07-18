@@ -21,6 +21,26 @@ class ScientificOutput(BaseModel):
         blank=True,
         null=True,
     )
+    legacy_portfolio_project_id = models.PositiveBigIntegerField(
+        blank=True,
+        null=True,
+        editable=False,
+        unique=True,
+    )
+    research_project = models.ForeignKey(
+        "research.ResearchProject",
+        on_delete=models.SET_NULL,
+        related_name="scientific_outputs",
+        blank=True,
+        null=True,
+    )
+    academic_work = models.ForeignKey(
+        "research.AcademicWork",
+        on_delete=models.SET_NULL,
+        related_name="scientific_outputs",
+        blank=True,
+        null=True,
+    )
     title = models.CharField(max_length=220)
     slug = models.SlugField(max_length=240, unique=True)
     output_type = models.CharField(max_length=40, choices=OutputType.choices)
@@ -43,3 +63,36 @@ class ScientificOutput(BaseModel):
 
     def __str__(self) -> str:
         return self.title
+
+
+class ScientificAuthorship(BaseModel):
+    scientific_output = models.ForeignKey(
+        ScientificOutput,
+        on_delete=models.CASCADE,
+        related_name="authorships",
+    )
+    person = models.ForeignKey(
+        "people.Person",
+        on_delete=models.CASCADE,
+        related_name="scientific_authorships",
+    )
+    author_order = models.PositiveIntegerField()
+    author_role = models.CharField(max_length=120, blank=True)
+
+    class Meta:
+        ordering = ("author_order", "person__full_name")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("scientific_output", "person"),
+                name="unique_scientific_output_person",
+            ),
+            models.UniqueConstraint(
+                fields=("scientific_output", "author_order"),
+                name="unique_scientific_output_author_order",
+            ),
+        ]
+        verbose_name = "autoria científica"
+        verbose_name_plural = "autorias científicas"
+
+    def __str__(self) -> str:
+        return f"{self.person} em {self.scientific_output}"

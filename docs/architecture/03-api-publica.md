@@ -4,9 +4,7 @@ A API pública permite que o frontend substitua gradualmente os dados locais de 
 
 ## Estado implementado
 
-O backend atual já expõe `/api/v1/`, paginação, schema OpenAPI e endpoints públicos para unidades institucionais, configurações, Home, pessoas, eixos, projetos, produções científicas, posts, cursos, transparência, parceiros, métricas e contato.
-
-Ainda não existem endpoints de pesquisas, trabalhos acadêmicos ou eventos. Os demais conteúdos atuais também não aceitam filtro por unidade nem retornam uma representação de `InstitutionalUnit`; essa adição foi adiada para preservar os payloads existentes na primeira fase.
+O backend expõe `/api/v1/`, paginação, schema OpenAPI e endpoints públicos para unidades, pesquisas, trabalhos acadêmicos e os domínios de conteúdo existentes. Conteúdos com propriedade institucional retornam unidade resumida e aceitam filtro por seu slug. O endpoint público de eventos permanece fora desta entrega.
 
 ## Política de versionamento
 
@@ -39,6 +37,10 @@ GET  /api/v1/axes/{slug}/
 GET  /api/v1/projects/
 GET  /api/v1/projects/{slug}/
 GET  /api/v1/projects/categories/
+GET  /api/v1/research-projects/
+GET  /api/v1/research-projects/{slug}/
+GET  /api/v1/academic-works/
+GET  /api/v1/academic-works/{slug}/
 GET  /api/v1/scientific-outputs/
 GET  /api/v1/scientific-outputs/{slug}/
 GET  /api/v1/posts/
@@ -52,24 +54,18 @@ GET  /api/v1/metrics/impact/
 POST /api/v1/contact/
 ```
 
-## Endpoints planejados
+## Endpoint fora desta entrega
 
 ```txt
-GET /api/v1/research-projects/
-GET /api/v1/research-projects/{slug}/
-
-GET /api/v1/academic-works/
-GET /api/v1/academic-works/{slug}/
-
 GET /api/v1/events/
 GET /api/v1/events/{slug}/
 ```
 
 Não haverá endpoint público para detalhamento interno da agenda de um evento.
 
-## Filtros públicos planejados
+## Filtros públicos
 
-Endpoints aplicáveis aceitarão `unit`:
+O `PublicReadOnlyModelViewSet` aplica `?unit=<slug>` aos models que possuem `unit`; parceiros usam a relação muitos-para-muitos equivalente. Registros sem unidade continuam serializáveis quando o filtro não é informado, mas não aparecem em uma consulta por unidade.
 
 ```txt
 GET /api/v1/posts/?unit=labtec-in
@@ -78,10 +74,26 @@ GET /api/v1/projects/?unit=latec
 GET /api/v1/research-projects/?unit=labtec-in
 GET /api/v1/academic-works/?work_type=tcc
 GET /api/v1/scientific-outputs/?unit=labtec-in
-GET /api/v1/events/?unit=labtec-in
 ```
 
-Filtros existentes por eixo, categoria, ano, destaque e busca textual permanecem quando fizerem sentido. O eixo não substitui a unidade: ele classifica prioritariamente conteúdos da LATEC.
+Filtros específicos documentados no OpenAPI:
+
+| Endpoint | Filtros |
+| --- | --- |
+| `research-projects` | `unit`, `axis`, `project_status`, `year`, `featured`, `search` |
+| `academic-works` | `unit`, `work_type`, `year`, `featured`, `search` |
+| `scientific-outputs` | `unit`, `axis`, `year`, `featured`, `search` |
+
+O eixo não substitui a unidade: ele classifica prioritariamente conteúdos da LATEC. Todos esses endpoints expõem somente registros publicados no campo editorial do model (`editorial_status` ou o legado `status`) e com `is_published=True`.
+
+## Contratos de pesquisa e produção
+
+- pesquisa inclui unidade resumida, eixo e equipe ordenada;
+- trabalho acadêmico inclui unidade, pesquisa resumida e contribuidores ordenados;
+- produção científica inclui pesquisa, trabalho acadêmico e autorias internas resumidas;
+- `ScientificOutput.authors` continua coexistindo com a autoria estruturada para autores externos;
+- representações resumidas evitam ciclos entre pesquisa, trabalho e produção.
+- querysets carregam unidade, eixo e relações aninhadas com `select_related`/`prefetch_related` para evitar N+1.
 
 ## Representação resumida da unidade
 
@@ -91,6 +103,7 @@ Respostas públicas de conteúdos institucionais incluirão:
 {
   "unit": {
     "name": "LABTEC.IN",
+    "acronym": "LABTEC.IN",
     "slug": "labtec-in",
     "unit_type": "laboratory"
   }
@@ -99,41 +112,15 @@ Respostas públicas de conteúdos institucionais incluirão:
 
 ## Home do LABTEC.IN
 
-O endpoint `/api/v1/site/home/` continuará existindo e deverá evoluir para a seguinte resposta conceitual:
-
-```json
-{
-  "settings": {},
-  "institution": {},
-  "heroes": [],
-  "sections": [],
-  "featured_research": [],
-  "featured_academic_works": [],
-  "featured_projects": [],
-  "latest_posts": [],
-  "upcoming_events": [],
-  "metrics": [],
-  "initiatives": [],
-  "social_links": []
-}
-```
-
-A Home principal será composta pelo contexto `labtec-in`. Métricas e destaques poderão agregar unidades filhas quando essa regra estiver habilitada.
+O endpoint `/api/v1/site/home/` retorna somente configurações, heroes, seções e links sociais vinculados diretamente a `labtec-in`. Ele não mistura conteúdo da LATEC nem conteúdo sem unidade. A ampliação da Home com pesquisas, trabalhos, projetos ou eventos permanece fora desta entrega.
 
 ## Seção LATEC
 
-A página da LATEC consumirá a unidade `/api/v1/institutional-units/latec/` e conteúdos filtrados por `?unit=latec`. Ela não terá backend ou API separados.
+A API oferece a unidade `/api/v1/institutional-units/latec/` e conteúdos filtrados por `?unit=latec`, sem backend separado para a Liga. A adoção desses endpoints pelo frontend permanece em outra entrega.
 
-## Migração
+## Compatibilidade
 
-1. Criar serializers e endpoints de unidades.
-2. Adicionar `unit` opcional aos serializers existentes.
-3. Executar o backfill.
-4. Habilitar filtros por unidade.
-5. Adicionar os endpoints de `research` e de eventos.
-6. Atualizar a Home e a seção LATEC.
-
-Durante a transição, respostas legadas podem permanecer temporariamente, desde que a documentação OpenAPI identifique os campos em retirada.
+Os slugs e o prefixo `/api/v1/` foram preservados. A unidade é obrigatória nos novos registros de pesquisa e trabalho acadêmico, mas permanece opcional nos modelos legados até a conclusão do backfill. A API pública continua anônima e somente leitura, sem expor o escopo administrativo do usuário.
 
 ## Restrições
 

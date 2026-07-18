@@ -9,12 +9,12 @@ O LABTEC.IN é a instituição raiz e proprietária do portal, do backend e dos 
 Os documentos distinguem três situações:
 
 - **Implementado:** comportamento confirmado no backend atual.
-- **Arquitetura alvo:** desenho aprovado para a evolução institucional LABTEC.IN/LATEC.
-- **Migração:** sequência planejada para sair do estado atual e alcançar o desenho alvo.
+- **Compatibilidade:** campos e dados antigos preservados durante a transição.
+- **Próximos cortes:** mudanças que dependem de validação manual ou de outra entrega.
 
-O backend Django e a API `/api/v1/` já estão implementados. A primeira fase da migração institucional também está concluída no código: o app `institutional` modela LABTEC.IN e LATEC, `core` possui vínculos opcionais por unidade e a API expõe as unidades públicas. O restante do backend ainda reflete parcialmente a arquitetura anterior: não possui o app `research`, não classifica os demais conteúdos por unidade e ainda representa o papel público de uma pessoa por um único campo.
+O backend Django implementa a estrutura LABTEC.IN/LATEC, memberships validados, classificação institucional dos conteúdos, escopo do Admin por unidade e eixo, o app `research`, autoria científica estruturada e endpoints públicos de pesquisas e trabalhos em `/api/v1/`. O seed idempotente cria 43 memberships e preserva dados e slugs legados durante a transição.
 
-Esta documentação registra a arquitetura alvo e o plano de migração. A primeira fase institucional já está implementada no backend; as fases seguintes permanecem planejadas. O frontend continua inalterado.
+Os models anteriores a `research` ainda aceitam `unit` nula, `Person.role` e categorias históricas não foram removidos, e o projeto de portfólio que originou a pesquisa permanece disponível até revisão e corte manual. O frontend, a expansão da Home, o endpoint público de eventos e a obrigatoriedade desses campos continuam fora desta entrega.
 
 ## Estrutura
 
@@ -63,10 +63,10 @@ docs/
 - [Visão geral](architecture/00-visao-geral.md): contexto institucional e direção técnica.
 - [Módulos](architecture/01-modulos.md): responsabilidades e dependências dos apps.
 - [Modelagem](architecture/02-modelagem-banco.md): entidades atuais e alvo.
-- [API pública](architecture/03-api-publica.md): endpoints implementados e planejados.
+- [API pública](architecture/03-api-publica.md): endpoints, filtros e limites da entrega atual.
 - [Estrutura institucional](architecture/10-estrutura-institucional.md): LABTEC.IN, LATEC, unidades e vínculos.
 - [Pesquisas e trabalhos acadêmicos](architecture/11-pesquisas-e-trabalhos-academicos.md): separação entre pesquisa, TCC, produção científica e portfólio.
-- [Plano de migração](architecture/12-migracao-labtec.md): etapas, backfill, riscos e critérios de conclusão.
+- [Plano de migração](architecture/12-migracao-labtec.md): backfill, conversão reversível e corte manual dos legados.
 
 ## Direção técnica consolidada
 
@@ -84,4 +84,4 @@ docs/
 
 ## Fora do escopo desta atualização
 
-Não fazem parte desta entrega a implementação dos novos apps, migrations, backfill, alterações do seed Python, frontend, renomeação do repositório, painel administrativo próprio, autenticação pública, inscrições completas, detalhamento interno da agenda de eventos, presença, certificados, pagamentos ou reservas de laboratório e equipamentos.
+Não fazem parte desta entrega o frontend, a expansão da Home, o endpoint público de eventos, a obrigatoriedade dos campos institucionais legados, o corte automático do projeto convertido, painel administrativo próprio, autenticação pública, inscrições completas, detalhamento interno da agenda de eventos, presença, certificados, pagamentos ou reservas de laboratório e equipamentos.

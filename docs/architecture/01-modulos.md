@@ -1,14 +1,14 @@
 # Módulos do backend do portal LABTEC.IN
 
-O backend é dividido em apps Django por domínio. A arquitetura alvo acrescenta `institutional` e `research` aos apps atuais.
+O backend é dividido em apps Django por domínio. `institutional` centraliza a organização e `research` separa pesquisas e trabalhos acadêmicos do portfólio.
 
 ## Estado implementado
 
-Estão instalados e implementados: `institutional`, `accounts`, `core`, `people`, `axes`, `mediahub`, `portfolio`, `scientific`, `news`, `learning`, `transparency`, `partnerships` e `metrics`, além de utilidades em `common`.
+Estão instalados e implementados: `institutional`, `accounts`, `core`, `people`, `axes`, `research`, `mediahub`, `portfolio`, `scientific`, `news`, `learning`, `transparency`, `partnerships` e `metrics`, além de utilidades em `common`.
 
-`institutional` já fornece `InstitutionalUnit`, `InstitutionMembership`, Admin, seed e endpoints públicos. `core` possui vínculos opcionais com unidade. Ainda não existe o app `research`, e os demais módulos ainda não possuem vínculo institucional.
+`institutional` fornece unidades, hierarquia validada e memberships. `accounts.Profile` define papel e escopo administrativo. Os modelos de conteúdo possuem propriedade institucional, e o Admin aplica o escopo também a filhos, inlines, autocomplete e parceiros compartilhados. Os campos `unit` herdados continuam opcionais; em `research` a unidade é obrigatória.
 
-## Apps na arquitetura alvo
+## Apps
 
 | App | Responsabilidade |
 | --- | --- |
@@ -23,9 +23,9 @@ Estão instalados e implementados: `institutional`, `accounts`, `core`, `people`
 | `news` | Notícias, posts, categorias, tags e autores. |
 | `learning` | Cursos, trilhas, materiais e eventos com informações gerais. |
 | `transparency` | Documentos de transparência do laboratório e de suas unidades. |
-| `mediahub` | Imagens, documentos, PDFs e outros arquivos reutilizáveis. |
+| `mediahub` | Catálogo de imagens, documentos, PDFs e outros arquivos, com unidade proprietária opcional. |
 | `partnerships` | Parceiros por unidade e mensagens de contato. |
-| `metrics` | Métricas por unidade e agregações para a Home. |
+| `metrics` | Métricas e históricos de valores por unidade. |
 | `common` | Modelos-base, status editoriais e utilidades compartilhadas. |
 
 ## Módulos centrais
@@ -46,14 +46,14 @@ Continua responsável por `ResearchAxis` e `AxisMentorship`, mas deixa de organi
 
 Separa pesquisas formais e trabalhos acadêmicos de `portfolio.Project` e de `scientific.ScientificOutput`.
 
-## Dependências alvo
+## Dependências
 
-- `institutional` fornece unidade e hierarquia para `core`, `people`, `axes`, `research`, `portfolio`, `scientific`, `news`, `learning`, `transparency`, `partnerships`, `mediahub` e `metrics`.
+- `institutional` fornece unidade e hierarquia para os conteúdos; a participação de pessoas é representada por `InstitutionMembership`.
 - `people` se relaciona com memberships, mentorias, equipes, autoria, pesquisa, trabalhos acadêmicos, posts e cursos.
 - `axes` pode classificar conteúdos da LATEC e se relacionar opcionalmente com pesquisas.
 - `research` pode originar produções em `scientific`.
-- `mediahub` centraliza arquivos reutilizáveis.
-- `metrics` pode agregar dados da unidade raiz e de unidades descendentes.
+- `mediahub` mantém um catálogo próprio, ainda sem relações estruturais com os modelos dos demais domínios.
+- `metrics` registra valores informados por unidade; não calcula agregações nem alimenta a Home automaticamente nesta etapa.
 - `accounts` protege o Django Admin e aplica o escopo institucional do usuário.
 
 O [mapa de módulos](diagrams/module-map.md) representa essas relações.
@@ -68,13 +68,11 @@ O [mapa de módulos](diagrams/module-map.md) representa essas relações.
 
 Os detalhes estão em [Pesquisas e trabalhos acadêmicos](11-pesquisas-e-trabalhos-academicos.md).
 
-## Sequência de migração
+## Limites atuais
 
-1. Criar `institutional`. **Concluído.**
-2. Ajustar `people` e `accounts`.
-3. Vincular `core` e `axes` às unidades. **`core` concluído com vínculo opcional; `axes` pendente.**
-4. Criar `research`.
-5. Ajustar os demais módulos.
-6. Executar backfill, aplicar permissões e retirar campos legados.
+- `Person.role` e categorias históricas continuam preservados até o corte dos consumidores legados.
+- Campos `unit` dos conteúdos anteriores a `research` continuam opcionais durante o backfill.
+- O endpoint público de eventos, a expansão da Home e o frontend não integram esta etapa.
+- A retirada dos legados e a obrigatoriedade institucional ocorrerão somente após validação dos dados.
 
-O plano completo está em [Migração para a arquitetura LABTEC.IN](12-migracao-labtec.md).
+O histórico e o corte manual estão em [Migração para a arquitetura LABTEC.IN](12-migracao-labtec.md).

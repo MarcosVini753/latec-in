@@ -10,12 +10,14 @@ O repositório possui:
 
 - frontend em HTML, CSS e JavaScript puro, com rotas por hash e dados históricos em `js/data.js`;
 - backend Django com Django REST Framework, Django Admin e API `/api/v1/`;
-- apps para estrutura institucional, conteúdo institucional, pessoas, eixos, portfólio, produção científica, notícias, aprendizagem, transparência, mídia, parcerias e métricas;
+- apps para estrutura institucional, conteúdo institucional, pessoas, eixos, pesquisas e trabalhos acadêmicos, portfólio, produção científica, notícias, aprendizagem, transparência, mídia, parcerias e métricas;
 - workflow editorial e comando idempotente `seed_initial_data`.
 
-O app `institutional` já possui unidades e memberships, o seed cria LABTEC.IN como raiz e LATEC como filha, e os conteúdos de `core` possuem vínculo opcional com unidade. O backend ainda reflete parcialmente o estado institucional anterior: memberships ainda não foram preenchidos, os demais conteúdos não possuem unidade e não existe módulo próprio de pesquisas e trabalhos acadêmicos.
+O app `institutional` modela LABTEC.IN como raiz e LATEC como filha. O seed cria 43 memberships sem duplicação, associa os sete eixos e os nove mentores à LATEC e classifica os conteúdos iniciais por unidade. A hierarquia e os memberships possuem validações de integridade no modelo e no banco.
 
-## Arquitetura alvo
+Os conteúdos legados possuem `unit` opcional durante a transição, parceiros podem se relacionar com várias unidades e a API aceita `?unit=<slug>`. Os novos `ResearchProject` e `AcademicWork` exigem unidade desde a criação. O Admin aplica escopo por unidade e eixo; apenas administrador e coordenação do LABTEC.IN realizam publicação final.
+
+## Estrutura institucional
 
 ```txt
 LABTEC.IN
@@ -40,7 +42,7 @@ LABTEC.IN
     └── atividades próprias da Liga
 ```
 
-Todo conteúdo será gerenciado dentro da estrutura do LABTEC.IN e poderá pertencer diretamente ao laboratório, à LATEC ou a futuras unidades. Esse vínculo será feito por relacionamento com `institutional.InstitutionalUnit`, sem booleanos específicos para cada unidade.
+Todo conteúdo é gerenciado dentro da estrutura do LABTEC.IN e pode pertencer diretamente ao laboratório, à LATEC ou a futuras unidades. O vínculo usa `institutional.InstitutionalUnit`, sem booleanos específicos para cada unidade.
 
 ## Objetivo do backend
 
@@ -55,7 +57,7 @@ Atuar como CMS institucional e API pública do portal LABTEC.IN, permitindo admi
 - transparência, parceiros, mídia, métricas e mensagens de contato;
 - conteúdo próprio da LATEC, incluindo ligantes, mentores e sete eixos.
 
-## Áreas públicas previstas
+## Áreas públicas
 
 - Home do LABTEC.IN, com conteúdo institucional, destaques e métricas do laboratório.
 - Institucional, com missão, visão, valores, histórico, pessoas e unidades.
@@ -67,7 +69,7 @@ Atuar como CMS institucional e API pública do portal LABTEC.IN, permitindo admi
 - Transparência, parceiros e canais de contato.
 - Seção LATEC, como recorte institucional com ligantes, mentores, eixos e conteúdos próprios.
 
-Eventos terão somente dados gerais de divulgação, como título, tipo, período, local e inscrição. O detalhamento interno por horários e atividades não integra esta arquitetura.
+Eventos possuem somente dados gerais de divulgação, como título, tipo, período, local e inscrição. O detalhamento interno por horários e atividades não integra esta arquitetura. O endpoint público de eventos permanece fora desta entrega.
 
 ## Eixos de atuação
 
@@ -98,14 +100,13 @@ Essas funções passam a existir no contexto institucional do LABTEC.IN, com pos
 - mídia local em desenvolvimento e volumes persistentes nos demais ambientes.
 - OpenAPI, preferencialmente com `drf-spectacular`.
 
-## Premissas
+## Regras consolidadas
 
-- `institutional` será a dependência central de organização.
-- LABTEC.IN será a unidade raiz; LATEC será sua unidade filha.
-- Uma pessoa poderá ter múltiplos papéis em múltiplas unidades.
-- Conteúdos aplicáveis terão vínculo institucional.
-- A Home principal usará conteúdo do LABTEC.IN; a seção LATEC usará conteúdo filtrado por `latec`.
-- Mentores da LATEC atuarão sobre os próprios eixos e unidades autorizadas.
-- A publicação final ficará com a coordenação competente.
+- `institutional` é a dependência central de organização.
+- LABTEC.IN é a unidade raiz; LATEC é sua unidade filha.
+- Uma pessoa pode ter múltiplos papéis na mesma unidade ou em unidades diferentes.
+- A Home principal usa exclusivamente conteúdo direto do LABTEC.IN; a API oferece o recorte LATEC por `?unit=latec`.
+- Mentores da LATEC atuam somente sobre os próprios eixos.
+- Apenas superusuários, administradores e coordenação do LABTEC.IN publicam ou arquivam.
 - Conteúdos públicos terão controle editorial, publicação e `slug` quando possuírem página própria.
-- A migração será gradual, com campos inicialmente opcionais, backfill e retirada posterior de legados.
+- Campos `unit` dos modelos legados continuam opcionais; sua obrigatoriedade, o frontend e a expansão da Home permanecem etapas posteriores.

@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "apps.axes",
     "apps.mediahub",
     "apps.portfolio",
+    "apps.research",
     "apps.scientific",
     "apps.news",
     "apps.learning",

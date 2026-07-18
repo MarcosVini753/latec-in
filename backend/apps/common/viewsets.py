@@ -1,4 +1,5 @@
 from rest_framework import viewsets
+from rest_framework.exceptions import ValidationError
 
 from apps.common.models import EditorialStatus
 
@@ -40,18 +41,32 @@ class PublicReadOnlyModelViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(status__slug=status)
 
         year = self.request.query_params.get("year")
-        if year and "year" in model_fields:
-            queryset = queryset.filter(year=year)
-        elif year and "start_date" in model_fields:
-            queryset = queryset.filter(start_date__year=year)
-        elif year and "publication_date" in model_fields:
-            queryset = queryset.filter(publication_date__year=year)
-        elif year and "published_at" in model_fields:
-            queryset = queryset.filter(published_at__year=year)
+        year_lookup = None
+        if "year" in model_fields:
+            year_lookup = "year"
+        elif "start_date" in model_fields:
+            year_lookup = "start_date__year"
+        elif "publication_date" in model_fields:
+            year_lookup = "publication_date__year"
+        elif "published_at" in model_fields:
+            year_lookup = "published_at__year"
+
+        if year is not None and year_lookup:
+            try:
+                year_value = int(year)
+            except (TypeError, ValueError):
+                raise ValidationError({"year": "Informe um ano inteiro válido."})
+            if not 1 <= year_value <= 9999:
+                raise ValidationError({"year": "Informe um ano entre 1 e 9999."})
+            queryset = queryset.filter(**{year_lookup: year_value})
 
         featured = self.request.query_params.get("featured")
         if featured in {"true", "1"} and "is_featured" in model_fields:
             queryset = queryset.filter(is_featured=True)
+        elif featured in {"false", "0"} and "is_featured" in model_fields:
+            queryset = queryset.filter(is_featured=False)
+        elif featured is not None and "is_featured" in model_fields:
+            raise ValidationError({"featured": "Use true, false, 1 ou 0."})
 
         search = self.request.query_params.get("search")
         if search:

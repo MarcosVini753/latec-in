@@ -4,20 +4,9 @@ O LABTEC.IN é responsável institucional por pesquisas, TCCs e outros trabalhos
 
 ## Estado implementado
 
-Hoje não existe app `research`.
+O app `research` concentra o processo de pesquisa e os trabalhos acadêmicos. `scientific` mantém resultados publicados e `portfolio` mantém soluções e iniciativas práticas.
 
-- pesquisas podem aparecer como `portfolio.Project` na categoria “Pesquisa”;
-- produção científica pode aparecer como categoria de portfólio;
-- `scientific.ScientificOutput` registra resultados publicados, com autoria textual;
-- não há entidade própria para TCCs;
-- não há equipe estruturada de pesquisa;
-- não há vínculo institucional.
-
-Essa sobreposição dificulta filtros, autoria, histórico e apresentação pública.
-
-## Arquitetura alvo
-
-O novo app `research` concentra o processo de pesquisa e os trabalhos acadêmicos. `scientific` mantém resultados publicados e `portfolio` mantém soluções e iniciativas práticas.
+Os registros novos usam unidade obrigatória. A compatibilidade histórica permanece: projetos de portfólio originários não são removidos automaticamente e `ScientificOutput.authors` continua disponível para autoria externa.
 
 ## `ResearchProject`
 
@@ -43,7 +32,7 @@ Campos:
 - `is_featured`;
 - timestamps.
 
-Regra inicial: a pesquisa normalmente pertence ao LABTEC.IN. A relação com eixo é opcional e indica conexão com um eixo da LATEC.
+`unit` é obrigatório e usa `PROTECT`. A relação com eixo é opcional. `project_status` aceita `planned`, `in_progress`, `completed`, `suspended` e `canceled`. Datas nulas são aceitas; quando ambas existem, `end_date >= start_date` é garantido por constraint.
 
 ## `ResearchProjectMember`
 
@@ -66,6 +55,8 @@ Papéis:
 - bolsista;
 - voluntário;
 - colaborador.
+
+Cada pessoa aparece no máximo uma vez por pesquisa.
 
 ## `AcademicWork`
 
@@ -120,6 +111,8 @@ Papéis:
 - avaliador;
 - colaborador.
 
+`unit` é obrigatório e usa `PROTECT`. A unicidade de contribuidores é `(academic_work, person, role)`, permitindo que a mesma pessoa acumule papéis diferentes no trabalho.
+
 ## Delimitação dos domínios
 
 | Domínio | Pergunta respondida |
@@ -148,19 +141,23 @@ Um mesmo esforço pode gerar registros nos quatro domínios, ligados entre si se
 - `AcademicWorkContributor.person` estrutura autoria e orientação.
 - `ScientificOutput` pode se relacionar a uma pesquisa, a um trabalho ou a ambos.
 - `ScientificAuthorship` ordena autores cadastrados.
-- campos textuais permanecem disponíveis para autores externos.
-- arquivos podem usar campos próprios ou ativos reutilizáveis do `mediahub`.
+- uma pessoa e uma ordem de autoria são únicas por produção;
+- `ScientificOutput.authors` permanece disponível e pode coexistir com autores internos estruturados;
+- pesquisas, trabalhos e produções usam seus campos próprios de arquivo; a integração estrutural com `mediahub` permanece futura.
 
-## Páginas públicas previstas
+## Páginas públicas
 
 - lista e detalhe de pesquisas;
 - lista e detalhe de trabalhos acadêmicos;
 - filtros por unidade, status, ano, tipo e destaque;
-- relações navegáveis entre pesquisa, trabalho, produção e portfólio;
-- destaques na Home do LABTEC.IN;
+- relações navegáveis entre pesquisa, trabalho acadêmico e produção científica;
 - recorte LATEC quando houver vínculo com a unidade.
 
-## API planejada
+A inclusão de destaques de pesquisa na Home permanece fora desta entrega.
+
+O portfólio legado não é exposto como relação de domínio. O identificador técnico da origem existe somente para permitir a reversão segura da conversão histórica.
+
+## API implementada
 
 ```txt
 GET /api/v1/research-projects/
@@ -178,17 +175,26 @@ GET /api/v1/academic-works/?work_type=tcc
 GET /api/v1/academic-works/?year=2026
 ```
 
-## Migração de registros históricos
+Pesquisas aceitam `unit`, `axis`, `project_status`, `year`, `featured` e `search`. Trabalhos aceitam `unit`, `work_type`, `year`, `featured` e `search`. Lista e detalhe exibem somente registros simultaneamente publicados no workflow e marcados com `is_published=True`.
 
-1. Inventariar projetos nas categorias “Pesquisa” e “Produção Científica”.
-2. Classificar cada registro por natureza real.
-3. Criar `ResearchProject`, `AcademicWork` ou `ScientificOutput` conforme o caso.
-4. Manter `portfolio.Project` somente quando houver iniciativa prática.
-5. Relacionar registros derivados.
-6. Validar unidade, pessoas, autoria, arquivos e datas.
-7. Desativar categorias incompatíveis após o backfill.
+Pesquisa inclui eixo e equipe ordenada. Trabalho inclui pesquisa resumida e contribuidores. Produção científica inclui pesquisa, trabalho e `ScientificAuthorship`, sem serialização circular.
 
-Nenhum registro de projeto será convertido automaticamente sem validação manual.
+## Conversão de registros históricos
+
+A migration de dados reversível aplica regras conservadoras:
+
+- categoria `pesquisa` cria `ResearchProject`;
+- categoria `producao-cientifica` cria `ScientificOutput`;
+- registros sem unidade fazem a migration falhar antes da conversão;
+- unidade, eixo, título, slug, resumo e status de execução são preservados quando semanticamente compatíveis;
+- o líder da equipe vira coordenador e os demais integrantes viram colaboradores;
+- autoria científica, metodologia, datas e instituição não são inferidas;
+- o novo registro fica em rascunho;
+- a origem de portfólio permanece inalterada e pública;
+- um identificador interno `legacy_portfolio_project_id`, não exposto pela API ou pelo Admin, registra a proveniência;
+- a reversão remove somente os registros marcados como derivados, mesmo que seus slugs tenham sido editados depois.
+
+No conjunto inicial, `pesquisa-de-bioativos-da-amazonia` gera uma pesquisa em rascunho. Não existe produção científica histórica para converter. O projeto legado só será arquivado manualmente depois da revisão institucional e da publicação do novo registro.
 
 ## Validações institucionais necessárias
 

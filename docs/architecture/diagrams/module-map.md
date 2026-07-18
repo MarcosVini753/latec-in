@@ -1,58 +1,42 @@
-# Mapa de módulos alvo
+# Mapa de relações de modelo implementadas
 
 ```mermaid
 flowchart LR
-  institutional --> accounts
-  institutional --> core
-  institutional --> people
-  institutional --> axes
-  institutional --> research
-  institutional --> portfolio
-  institutional --> scientific
-  institutional --> news
-  institutional --> learning
-  institutional --> transparency
-  institutional --> mediahub
-  institutional --> partnerships
-  institutional --> metrics
-
+  accounts --> institutional
   accounts --> people
+  institutional --> people
 
-  people --> axes
-  people --> research
-  people --> portfolio
-  people --> scientific
-  people --> news
-  people --> learning
+  core --> institutional
+  axes --> institutional
+  axes --> people
 
-  axes --> research
-  axes --> portfolio
-  axes --> scientific
-  axes --> news
-  axes --> learning
+  research --> institutional
+  research --> axes
+  research --> people
 
-  research --> scientific
-  research --> portfolio
+  portfolio --> institutional
+  portfolio --> axes
+  portfolio --> people
 
-  mediahub --> core
-  mediahub --> research
-  mediahub --> portfolio
-  mediahub --> scientific
-  mediahub --> news
-  mediahub --> learning
-  mediahub --> transparency
+  scientific --> institutional
+  scientific --> axes
+  scientific --> research
+  scientific --> people
 
-  partnerships --> portfolio
+  news --> institutional
+  news --> axes
+  news --> people
 
-  people --> metrics
-  axes --> metrics
-  research --> metrics
-  portfolio --> metrics
-  scientific --> metrics
-  news --> metrics
-  learning --> metrics
-  transparency --> metrics
-  partnerships --> metrics
+  learning --> institutional
+  learning --> axes
+  learning --> people
+
+  transparency --> institutional
+  mediahub --> institutional
+  partnerships --> institutional
+  metrics --> institutional
 ```
 
-As setas indicam conceitos fornecidos ou relações consumidas pelo módulo de destino. `institutional` é a raiz organizacional; `axes` organiza a LATEC; `research` separa pesquisa e trabalhos acadêmicos; `metrics` consolida indicadores por unidade.
+Cada seta parte do app que mantém a FK ou M2M e aponta para o app cujo modelo é referenciado. O autorrelacionamento de `InstitutionalUnit` e as relações internas de cada app foram omitidos para manter o mapa legível.
+
+`common` fornece classes-base, workflow, viewsets e o mixin administrativo, mas não mantém relações de banco. `MediaAsset` e `ImpactMetric` possuem unidade própria; ainda não existem relações automáticas dos demais domínios com esses registros. A conversão histórica entre `portfolio` e `research` usa apenas um identificador técnico de proveniência, não uma FK pública.

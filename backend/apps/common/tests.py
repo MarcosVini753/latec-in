@@ -16,6 +16,7 @@ from apps.news.models import Post
 from apps.partnerships.models import ContactMessage, Partner
 from apps.people.models import Person, Role
 from apps.portfolio.models import Project, ProjectCategory, ProjectResult, ProjectStatus, ProjectTeamMember
+from apps.research.models import ResearchProject, ResearchProjectMember
 from apps.scientific.models import ScientificOutput
 
 
@@ -36,14 +37,16 @@ class CmsApiTests(TestCase):
     def test_seed_initial_data_is_idempotent(self):
         expected_counts = {
             InstitutionalUnit: 2,
-            InstitutionMembership: 34,
+            InstitutionMembership: 43,
             Role: 7,
             Person: 33,
             ResearchAxis: 7,
             AxisMentorship: 9,
-            Project: 3,
-            ProjectResult: 5,
-            ProjectTeamMember: 7,
+            Project: 2,
+            ProjectResult: 3,
+            ProjectTeamMember: 5,
+            ResearchProject: 1,
+            ResearchProjectMember: 2,
             Post: 2,
             Course: 2,
             CourseMaterial: 1,
@@ -89,6 +92,7 @@ class CmsApiTests(TestCase):
         self.assertFalse(Post.objects.exclude(unit=latec).exists())
         self.assertFalse(Course.objects.exclude(unit=latec).exists())
         self.assertFalse(Project.objects.exclude(unit=latec).exists())
+        self.assertFalse(ResearchProject.objects.exclude(unit=latec).exists())
         self.assertFalse(LearningTrack.objects.exclude(unit=labtec).exists())
         self.assertFalse(ImpactMetric.objects.exclude(unit=labtec).exists())
 
@@ -106,7 +110,15 @@ class CmsApiTests(TestCase):
         coordinator = Person.objects.get(slug=slugify("Marta Adelino"))
         self.assertEqual(
             set(coordinator.institution_memberships.values_list("unit__slug", "role")),
-            {("labtec-in", "Coordenadora"), ("latec", "Coordenadora")},
+            {
+                ("labtec-in", "Coordenadora"),
+                ("latec", "Coordenadora"),
+                ("latec", "Mentor"),
+            },
+        )
+        self.assertEqual(
+            InstitutionMembership.objects.filter(unit=latec, role="Mentor").count(),
+            9,
         )
 
     def test_seed_preserves_manual_project_unit_classification(self):
@@ -119,6 +131,39 @@ class CmsApiTests(TestCase):
 
         project.refresh_from_db()
         self.assertEqual(project.unit, labtec)
+
+    def test_seed_keeps_research_draft_state_and_out_of_legacy_portfolio(self):
+        research = ResearchProject.objects.get(slug="pesquisa-de-bioativos-da-amazonia")
+        research.editorial_status = EditorialStatus.ARCHIVED
+        research.is_published = False
+        research.save(update_fields=("editorial_status", "is_published"))
+
+        call_command("seed_initial_data", verbosity=0)
+
+        research.refresh_from_db()
+        self.assertEqual(research.editorial_status, EditorialStatus.ARCHIVED)
+        self.assertFalse(research.is_published)
+        self.assertFalse(Project.objects.filter(slug=research.slug).exists())
+
+    def test_seed_corrects_legacy_labels_without_changing_public_slugs(self):
+        hero = HeroBanner.objects.get(title="Biotecnologia, biodiversidade e inovação")
+        coordinator = Person.objects.get(slug=slugify("Marta Adelino"))
+        professor_role = Role.objects.get(slug="professor")
+        graduate_role = Role.objects.get(slug="egresso")
+
+        self.assertTrue(hero.subtitle.startswith("Um laboratório"))
+        self.assertIn("LABTEC.IN e da LATEC", coordinator.short_bio)
+        self.assertIn("LABTEC.IN", professor_role.description)
+        self.assertIn("LATEC", professor_role.description)
+        self.assertIn("LABTEC.IN ou a LATEC", graduate_role.description)
+        self.assertEqual(
+            set(Post.objects.values_list("slug", flat=True)),
+            {
+                "coordenadora-do-latecin-e-premiada-por-inovacao-tecnologica",
+                "latecin-participa-do-congresso-nacional-de-inovacao",
+            },
+        )
+        self.assertFalse(Post.objects.filter(title__contains="LATEC.IN").exists())
 
     def test_seed_reuses_legacy_site_settings_without_losing_custom_data(self):
         SiteSettings.objects.all().delete()

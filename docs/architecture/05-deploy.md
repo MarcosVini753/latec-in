@@ -77,7 +77,7 @@ A produção deve possuir política mínima de backup para:
 
 ## Migração institucional
 
-A introdução dos apps `institutional` e `research` exige migrations e backfill de banco, mas não novos containers. A implantação deverá executar migrations pequenas e reversíveis antes de tornar vínculos de unidade obrigatórios.
+Os apps `institutional` e `research` não exigem novos containers. A implantação deve fazer backup, executar o preflight institucional, aplicar as migrations incrementais, rodar o seed idempotente e validar o rascunho convertido antes de qualquer corte manual. Vínculos de unidade legados continuam opcionais.
 
 ## Premissas
 

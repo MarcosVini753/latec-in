@@ -15,40 +15,41 @@ Ele cria ou atualiza, sem duplicação:
 - 2 unidades institucionais;
 - 7 papéis públicos;
 - 33 pessoas;
+- 43 memberships institucionais;
 - 7 eixos;
 - 9 mentorias;
-- 3 projetos, 5 resultados e 7 vínculos de equipe;
+- projetos de portfólio, resultados e equipes iniciais;
+- 1 pesquisa formal em rascunho;
 - 2 posts;
 - 2 cursos e 1 material;
 - 7 métricas;
 - configurações do site, 1 hero e 3 seções institucionais.
 
-O seed cria LABTEC.IN como raiz, LATEC como filha e associa as configurações, o hero e as seções iniciais ao laboratório. Ainda não cria memberships, pesquisas formais ou trabalhos acadêmicos e mantém pesquisa e produção científica como categorias históricas do portfólio.
+O seed cria LABTEC.IN como raiz, LATEC como filha e associa as configurações, o hero, as seções e as métricas iniciais ao laboratório. Os sete eixos, ligantes e conteúdos explicitamente ligados à Liga pertencem à LATEC. Em banco novo, a pesquisa de bioativos é criada somente como `ResearchProject` em rascunho; em banco atualizado, o projeto de portfólio legado é preservado até o corte manual.
 
-## Estratégia alvo
+## Organização do comando
 
-O comando continuará idempotente e será reorganizado conceitualmente em:
+O comando idempotente está organizado em métodos simples:
 
 ```txt
 seed_institutional_units()
 seed_roles()
 seed_people()
-seed_memberships()
+seed_institution_memberships()
 seed_axes()
 seed_axis_mentorships()
-seed_labtec_settings()
-seed_latec_profile()
-seed_research_categories()
-seed_academic_work_types()
+seed_mentor_memberships()
+seed_project_categories()
+seed_project_statuses()
 seed_projects()
-seed_scientific_outputs()
+seed_research_projects()
+seed_post_categories()
 seed_posts()
+seed_learning_tracks()
 seed_courses()
-seed_events()
 seed_metrics()
+seed_site_settings()
 ```
-
-Essa lista expressa responsabilidades; a implementação pode manter um único comando e métodos internos simples.
 
 ## Dados institucionais iniciais
 
@@ -70,26 +71,30 @@ Essa lista expressa responsabilidades; a implementação pode manter um único c
 | Pesquisadores e professores | LABTEC.IN, com memberships adicionais quando aplicável |
 | Notícias explicitamente da Liga | LATEC |
 | Cursos específicos da Liga | LATEC |
-| Pesquisas e trabalhos acadêmicos | LABTEC.IN |
+| Pesquisas e trabalhos acadêmicos | Unidade validada no registro; a pesquisa inicial preserva LATEC |
 | Produção científica geral | LABTEC.IN |
 | Transparência institucional | LABTEC.IN |
-| Projetos existentes | Revisão manual |
+| Projetos existentes | Classificação provisória preservada para revisão manual |
 
-## Pesquisas e trabalhos acadêmicos
+## Memberships
 
-O seed alvo deverá incluir:
+Os 43 vínculos iniciais são compostos por:
 
-- categorias ou escolhas iniciais de pesquisa;
-- tipos de trabalho acadêmico;
-- pesquisas formalmente classificadas;
-- TCCs e outros trabalhos acadêmicos quando os dados forem validados;
-- relações com pessoas, unidades, eixos e produções científicas.
+- ligantes na LATEC;
+- professores e pesquisadores no LABTEC.IN;
+- coordenação no LABTEC.IN e na LATEC;
+- estagiários no LABTEC.IN quando aplicável;
+- nove memberships `Mentor` na LATEC, um para cada pessoa presente em `AxisMentorship`.
 
-Registros históricos classificados como “Pesquisa” ou “Produção Científica” em `portfolio` não serão movidos automaticamente sem análise do conteúdo.
+A chave estável é `(person, unit, role)`, portanto Marta pode possuir `Coordenadora` e `Mentor` na LATEC sem conflito.
+
+## Pesquisa histórica
+
+`pesquisa-de-bioativos-da-amazonia` é semeada idempotentemente como pesquisa formal em rascunho. O comando não infere metodologia, datas, instituição ou autoria científica. Um projeto legado existente não é apagado nem republicado pelo seed caso tenha sido arquivado depois; seu corte só ocorre após revisão e publicação do novo registro.
 
 ## Eventos
 
-O seed poderá criar eventos com informações gerais de divulgação. Não serão criados itens internos por horário nem dados detalhados de agenda.
+O seed e o endpoint público de eventos não foram ampliados nesta entrega. Não existem itens internos por horário nem dados detalhados de agenda.
 
 ## Métricas
 
@@ -98,7 +103,7 @@ As métricas serão separadas por unidade:
 - LABTEC.IN: pesquisas, trabalhos acadêmicos, pesquisadores, produções, projetos, cursos, eventos, parcerias e iniciativas;
 - LATEC: ligantes, mentores, eixos e conteúdos específicos.
 
-Métricas da unidade raiz poderão incluir descendentes quando `aggregation_mode` permitir.
+As métricas atuais permanecem vinculadas ao LABTEC.IN por enquanto; agregação de descendentes não foi acrescentada nesta entrega.
 
 ## Idempotência e ordem
 
@@ -108,6 +113,16 @@ Métricas da unidade raiz poderão incluir descendentes quando `aggregation_mode
 - Criar eixos antes de mentorias.
 - Não apagar registros editoriais criados manualmente.
 - Atualizar somente campos sob responsabilidade declarada do seed.
+- Não elevar o status editorial de um legado arquivado manualmente.
+
+## Textos e URLs preservadas
+
+- O hero do LABTEC.IN descreve um laboratório, não uma liga acadêmica.
+- Conteúdos da unidade filha usam o nome LATEC.
+- A biografia da coordenação explicita os papéis no LABTEC.IN e na LATEC.
+- As descrições de Professor e Egresso distinguem laboratório e Liga.
+- Os slugs públicos existentes são informados explicitamente e não mudam com a correção do título visível.
+- O fallback técnico `site_name__in=("LABTEC.IN", "LATEC.IN")` permanece para localizar bancos antigos.
 
 ## Validações manuais
 
@@ -119,4 +134,4 @@ Métricas da unidade raiz poderão incluir descendentes quando `aggregation_mode
 - autoria e arquivos de pesquisas, trabalhos e produções;
 - valores iniciais das métricas.
 
-Nenhuma alteração no comando Python é realizada nesta tarefa documental.
+O comando não cria usuários administrativos nem credenciais.
