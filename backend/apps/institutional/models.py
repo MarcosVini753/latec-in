@@ -1,6 +1,25 @@
+from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import F, Q
 
 from apps.common.models import BaseModel
+
+
+class InstitutionalUnitQuerySet(models.QuerySet):
+    def bulk_create(self, objs, *args, **kwargs):
+        objs = list(objs)
+        if any(obj.parent_id is not None for obj in objs):
+            raise ValidationError(
+                "Unidades com unidade superior devem ser salvas individualmente para validar a hierarquia."
+            )
+        return super().bulk_create(objs, *args, **kwargs)
+
+    def bulk_update(self, objs, fields, *args, **kwargs):
+        if {"parent", "parent_id"}.intersection(fields):
+            raise ValidationError(
+                "A hierarquia institucional não pode ser alterada com bulk_update()."
+            )
+        return super().bulk_update(objs, fields, *args, **kwargs)
 
 
 class InstitutionalUnit(BaseModel):
@@ -33,13 +52,43 @@ class InstitutionalUnit(BaseModel):
     is_public = models.BooleanField(default=True)
     display_order = models.PositiveIntegerField(default=0)
 
+    objects = InstitutionalUnitQuerySet.as_manager()
+
     class Meta:
         ordering = ("display_order", "name")
         verbose_name = "unidade institucional"
         verbose_name_plural = "unidades institucionais"
+        constraints = [
+            models.CheckConstraint(
+                check=~Q(parent=F("id")),
+                name="institutional_unit_parent_not_self",
+            ),
+        ]
 
     def __str__(self) -> str:
         return self.acronym or self.name
+
+    def clean(self) -> None:
+        super().clean()
+        if self.parent_id is None:
+            return
+
+        ancestor_id = self.parent_id
+        visited_ids = set()
+        while ancestor_id is not None:
+            if ancestor_id == self.pk or ancestor_id in visited_ids:
+                raise ValidationError(
+                    {"parent": "A unidade superior não pode criar um ciclo na hierarquia institucional."}
+                )
+            visited_ids.add(ancestor_id)
+            ancestor_id = (
+                type(self).objects.filter(pk=ancestor_id).values_list("parent_id", flat=True).first()
+            )
+
+    def save(self, *args, **kwargs):
+        # QuerySet.update() is the only intentionally unsupported ORM bypass.
+        self.full_clean()
+        return super().save(*args, **kwargs)
 
 
 class InstitutionMembership(BaseModel):
@@ -64,6 +113,27 @@ class InstitutionMembership(BaseModel):
         ordering = ("unit__display_order", "display_order", "person__full_name", "role")
         verbose_name = "vínculo institucional"
         verbose_name_plural = "vínculos institucionais"
+        constraints = [
+            models.UniqueConstraint(
+                fields=("person", "unit", "role"),
+                name="unique_institution_membership",
+            ),
+            models.CheckConstraint(
+                check=(
+                    Q(start_date__isnull=True)
+                    | Q(end_date__isnull=True)
+                    | Q(end_date__gte=F("start_date"))
+                ),
+                name="valid_membership_date_range",
+            ),
+        ]
 
     def __str__(self) -> str:
         return f"{self.person} — {self.role} em {self.unit}"
+
+    def clean(self) -> None:
+        super().clean()
+        if self.start_date and self.end_date and self.end_date < self.start_date:
+            raise ValidationError(
+                {"end_date": "A data de término deve ser igual ou posterior à data de início."}
+            )
