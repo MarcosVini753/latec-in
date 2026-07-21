@@ -1,63 +1,49 @@
 # Workflow editorial do portal LABTEC.IN
 
-O workflow continua simples e compatível com o Django Admin e considera a unidade proprietária do conteúdo e o escopo institucional do usuário.
+O portal usa um único campo de workflow e o escopo institucional do usuário para controlar edição e publicação.
 
-## Estado implementado
-
-O backend define os status editoriais, filtra conteúdos públicos por publicação e aplica no Admin o escopo de unidade e eixo. Projetos, pesquisas, trabalhos acadêmicos, produções científicas, posts, cursos, eventos e documentos de transparência possuem campos editoriais, embora modelos legados ainda variem entre `status` e `editorial_status`.
-
-## Status editoriais
+## Status
 
 ```txt
-draft       -> rascunho
-in_review   -> em revisão
-published   -> publicado
-archived    -> arquivado
+draft       rascunho
+in_review   em revisão
+published   publicado
+archived    arquivado
 ```
 
-## Regras gerais
-
-- Visitantes acessam somente conteúdos publicados.
-- Conteúdos publicados devem combinar status `published` e `is_published=True`.
-- Conteúdos com página pública possuem `slug`.
-- `published_at` registra a publicação quando aplicável.
-- Novas pesquisas e trabalhos exigem unidade; conteúdos legados ainda podem permanecer sem unidade durante o backfill.
-- O usuário só edita conteúdo dentro de seu escopo institucional.
+`editorial_status` é a única fonte de visibilidade dos conteúdos editoriais. Não existe `is_published` paralelo nem flag de destaque. `published_at` registra quando a publicação ocorreu.
 
 ## Fluxo
 
-1. O autor cria o conteúdo como `draft` em uma unidade autorizada.
-2. O autor envia o conteúdo como `in_review`.
-3. A coordenação revisa unidade, autoria, vínculos e conteúdo.
-4. Administrador ou coordenação do LABTEC.IN publica, arquiva ou devolve para ajuste.
+1. Coordenador de unidade ou mentor cria o conteúdo como `draft` dentro do escopo autorizado.
+2. Completa os metadados, vínculos, arquivo ou texto necessários e escolhe se o registro participará do ecossistema da unidade mãe.
+3. Move o registro para `in_review`.
+4. A coordenação do LABTEC.IN revisa unidade, eixo, autoria, arquivo, direitos e a opção de ecossistema.
+5. Superusuário ou coordenação do LABTEC.IN define `published`, `archived` ou devolve o conteúdo para ajuste.
 
-## Coordenação
-
-- A coordenação do LABTEC.IN pode revisar e publicar conteúdo da unidade raiz e das unidades descendentes.
-- A coordenação de unidade pode criar, editar e revisar rascunhos em seu escopo, mas não publica nem arquiva.
-- Apenas superusuário, administrador e coordenação do LABTEC.IN realizam publicação final.
-
-## Mentores da LATEC
-
-- Criam e editam conteúdos dos próprios eixos.
-- Atuam dentro da unidade LATEC.
-- Enviam conteúdo para revisão.
-- Não publicam nem arquivam.
+Coordenadores de unidade e mentores não publicam, arquivam, excluem nem alteram registros já publicados.
 
 ## Conteúdos sujeitos ao workflow
 
+- projetos de portfólio;
 - pesquisas;
 - trabalhos acadêmicos;
-- projetos e soluções;
 - produções científicas;
-- notícias e posts;
-- cursos e eventos;
-- documentos de transparência;
-- seções institucionais quando aplicável.
+- notícias;
+- cursos;
+- documentos de transparência.
 
-## Proteções administrativas
+Banners e seções institucionais usam `is_published` simples, pois sua publicação é estrutural e não passa pelo workflow editorial completo.
 
-- Mentores, editores e coordenadores de unidade não alteram registros já publicados.
-- Querysets, formulários, inlines, autocomplete, ações e POSTs validam o mesmo escopo.
-- Conteúdo sem unidade é restrito a administrador e coordenação do LABTEC.IN.
-- A API pública continua somente leitura e oculta rascunhos, independentemente do perfil administrativo.
+`CourseMaterial` também não possui workflow próprio. O material herda o estado editorial do curso: todos os seus arquivos e links tornam-se públicos quando o curso está `published` e deixam de ser descobertos pela API quando o curso sai desse estado.
+
+## Ecossistema da unidade mãe
+
+`include_in_parent_ecosystem` é editável durante rascunho e revisão. Quando verdadeiro, um conteúdo publicado pode aparecer no filtro da mãe direta, preservando sua unidade proprietária. A publicação final também aprova essa inclusão.
+
+## Proteções
+
+- Todo conteúdo editorial exige unidade.
+- Querysets, formulários, inlines, autocomplete, ações e validação do POST aplicam o mesmo escopo.
+- A API pública oculta `draft`, `in_review` e `archived` independentemente do perfil administrativo.
+- Slugs publicados não são recalculados automaticamente.

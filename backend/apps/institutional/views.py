@@ -4,6 +4,6 @@ from apps.institutional.serializers import InstitutionalUnitSerializer
 
 
 class InstitutionalUnitViewSet(PublicReadOnlyModelViewSet):
-    queryset = InstitutionalUnit.objects.filter(is_public=True).select_related("parent")
+    queryset = InstitutionalUnit.objects.select_related("parent")
     serializer_class = InstitutionalUnitSerializer
     search_fields = ("name", "acronym", "description")

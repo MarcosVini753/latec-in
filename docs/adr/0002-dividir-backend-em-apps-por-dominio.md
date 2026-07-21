@@ -4,6 +4,10 @@
 
 Aceita
 
+## Estado atual
+
+A divisão por domínio permanece aceita, mas o app `mediahub` listado na decisão original foi removido integralmente pelo [ADR 0016](0016-simplificar-conteudo-e-cortar-legados.md). Arquivos agora pertencem diretamente aos apps que os publicam. A lista e os cuidados abaixo registram a arquitetura proposta naquele momento, não os apps atualmente instalados.
+
 ## Contexto
 
 O portal do LABTEC.IN abrange estrutura institucional, pessoas, eixos da LATEC, pesquisas, trabalhos acadêmicos, portfólio, notícias, aprendizagem, arquivos, transparência, produção científica, parceiros e métricas.

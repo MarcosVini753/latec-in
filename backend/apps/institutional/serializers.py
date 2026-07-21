@@ -15,7 +15,7 @@ class InstitutionalUnitSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(InstitutionalUnitSummarySerializer(allow_null=True))
     def get_parent(self, obj):
-        if not obj.parent or not obj.parent.is_active or not obj.parent.is_public:
+        if not obj.parent:
             return None
         return InstitutionalUnitSummarySerializer(obj.parent, context=self.context).data
 
@@ -35,7 +35,5 @@ class InstitutionalUnitSerializer(serializers.ModelSerializer):
             "cover_image",
             "contact_email",
             "website_url",
-            "is_active",
-            "is_public",
             "display_order",
         )

@@ -33,7 +33,6 @@ INSTALLED_APPS = [
     "apps.people",
     "apps.institutional",
     "apps.axes",
-    "apps.mediahub",
     "apps.portfolio",
     "apps.research",
     "apps.scientific",

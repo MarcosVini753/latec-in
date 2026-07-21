@@ -53,7 +53,7 @@ Nenhum domínio definitivo é estabelecido por esta documentação.
 
 A migração futura para storage externo poderá ser avaliada se houver crescimento relevante, necessidade de CDN ou requisito institucional.
 
-LABTEC.IN e LATEC compartilham a mesma infraestrutura de mídia. A propriedade lógica de um arquivo será representada por `mediahub.MediaAsset.unit`, sem separar volumes por unidade nesta fase.
+LABTEC.IN e LATEC compartilham a mesma infraestrutura de mídia. Cada arquivo pertence diretamente ao modelo de domínio que o publica; não existe catálogo central MediaHub nem separação física por unidade.
 
 ## Configurações mínimas de produção
 
@@ -77,7 +77,31 @@ A produção deve possuir política mínima de backup para:
 
 ## Migração institucional
 
-Os apps `institutional` e `research` não exigem novos containers. A implantação deve fazer backup, executar o preflight institucional, aplicar as migrations incrementais, rodar o seed idempotente e validar o rascunho convertido antes de qualquer corte manual. Vínculos de unidade legados continuam opcionais.
+Os apps `institutional` e `research` não exigem novos containers. Antes do corte, a implantação deve fazer backup e executar os preflights de unidade, workflow, autoria e papéis públicos. Depois, aplica as migrations incrementais, executa o seed idempotente duas vezes e valida API e OpenAPI. As migrations removem estruturas e dados legados e não possuem reversão integral.
+
+O app `mediahub`, sua tabela, ContentType e permissões foram removidos. Arquivos permanecem no volume compartilhado e são relacionados diretamente pelos modelos de domínio.
+
+O comando abaixo inventaria arquivos sem referência sem alterar o storage:
+
+```bash
+python manage.py cleanup_orphan_media
+```
+
+Depois de revisar a lista e confirmar o backup, a exclusão permanente é explícita:
+
+```bash
+python manage.py cleanup_orphan_media --delete
+python manage.py cleanup_orphan_media
+```
+
+O comando acima é suficiente para o caminho padrão `backend/media`. Se `MEDIA_ROOT` apontar
+para um volume personalizado, a exclusão exige confirmar exatamente a raiz inventariada:
+
+```bash
+python manage.py cleanup_orphan_media --delete --confirm-root=/caminho/absoluto/da/midia
+```
+
+A última execução deve informar zero órfãos. O inventário é exibido no terminal; não existe tabela, arquivo de relatório ou registro operacional permanente do corte.
 
 ## Premissas
 

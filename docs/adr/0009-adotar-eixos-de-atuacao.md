@@ -4,6 +4,10 @@
 
 Aceita
 
+## Estado atual
+
+Os sete eixos pertencem à LATEC e as mentorias estão implementadas. Eventos foram removidos pelo [ADR 0016](0016-simplificar-conteudo-e-cortar-legados.md); portanto, a referência a eventos na decisão original abaixo é histórica. Projetos, publicações, cursos e pesquisas continuam podendo se relacionar opcionalmente com um eixo.
+
 ## Contexto
 
 A LATEC possui sete eixos de atuação e mentorias associadas. A nova hierarquia estabelece que a Liga é unidade filha do LABTEC.IN.

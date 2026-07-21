@@ -1,44 +1,50 @@
 from datetime import date
 from importlib import import_module
+import shutil
+import tempfile
 from types import SimpleNamespace
 
-from django.apps import apps
 from django.contrib import admin
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, connection, transaction
+from django.db.migrations.executor import MigrationExecutor
 from django.db.models.deletion import ProtectedError
-from django.test import RequestFactory, TestCase
+from django.test import RequestFactory, TestCase, TransactionTestCase, override_settings
 from django.test.utils import CaptureQueriesContext
 
-from apps.axes.models import ResearchAxis
 from apps.accounts.models import Profile
+from apps.axes.models import ResearchAxis
 from apps.common.models import EditorialStatus
 from apps.institutional.models import InstitutionMembership, InstitutionalUnit
-from apps.people.models import Person, Role
-from apps.portfolio.models import Project, ProjectCategory, ProjectStatus, ProjectTeamMember
-from apps.research.models import AcademicWork, AcademicWorkContributor, ResearchProject, ResearchProjectMember
+from apps.people.models import Person
 from apps.research.admin import (
     AcademicWorkAdmin,
     AcademicWorkContributorAdmin,
     ResearchProjectAdmin,
     ResearchProjectMemberAdmin,
 )
+from apps.research.models import AcademicWork, AcademicWorkContributor, ResearchProject, ResearchProjectMember
 from apps.scientific.admin import ScientificAuthorshipAdmin, ScientificOutputAdmin
 from apps.scientific.models import ScientificAuthorship, ScientificOutput
 
 
+TEST_MEDIA_ROOT = tempfile.mkdtemp(prefix="latec-research-test-media-")
+
+
+@override_settings(MEDIA_ROOT=TEST_MEDIA_ROOT)
 class ResearchDomainTests(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.labtec = InstitutionalUnit.objects.create(
-            name="Laboratório LABTEC.IN",
+            name="LABTEC.IN",
             acronym="LABTEC.IN",
             slug="labtec-in-test",
             unit_type=InstitutionalUnit.UnitType.LABORATORY,
         )
         cls.latec = InstitutionalUnit.objects.create(
-            name="Liga LATEC",
+            name="LATEC",
             acronym="LATEC",
             slug="latec-test",
             unit_type=InstitutionalUnit.UnitType.ACADEMIC_LEAGUE,
@@ -50,29 +56,24 @@ class ResearchDomainTests(TestCase):
             title="Eixo de testes",
             slug="eixo-de-testes",
         )
-        cls.public_role = Role.objects.create(name="Pesquisador de testes", slug="pesquisador-de-testes")
-        cls.person = Person.objects.create(
-            full_name="Ana Pesquisadora",
-            slug="ana-pesquisadora",
-            role=cls.public_role,
-        )
+        cls.person = Person.objects.create(full_name="Ana Pesquisadora", slug="ana-pesquisadora")
+        InstitutionMembership.objects.create(person=cls.person, unit=cls.labtec, role="Pesquisador")
         cls.research_project = ResearchProject.objects.create(
             unit=cls.labtec,
             axis=cls.axis,
             title="Pesquisa publicada",
             slug="pesquisa-publicada",
             summary="Bioativos amazônicos.",
+            file=SimpleUploadedFile("pesquisa.pdf", b"pesquisa"),
+            external_url="https://example.com/pesquisa",
             start_date=date(2026, 2, 1),
             project_status=ResearchProject.ProjectStatus.IN_PROGRESS,
             editorial_status=EditorialStatus.PUBLISHED,
-            is_published=True,
-            is_featured=True,
         )
         ResearchProjectMember.objects.create(
             research_project=cls.research_project,
             person=cls.person,
             role=ResearchProjectMember.Role.COORDINATOR,
-            is_coordinator=True,
             display_order=1,
         )
         cls.academic_work = AcademicWork.objects.create(
@@ -85,9 +86,10 @@ class ResearchDomainTests(TestCase):
             institution="UFAC",
             year=2026,
             abstract="Trabalho sobre bioativos.",
+            keywords="bioativos, Amazônia",
+            file=SimpleUploadedFile("tcc.pdf", b"tcc"),
+            external_url="https://example.com/tcc",
             editorial_status=EditorialStatus.PUBLISHED,
-            is_published=True,
-            is_featured=True,
         )
         AcademicWorkContributor.objects.create(
             academic_work=cls.academic_work,
@@ -103,11 +105,11 @@ class ResearchDomainTests(TestCase):
             title="Artigo publicado",
             slug="artigo-publicado",
             output_type=ScientificOutput.OutputType.ARTICLE,
-            authors="Autora Externa",
+            abstract="Resumo publicado.",
             publication_date=date(2026, 3, 1),
-            status=EditorialStatus.PUBLISHED,
-            is_published=True,
-            is_featured=True,
+            file=SimpleUploadedFile("artigo.pdf", b"artigo"),
+            external_url="https://example.com/artigo",
+            editorial_status=EditorialStatus.PUBLISHED,
         )
         ScientificAuthorship.objects.create(
             scientific_output=cls.scientific_output,
@@ -119,29 +121,29 @@ class ResearchDomainTests(TestCase):
             unit=cls.latec,
             title="Pesquisa em rascunho",
             slug="pesquisa-em-rascunho",
-            editorial_status=EditorialStatus.DRAFT,
-            is_published=False,
         )
         AcademicWork.objects.create(
             unit=cls.latec,
             title="Trabalho em rascunho",
             slug="trabalho-em-rascunho",
             work_type=AcademicWork.WorkType.OTHER,
-            editorial_status=EditorialStatus.DRAFT,
-            is_published=False,
         )
 
-    def test_research_date_range_has_friendly_and_database_validation(self):
-        invalid_project = ResearchProject(
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        shutil.rmtree(TEST_MEDIA_ROOT, ignore_errors=True)
+
+    def test_date_range_and_relational_constraints(self):
+        invalid = ResearchProject(
             unit=self.labtec,
             title="Datas inválidas",
             slug="datas-invalidas",
             start_date=date(2026, 2, 2),
             end_date=date(2026, 2, 1),
         )
-        with self.assertRaisesMessage(ValidationError, "A data final deve ser igual ou posterior"):
-            invalid_project.full_clean()
-
+        with self.assertRaisesMessage(ValidationError, "igual ou posterior"):
+            invalid.full_clean()
         with self.assertRaises(IntegrityError), transaction.atomic():
             ResearchProject.objects.create(
                 unit=self.labtec,
@@ -150,30 +152,16 @@ class ResearchDomainTests(TestCase):
                 start_date=date(2026, 2, 2),
                 end_date=date(2026, 2, 1),
             )
-
-    def test_research_relations_enforce_uniqueness_and_protect_unit(self):
         with self.assertRaises(IntegrityError), transaction.atomic():
             ResearchProjectMember.objects.create(
                 research_project=self.research_project,
                 person=self.person,
                 role=ResearchProjectMember.Role.RESEARCHER,
             )
-        with self.assertRaises(IntegrityError), transaction.atomic():
-            AcademicWorkContributor.objects.create(
-                academic_work=self.academic_work,
-                person=self.person,
-                role=AcademicWorkContributor.Role.AUTHOR,
-            )
-        with self.assertRaises(IntegrityError), transaction.atomic():
-            ScientificAuthorship.objects.create(
-                scientific_output=self.scientific_output,
-                person=self.person,
-                author_order=2,
-            )
         with self.assertRaises(ProtectedError):
             self.labtec.delete()
 
-    def test_research_project_endpoint_filters_and_hides_drafts(self):
+    def test_research_endpoint_filters_and_returns_minimal_file_metadata(self):
         response = self.client.get(
             "/api/v1/research-projects/",
             {
@@ -181,287 +169,89 @@ class ResearchDomainTests(TestCase):
                 "axis": self.axis.slug,
                 "project_status": ResearchProject.ProjectStatus.IN_PROGRESS,
                 "year": 2026,
-                "featured": "true",
                 "search": "Bioativos",
             },
         )
-
         self.assertEqual(response.status_code, 200)
         self.assertEqual([item["slug"] for item in response.json()["results"]], [self.research_project.slug])
         item = response.json()["results"][0]
-        self.assertEqual(set(item["unit"]), {"name", "acronym", "slug", "unit_type"})
-        self.assertEqual(item["axis"]["slug"], self.axis.slug)
-        self.assertEqual(item["team_members"][0]["person"]["slug"], self.person.slug)
+        self.assertTrue(item["file"].endswith(self.research_project.file.url))
+        self.assertEqual(item["external_url"], "https://example.com/pesquisa")
+        self.assertTrue({"objectives", "methodology", "expected_results", "cover_image"}.isdisjoint(item))
+        self.assertEqual(item["team_members"][0]["role"], ResearchProjectMember.Role.COORDINATOR)
+        self.assertNotIn("is_coordinator", item["team_members"][0])
+        self.assertNotIn("memberships", item["team_members"][0]["person"])
         self.assertEqual(self.client.get("/api/v1/research-projects/pesquisa-em-rascunho/").status_code, 404)
 
-    def test_featured_false_filters_and_invalid_public_filters_return_400(self):
-        non_featured = ResearchProject.objects.create(
-            unit=self.labtec,
-            title="Pesquisa sem destaque",
-            slug="pesquisa-sem-destaque",
-            editorial_status=EditorialStatus.PUBLISHED,
-            is_published=True,
-            is_featured=False,
-        )
-
-        response = self.client.get("/api/v1/research-projects/", {"featured": "false"})
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual([item["slug"] for item in response.json()["results"]], [non_featured.slug])
-        self.assertEqual(
-            self.client.get("/api/v1/research-projects/", {"featured": "talvez"}).status_code,
-            400,
-        )
-        for endpoint in ("research-projects", "academic-works", "scientific-outputs"):
-            with self.subTest(endpoint=endpoint):
-                self.assertEqual(self.client.get(f"/api/v1/{endpoint}/", {"year": "abc"}).status_code, 400)
-
-    def test_academic_work_endpoint_filters_and_returns_nested_summaries(self):
-        response = self.client.get(
+    def test_academic_work_and_scientific_output_return_structured_relations(self):
+        work_response = self.client.get(
             "/api/v1/academic-works/",
-            {
-                "unit": self.labtec.slug,
-                "work_type": AcademicWork.WorkType.TCC,
-                "year": 2026,
-                "featured": "1",
-                "search": "bioativos",
-            },
+            {"unit": self.labtec.slug, "work_type": AcademicWork.WorkType.TCC, "year": 2026, "search": "bioativos"},
         )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual([item["slug"] for item in response.json()["results"]], [self.academic_work.slug])
-        item = response.json()["results"][0]
-        self.assertEqual(item["research_project"]["slug"], self.research_project.slug)
-        self.assertEqual(item["contributors"][0]["person"]["slug"], self.person.slug)
+        work = work_response.json()["results"][0]
+        self.assertEqual(work["research_project"]["slug"], self.research_project.slug)
+        self.assertEqual(work["contributors"][0]["person"]["slug"], self.person.slug)
+        self.assertTrue(work["file"].endswith(self.academic_work.file.url))
         self.assertEqual(self.client.get("/api/v1/academic-works/trabalho-em-rascunho/").status_code, 404)
 
-    def test_scientific_output_keeps_external_authors_and_structured_authorship(self):
-        response = self.client.get(f"/api/v1/scientific-outputs/{self.scientific_output.slug}/")
+        output = self.client.get(f"/api/v1/scientific-outputs/{self.scientific_output.slug}/").json()
+        self.assertNotIn("authors", output)
+        self.assertEqual(output["authorships"][0]["person"]["slug"], self.person.slug)
+        self.assertEqual(output["research_project"]["slug"], self.research_project.slug)
+        self.assertEqual(output["academic_work"]["slug"], self.academic_work.slug)
+        self.assertTrue(output["file"].endswith(self.scientific_output.file.url))
 
-        self.assertEqual(response.status_code, 200)
-        item = response.json()
-        self.assertEqual(item["authors"], "Autora Externa")
-        self.assertEqual(item["authorships"][0]["person"]["slug"], self.person.slug)
-        self.assertEqual(item["research_project"]["slug"], self.research_project.slug)
-        self.assertEqual(item["academic_work"]["slug"], self.academic_work.slug)
+    def test_invalid_year_returns_400_and_featured_is_absent_from_openapi(self):
+        for endpoint in ("research-projects", "academic-works", "scientific-outputs"):
+            self.assertEqual(self.client.get(f"/api/v1/{endpoint}/", {"year": "abc"}).status_code, 400)
+        schema = self.client.get("/api/schema/").content.decode()
+        self.assertIn("project_status", schema)
+        self.assertIn("work_type", schema)
+        self.assertNotIn("name: featured", schema)
 
     def test_nested_endpoints_do_not_add_queries_per_item(self):
-        initial_counts = {}
+        initial = {}
         for endpoint in ("research-projects", "academic-works", "scientific-outputs"):
             with CaptureQueriesContext(connection) as queries:
                 self.client.get(f"/api/v1/{endpoint}/")
-            initial_counts[endpoint] = len(queries)
+            initial[endpoint] = len(queries)
 
-        second_person = Person.objects.create(full_name="Bia Pesquisadora", slug="bia-pesquisadora")
-        second_research = ResearchProject.objects.create(
+        person = Person.objects.create(full_name="Bia Pesquisadora", slug="bia-pesquisadora")
+        research = ResearchProject.objects.create(
             unit=self.labtec,
-            axis=self.axis,
             title="Segunda pesquisa",
             slug="segunda-pesquisa",
             editorial_status=EditorialStatus.PUBLISHED,
-            is_published=True,
         )
-        ResearchProjectMember.objects.create(
-            research_project=second_research,
-            person=second_person,
-            display_order=1,
-        )
-        second_work = AcademicWork.objects.create(
+        ResearchProjectMember.objects.create(research_project=research, person=person)
+        work = AcademicWork.objects.create(
             unit=self.labtec,
-            research_project=second_research,
+            research_project=research,
             title="Segundo trabalho",
             slug="segundo-trabalho",
             work_type=AcademicWork.WorkType.OTHER,
             editorial_status=EditorialStatus.PUBLISHED,
-            is_published=True,
         )
         AcademicWorkContributor.objects.create(
-            academic_work=second_work,
-            person=second_person,
+            academic_work=work,
+            person=person,
             role=AcademicWorkContributor.Role.AUTHOR,
         )
-        second_output = ScientificOutput.objects.create(
+        output = ScientificOutput.objects.create(
             unit=self.labtec,
-            research_project=second_research,
-            academic_work=second_work,
+            research_project=research,
+            academic_work=work,
             title="Segundo artigo",
             slug="segundo-artigo",
             output_type=ScientificOutput.OutputType.ARTICLE,
-            status=EditorialStatus.PUBLISHED,
-            is_published=True,
+            editorial_status=EditorialStatus.PUBLISHED,
         )
-        ScientificAuthorship.objects.create(
-            scientific_output=second_output,
-            person=second_person,
-            author_order=1,
-        )
+        ScientificAuthorship.objects.create(scientific_output=output, person=person, author_order=1)
 
-        for endpoint, initial_count in initial_counts.items():
+        for endpoint, query_count in initial.items():
             with self.subTest(endpoint=endpoint), CaptureQueriesContext(connection) as queries:
                 self.client.get(f"/api/v1/{endpoint}/")
-            self.assertEqual(len(queries), initial_count)
-
-    def test_openapi_documents_new_public_filters(self):
-        schema = self.client.get("/api/schema/").content.decode()
-
-        self.assertIn("/api/v1/research-projects/", schema)
-        self.assertIn("/api/v1/academic-works/", schema)
-        self.assertIn("project_status", schema)
-        self.assertIn("work_type", schema)
-
-
-class LegacyCategoryConversionTests(TestCase):
-    @classmethod
-    def setUpTestData(cls):
-        cls.unit = InstitutionalUnit.objects.create(
-            name="Unidade de migração",
-            acronym="MIG",
-            slug="unidade-de-migracao",
-            unit_type=InstitutionalUnit.UnitType.RESEARCH_GROUP,
-        )
-        cls.person = Person.objects.create(full_name="Pessoa da migração", slug="pessoa-da-migracao")
-        cls.status = ProjectStatus.objects.create(name="Em andamento da migração", slug="em-andamento")
-        cls.research_category = ProjectCategory.objects.create(name="Pesquisa da migração", slug="pesquisa")
-        cls.scientific_category = ProjectCategory.objects.create(
-            name="Produção científica da migração",
-            slug="producao-cientifica",
-        )
-
-    def setUp(self):
-        self.migration = import_module("apps.research.migrations.0002_convert_legacy_portfolio_categories")
-        self.schema_editor = SimpleNamespace(connection=connection)
-
-    def test_conversion_is_reversible_and_preserves_legacy_sources(self):
-        research_source = Project.objects.create(
-            unit=self.unit,
-            title="Pesquisa legada",
-            slug="pesquisa-legada",
-            category=self.research_category,
-            status=self.status,
-            summary="Resumo preservado.",
-            editorial_status=EditorialStatus.PUBLISHED,
-            is_published=True,
-        )
-        ProjectTeamMember.objects.create(
-            project=research_source,
-            person=self.person,
-            is_lead=True,
-            display_order=1,
-        )
-        scientific_source = Project.objects.create(
-            unit=self.unit,
-            title="Produção legada",
-            slug="producao-legada",
-            category=self.scientific_category,
-            summary="Resumo científico.",
-            editorial_status=EditorialStatus.PUBLISHED,
-            is_published=True,
-        )
-        unrelated_research = ResearchProject.objects.create(
-            unit=self.unit,
-            title="Pesquisa nativa",
-            slug="pesquisa-nativa",
-        )
-
-        self.migration.convert_legacy_projects(apps, self.schema_editor)
-
-        converted_research = ResearchProject.objects.get(slug=research_source.slug)
-        self.assertEqual(converted_research.legacy_portfolio_project_id, research_source.pk)
-        self.assertEqual(converted_research.project_status, ResearchProject.ProjectStatus.IN_PROGRESS)
-        self.assertEqual(converted_research.summary, research_source.summary)
-        self.assertEqual(converted_research.editorial_status, EditorialStatus.DRAFT)
-        self.assertFalse(converted_research.is_published)
-        member = converted_research.team_members.get()
-        self.assertEqual(member.role, ResearchProjectMember.Role.COORDINATOR)
-        self.assertTrue(member.is_coordinator)
-        converted_output = ScientificOutput.objects.get(slug=scientific_source.slug)
-        self.assertEqual(converted_output.legacy_portfolio_project_id, scientific_source.pk)
-        self.assertEqual(converted_output.output_type, ScientificOutput.OutputType.SCIENTIFIC_PRODUCTION)
-        self.assertEqual(converted_output.status, EditorialStatus.DRAFT)
-        self.assertFalse(converted_output.is_published)
-        self.assertEqual(Project.objects.filter(pk__in=(research_source.pk, scientific_source.pk)).count(), 2)
-
-        converted_research.slug = "pesquisa-derivada-renomeada"
-        converted_research.save(update_fields=("slug",))
-        native_research = ResearchProject.objects.create(
-            unit=self.unit,
-            title="Pesquisa nativa no slug antigo",
-            slug=research_source.slug,
-        )
-        converted_output.slug = "producao-derivada-renomeada"
-        converted_output.save(update_fields=("slug",))
-        native_output = ScientificOutput.objects.create(
-            unit=self.unit,
-            title="Produção nativa no slug antigo",
-            slug=scientific_source.slug,
-            output_type=ScientificOutput.OutputType.ARTICLE,
-        )
-
-        self.migration.remove_converted_projects(apps, self.schema_editor)
-
-        self.assertFalse(ResearchProject.objects.filter(pk=converted_research.pk).exists())
-        self.assertFalse(ScientificOutput.objects.filter(pk=converted_output.pk).exists())
-        self.assertTrue(ResearchProject.objects.filter(pk=native_research.pk).exists())
-        self.assertTrue(ScientificOutput.objects.filter(pk=native_output.pk).exists())
-        self.assertTrue(ResearchProject.objects.filter(pk=unrelated_research.pk).exists())
-        self.assertEqual(Project.objects.filter(pk__in=(research_source.pk, scientific_source.pk)).count(), 2)
-
-    def test_conversion_preserves_compatible_suspended_and_canceled_statuses(self):
-        suspended = ProjectStatus.objects.create(name="Suspensa", slug="suspensa")
-        canceled = ProjectStatus.objects.create(name="Cancelado", slug="cancelado")
-        Project.objects.create(
-            unit=self.unit,
-            title="Pesquisa suspensa",
-            slug="pesquisa-suspensa",
-            category=self.research_category,
-            status=suspended,
-        )
-        Project.objects.create(
-            unit=self.unit,
-            title="Pesquisa cancelada",
-            slug="pesquisa-cancelada",
-            category=self.research_category,
-            status=canceled,
-        )
-
-        self.migration.convert_legacy_projects(apps, self.schema_editor)
-
-        self.assertEqual(
-            ResearchProject.objects.get(slug="pesquisa-suspensa").project_status,
-            ResearchProject.ProjectStatus.SUSPENDED,
-        )
-        self.assertEqual(
-            ResearchProject.objects.get(slug="pesquisa-cancelada").project_status,
-            ResearchProject.ProjectStatus.CANCELED,
-        )
-
-    def test_conversion_preflight_reports_projects_without_unit(self):
-        project = Project.objects.create(
-            title="Pesquisa sem unidade",
-            slug="pesquisa-sem-unidade-na-migracao",
-            category=self.research_category,
-        )
-
-        with self.assertRaisesMessage(RuntimeError, f"IDs: {project.id}"):
-            self.migration.convert_legacy_projects(apps, self.schema_editor)
-
-    def test_conversion_preflight_reports_slug_collisions_without_writing(self):
-        source = Project.objects.create(
-            unit=self.unit,
-            title="Pesquisa com colisão",
-            slug="pesquisa-com-colisao",
-            category=self.research_category,
-        )
-        ResearchProject.objects.create(
-            unit=self.unit,
-            title="Pesquisa já existente",
-            slug=source.slug,
-        )
-
-        with self.assertRaisesMessage(RuntimeError, f"pesquisas IDs: {source.id}"):
-            self.migration.convert_legacy_projects(apps, self.schema_editor)
-
-        self.assertEqual(ResearchProject.objects.filter(slug=source.slug).count(), 1)
+            self.assertEqual(len(queries), query_count)
 
 
 class ResearchAdminScopeTests(TestCase):
@@ -470,7 +260,7 @@ class ResearchAdminScopeTests(TestCase):
         cls.labtec = InstitutionalUnit.objects.create(
             name="LABTEC.IN",
             acronym="LABTEC.IN",
-            slug="labtec-in",
+            slug="labtec-in-admin",
             unit_type=InstitutionalUnit.UnitType.LABORATORY,
         )
         cls.latec = InstitutionalUnit.objects.create(
@@ -480,27 +270,19 @@ class ResearchAdminScopeTests(TestCase):
             unit_type=InstitutionalUnit.UnitType.ACADEMIC_LEAGUE,
             parent=cls.labtec,
         )
-        cls.axis = ResearchAxis.objects.create(
-            unit=cls.latec,
-            number=201,
-            title="Eixo permitido no Admin",
-            slug="eixo-permitido-admin",
-        )
-        cls.other_axis = ResearchAxis.objects.create(
-            unit=cls.latec,
-            number=202,
-            title="Outro eixo no Admin",
-            slug="outro-eixo-admin",
-        )
+        cls.axis = ResearchAxis.objects.create(unit=cls.latec, number=201, title="Eixo permitido", slug="eixo-permitido")
+        cls.other_axis = ResearchAxis.objects.create(unit=cls.latec, number=202, title="Outro eixo", slug="outro-eixo-admin")
         cls.person = Person.objects.create(full_name="Pessoa do Admin", slug="pessoa-do-admin")
         cls.mentor_person = Person.objects.create(full_name="Mentora do Admin", slug="mentora-do-admin")
         InstitutionMembership.objects.create(person=cls.person, unit=cls.latec, role="Pesquisador")
         InstitutionMembership.objects.create(person=cls.mentor_person, unit=cls.latec, role="Mentor")
         cls.axis.mentorships.create(person=cls.mentor_person)
-
-        cls.editor_user = get_user_model().objects.create_user("research_editor", is_staff=True)
-        cls.editor_profile = Profile.objects.create(user=cls.editor_user, role=Profile.AdminRole.EDITOR)
-        cls.editor_profile.authorized_units.add(cls.latec)
+        cls.coordinator_user = get_user_model().objects.create_user("unit_coordinator", is_staff=True)
+        Profile.objects.create(
+            user=cls.coordinator_user,
+            role=Profile.AdminRole.UNIT_COORDINATOR,
+            primary_unit=cls.latec,
+        )
         cls.mentor_user = get_user_model().objects.create_user("research_mentor", is_staff=True)
         Profile.objects.create(
             user=cls.mentor_user,
@@ -512,9 +294,9 @@ class ResearchAdminScopeTests(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
         self.request = self.factory.post("/admin/")
-        self.request.user = self.editor_user
+        self.request.user = self.coordinator_user
 
-    def test_scoped_editor_can_create_research_graph_as_draft(self):
+    def test_unit_coordinator_creates_full_research_graph_as_draft(self):
         project_admin = ResearchProjectAdmin(ResearchProject, admin.site)
         member_admin = ResearchProjectMemberAdmin(ResearchProjectMember, admin.site)
         work_admin = AcademicWorkAdmin(AcademicWork, admin.site)
@@ -527,13 +309,10 @@ class ResearchAdminScopeTests(TestCase):
             axis=self.axis,
             title="Pesquisa criada no Admin",
             slug="pesquisa-criada-no-admin",
+            include_in_parent_ecosystem=True,
         )
         project_admin.save_model(self.request, project, form=None, change=False)
-        member = ResearchProjectMember(
-            research_project=project,
-            person=self.person,
-            role=ResearchProjectMember.Role.RESEARCHER,
-        )
+        member = ResearchProjectMember(research_project=project, person=self.person)
         member_admin.save_model(self.request, member, form=None, change=False)
         work = AcademicWork(
             unit=self.latec,
@@ -559,42 +338,194 @@ class ResearchAdminScopeTests(TestCase):
             output_type=ScientificOutput.OutputType.ARTICLE,
         )
         output_admin.save_model(self.request, output, form=None, change=False)
-        authorship = ScientificAuthorship(
-            scientific_output=output,
-            person=self.person,
-            author_order=1,
-        )
+        authorship = ScientificAuthorship(scientific_output=output, person=self.person, author_order=1)
         authorship_admin.save_model(self.request, authorship, form=None, change=False)
 
         self.assertEqual(project.editorial_status, EditorialStatus.DRAFT)
-        self.assertFalse(project.is_published)
-        self.assertTrue(project_admin.get_queryset(self.request).filter(pk=project.pk).exists())
-        self.assertTrue(work_admin.get_queryset(self.request).filter(pk=work.pk).exists())
-        self.assertTrue(output_admin.get_queryset(self.request).filter(pk=output.pk).exists())
+        self.assertTrue(project.include_in_parent_ecosystem)
         self.assertTrue(authorship_admin.get_queryset(self.request).filter(pk=authorship.pk).exists())
 
-    def test_mentor_querysets_and_related_choices_are_limited_to_own_axis(self):
-        own_project = ResearchProject.objects.create(
-            unit=self.latec,
-            axis=self.axis,
-            title="Pesquisa do eixo mentorado",
-            slug="pesquisa-eixo-mentorado",
-        )
-        ResearchProject.objects.create(
-            unit=self.latec,
-            axis=self.other_axis,
-            title="Pesquisa de outro eixo",
-            slug="pesquisa-outro-eixo",
-        )
-        request = self.factory.get("/admin/")
+    def test_mentor_is_limited_to_own_axis(self):
+        own = ResearchProject.objects.create(unit=self.latec, axis=self.axis, title="Pesquisa própria", slug="pesquisa-propria")
+        ResearchProject.objects.create(unit=self.latec, axis=self.other_axis, title="Pesquisa externa", slug="pesquisa-externa")
+        request = self.factory.post("/admin/")
         request.user = self.mentor_user
         project_admin = ResearchProjectAdmin(ResearchProject, admin.site)
-        output_admin = ScientificOutputAdmin(ScientificOutput, admin.site)
+        self.assertEqual(set(project_admin.get_queryset(request).values_list("slug", flat=True)), {own.slug})
 
-        self.assertEqual(
-            set(project_admin.get_queryset(request).values_list("slug", flat=True)),
-            {own_project.slug},
+        allowed = ResearchProject(
+            unit=self.latec,
+            axis=self.axis,
+            title="Pesquisa criada pela mentora",
+            slug="pesquisa-criada-pela-mentora",
+            include_in_parent_ecosystem=True,
         )
-        research_project_field = ScientificOutput._meta.get_field("research_project")
-        choices = output_admin.formfield_for_foreignkey(research_project_field, request).queryset
-        self.assertEqual(set(choices.values_list("slug", flat=True)), {own_project.slug})
+        project_admin.save_model(request, allowed, form=None, change=False)
+        self.assertTrue(allowed.include_in_parent_ecosystem)
+
+        tampered = ResearchProject(
+            unit=self.latec,
+            axis=self.other_axis,
+            title="Pesquisa adulterada pela mentora",
+            slug="pesquisa-adulterada-pela-mentora",
+        )
+        with self.assertRaises(PermissionDenied):
+            project_admin.save_model(request, tampered, form=None, change=False)
+
+
+class FinalLegacyCutMigrationTests(TransactionTestCase):
+    reset_sequences = True
+    old_targets = [
+        ("accounts", "0002_add_institutional_admin_scope"),
+        ("axes", "0002_researchaxis_unit"),
+        ("core", "0002_herobanner_unit_institutionalsection_unit_and_more"),
+        ("institutional", "0002_validate_and_add_institutional_constraints"),
+        ("learning", "0003_course_unit_event_unit_learningtrack_unit"),
+        ("metrics", "0002_impactmetric_unit"),
+        ("news", "0002_post_unit"),
+        ("people", "0001_initial"),
+        ("portfolio", "0002_project_unit"),
+        ("research", "0002_convert_legacy_portfolio_categories"),
+        ("scientific", "0003_scientificoutput_academic_work_and_more"),
+        ("transparency", "0002_transparencydocument_unit"),
+    ]
+
+    def setUp(self):
+        super().setUp()
+        self.executor = MigrationExecutor(connection)
+        self.latest_targets = self.executor.loader.graph.leaf_nodes()
+        self.executor.migrate(self.old_targets)
+        self.old_apps = self.executor.loader.project_state(self.old_targets).apps
+
+    def tearDown(self):
+        MigrationExecutor(connection).migrate(self.latest_targets)
+        super().tearDown()
+
+    def _create_valid_legacy_graph(self):
+        Unit = self.old_apps.get_model("institutional", "InstitutionalUnit")
+        Role = self.old_apps.get_model("people", "Role")
+        Person = self.old_apps.get_model("people", "Person")
+        Membership = self.old_apps.get_model("institutional", "InstitutionMembership")
+        Category = self.old_apps.get_model("portfolio", "ProjectCategory")
+        Project = self.old_apps.get_model("portfolio", "Project")
+        Research = self.old_apps.get_model("research", "ResearchProject")
+        ResearchMember = self.old_apps.get_model("research", "ResearchProjectMember")
+        Scientific = self.old_apps.get_model("scientific", "ScientificOutput")
+        Metric = self.old_apps.get_model("metrics", "ImpactMetric")
+        unit = Unit.objects.create(name="LATEC", acronym="LATEC", slug="latec-cut", unit_type="academic_league")
+        role = Role.objects.create(name="Pesquisador", slug="pesquisador-cut")
+        person = Person.objects.create(full_name="Pessoa do corte", slug="pessoa-corte", role=role)
+        Membership.objects.create(person=person, unit=unit, role="Pesquisador")
+        category = Category.objects.create(name="Pesquisa", slug="pesquisa")
+        source = Project.objects.create(
+            unit=unit,
+            category=category,
+            title="Pesquisa legada",
+            slug="pesquisa-legada-cut",
+            editorial_status="published",
+            is_published=True,
+        )
+        destination = Research.objects.create(
+            unit=unit,
+            legacy_portfolio_project_id=source.pk,
+            title=source.title,
+            slug=source.slug,
+        )
+        member = ResearchMember.objects.create(
+            research_project=destination,
+            person=person,
+            role="researcher",
+            is_coordinator=True,
+        )
+        legacy_type = Scientific.objects.create(
+            unit=unit,
+            title="Tipo científico legado",
+            slug="tipo-cientifico-legado",
+            output_type="project",
+        )
+        Metric.objects.create(unit=unit, key="eventos", label="Eventos", value=0)
+        return source.pk, destination.pk, member.pk, legacy_type.pk
+
+    def test_cut_publishes_destination_archives_source_and_removes_legacy_state(self):
+        source_id, destination_id, member_id, legacy_type_id = self._create_valid_legacy_graph()
+        MigrationExecutor(connection).migrate(self.latest_targets)
+
+        from apps.metrics.models import ImpactMetric
+        from apps.portfolio.models import Project, ProjectCategory
+        from apps.research.models import ResearchProject, ResearchProjectMember
+        from apps.scientific.models import ScientificOutput
+
+        source = Project.objects.get(pk=source_id)
+        destination = ResearchProject.objects.get(pk=destination_id)
+        self.assertEqual(source.editorial_status, EditorialStatus.ARCHIVED)
+        self.assertIsNone(source.category)
+        self.assertEqual(destination.editorial_status, EditorialStatus.PUBLISHED)
+        self.assertIsNotNone(destination.published_at)
+        self.assertFalse(ProjectCategory.objects.filter(slug="pesquisa").exists())
+        self.assertFalse(ImpactMetric.objects.filter(key="eventos").exists())
+        self.assertFalse(hasattr(destination, "legacy_portfolio_project_id"))
+        self.assertEqual(
+            ResearchProjectMember.objects.get(pk=member_id).role,
+            ResearchProjectMember.Role.COORDINATOR,
+        )
+        self.assertEqual(
+            ScientificOutput.objects.get(pk=legacy_type_id).output_type,
+            ScientificOutput.OutputType.OTHER,
+        )
+
+    def test_preflight_reports_all_destructive_blockers_before_writing(self):
+        Unit = self.old_apps.get_model("institutional", "InstitutionalUnit")
+        Role = self.old_apps.get_model("people", "Role")
+        Person = self.old_apps.get_model("people", "Person")
+        Category = self.old_apps.get_model("portfolio", "ProjectCategory")
+        Project = self.old_apps.get_model("portfolio", "Project")
+        Metric = self.old_apps.get_model("metrics", "ImpactMetric")
+        Post = self.old_apps.get_model("news", "Post")
+        Scientific = self.old_apps.get_model("scientific", "ScientificOutput")
+        unit = Unit.objects.create(name="Unidade", acronym="U", slug="unidade-preflight", unit_type="initiative")
+        role = Role.objects.create(name="Papel sem membership", slug="papel-sem-membership")
+        person = Person.objects.create(full_name="Pessoa inconsistente", slug="pessoa-inconsistente", role=role)
+        category = Category.objects.create(name="Produção científica", slug="producao-cientifica")
+        source = Project.objects.create(
+            unit=unit,
+            category=category,
+            title="Projeto sem destino",
+            slug="projeto-sem-destino",
+        )
+        metric = Metric.objects.create(unit=unit, key="eventos", label="Eventos", value=1)
+        post = Post.objects.create(
+            unit=None,
+            title="Publicação contraditória",
+            slug="publicacao-contraditoria",
+            content="texto",
+            status="published",
+            is_published=False,
+        )
+        output = Scientific.objects.create(
+            unit=unit,
+            title="Autores externos",
+            slug="autores-externos",
+            output_type="article",
+            authors="Pessoa Externa",
+        )
+        migration = import_module("apps.research.migrations.0003_final_legacy_cut")
+
+        with self.assertRaisesMessage(RuntimeError, f"news.Post com publicação contraditória: [{post.pk}]") as error:
+            migration.preflight_and_cut(
+                self.old_apps,
+                SimpleNamespace(connection=connection),
+            )
+        message = str(error.exception)
+        self.assertIn(f"news.Post sem unit: [{post.pk}]", message)
+        self.assertIn(f"people.Person sem membership equivalente ao role legado: [{person.pk}]", message)
+        self.assertIn(f"scientific.ScientificOutput com authors textual: [{output.pk}]", message)
+        self.assertIn(f"portfolio.Project legado sem destino convertido: [{source.pk}]", message)
+        self.assertTrue(Metric.objects.filter(pk=metric.pk).exists())
+        self.assertEqual(Project.objects.get(pk=source.pk).category_id, category.pk)
+        output.delete()
+        post.delete()
+        source.delete()
+        category.delete()
+        person.delete()
+        role.delete()
+        metric.delete()

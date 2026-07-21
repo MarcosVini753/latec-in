@@ -1,4 +1,4 @@
-# Mapa de relações de modelo implementadas
+# Mapa de relações de modelo consolidadas
 
 ```mermaid
 flowchart LR
@@ -25,18 +25,16 @@ flowchart LR
 
   news --> institutional
   news --> axes
-  news --> people
 
   learning --> institutional
   learning --> axes
   learning --> people
 
   transparency --> institutional
-  mediahub --> institutional
   partnerships --> institutional
   metrics --> institutional
 ```
 
-Cada seta parte do app que mantém a FK ou M2M e aponta para o app cujo modelo é referenciado. O autorrelacionamento de `InstitutionalUnit` e as relações internas de cada app foram omitidos para manter o mapa legível.
+Cada seta parte do app que mantém a FK ou M2M e aponta para o app referenciado. Relações internas e o autorrelacionamento de `InstitutionalUnit` foram omitidos.
 
-`common` fornece classes-base, workflow, viewsets e o mixin administrativo, mas não mantém relações de banco. `MediaAsset` e `ImpactMetric` possuem unidade própria; ainda não existem relações automáticas dos demais domínios com esses registros. A conversão histórica entre `portfolio` e `research` usa apenas um identificador técnico de proveniência, não uma FK pública.
+`common` fornece `BaseModel`, workflow, viewsets e escopo administrativo sem relações próprias de banco. Arquivos pertencem aos apps de domínio; não existe app central de mídia no grafo ou em `INSTALLED_APPS`.

@@ -14,11 +14,10 @@ class ScientificAuthorshipInline(UnitScopedInlineMixin, admin.TabularInline):
 @admin.register(ScientificOutput)
 class ScientificOutputAdmin(UnitScopedAdminMixin, admin.ModelAdmin):
     axis_lookup = "axis"
-    list_display = ("title", "unit", "output_type", "axis", "status", "is_published", "is_featured", "publication_date")
-    list_filter = ("unit", "axis", "output_type", "status", "is_published", "is_featured")
+    list_display = ("title", "unit", "output_type", "axis", "editorial_status", "include_in_parent_ecosystem", "publication_date")
+    list_filter = ("unit", "axis", "output_type", "editorial_status", "include_in_parent_ecosystem")
     search_fields = (
         "title",
-        "authors",
         "abstract",
         "unit__name",
         "unit__acronym",
@@ -40,12 +39,11 @@ class ScientificOutputAdmin(UnitScopedAdminMixin, admin.ModelAdmin):
                     "axis",
                     "research_project",
                     "academic_work",
-                    "authors",
                 )
             },
         ),
         ("Conteúdo", {"fields": ("abstract", "publication_date", "file", "external_url")}),
-        ("Publicação", {"fields": ("status", "is_published", "published_at", "is_featured", "display_order")}),
+        ("Publicação", {"fields": ("editorial_status", "published_at", "include_in_parent_ecosystem")}),
     )
     inlines = (ScientificAuthorshipInline,)
 

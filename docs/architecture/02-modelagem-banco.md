@@ -1,402 +1,202 @@
 # Modelagem do banco de dados — Portal LABTEC.IN
 
-Este documento descreve a modelagem Django implementada e os legados mantidos durante a transição.
+Este documento descreve a modelagem consolidada depois do corte institucional e editorial.
 
 ## Convenções
 
-- Todos os modelos de domínio usam `id`, `created_at` e `updated_at`.
-- Conteúdos públicos usam `slug`, status editorial, publicação e destaque quando aplicável.
-- O workflow permanece `draft`, `in_review`, `published` e `archived`.
-- `InstitutionalUnit` representa propriedade institucional; não serão criados booleanos como `is_latec` ou `is_labtec_content`.
-- Campos `unit` dos modelos legados permanecem opcionais para permitir backfill; os novos modelos de `research` exigem unidade.
-- Relações com pessoas usam entidades intermediárias quando o papel, a ordem ou outros metadados pertencem ao vínculo.
+- Modelos de domínio usam `id`, `created_at` e `updated_at` por meio de `BaseModel`.
+- Registros com página própria usam `slug` único e estável.
+- Conteúdos editoriais usam apenas `editorial_status`: `draft`, `in_review`, `published` ou `archived`.
+- `published_at` registra a data de publicação, mas não controla visibilidade sozinho.
+- Todo conteúdo possui uma única `InstitutionalUnit` obrigatória com `PROTECT`.
+- `include_in_parent_ecosystem` permite exibição no recorte público da mãe sem alterar a propriedade.
+- Relações com pessoas usam models intermediários quando papel ou ordem pertencem ao vínculo.
+- `display_order` existe apenas onde a ordem é estrutural; listas editoriais usam datas e título.
 
-## Estado implementado
+Não existem flags genéricas `is_featured` nem duplicidade entre status e `is_published`. Somente banners e seções institucionais mantêm uma flag simples de publicação por não usarem workflow editorial.
 
-O backend possui models nos apps `institutional`, `accounts`, `core`, `people`, `axes`, `research`, `portfolio`, `scientific`, `news`, `learning`, `transparency`, `mediahub`, `partnerships` e `metrics`.
-
-- `InstitutionalUnit` e `InstitutionMembership` possuem constraints e validações de integridade;
-- `Profile` possui unidade principal, unidades autorizadas e herança opcional de descendentes;
-- os sete eixos pertencem à LATEC;
-- `ResearchProject` e `AcademicWork` modelam pesquisas e trabalhos acadêmicos;
-- `ScientificOutput` pode apontar para ambos e possui autoria interna ordenada, mantendo `authors` para autores externos;
-- conteúdos existentes possuem `unit` opcional, e `Partner` possui relação muitos-para-muitos com unidades;
-- `Person.role`, categorias de portfólio e tipos científicos antigos permanecem por compatibilidade;
-- `Event` continua sem endpoint público nesta entrega.
-
-## `institutional`
-
-App responsável pela estrutura organizacional.
+## Institucional
 
 ### `InstitutionalUnit`
 
 Representa LABTEC.IN, LATEC e futuras unidades.
 
-Campos conceituais:
+Campos principais:
 
-- `id`;
-- `name`;
-- `acronym`;
-- `slug`;
-- `unit_type`;
-- `parent`, autorrelacionamento opcional;
-- `description`;
-- `mission`;
-- `vision`;
-- `logo`;
-- `cover_image`;
-- `contact_email`;
-- `website_url`;
-- `is_active`;
-- `is_public`;
-- `display_order`;
-- `created_at`;
-- `updated_at`.
+- `name`, `acronym`, `slug` e `unit_type`;
+- `parent`, opcional e protegido;
+- descrição, missão, visão, imagens e contatos;
+- `display_order`.
 
-Tipos iniciais:
+Toda unidade cadastrada é pública por definição. O modelo não possui flags de ativação ou visibilidade.
 
-- `laboratory`;
-- `academic_league`;
-- `program`;
-- `research_group`;
-- `initiative`.
-
-Unidades iniciais:
-
-- LABTEC.IN: `laboratory`, sem unidade pai e raiz do portal;
-- LATEC: `academic_league`, filha do LABTEC.IN.
-
-`parent` não pode apontar para o próprio registro. `clean()` percorre os ancestrais e rejeita ciclos indiretos, e `save()` executa a validação também em gravações ORM usuais. O manager bloqueia inserções hierárquicas por `bulk_create()` e alterações de pai por `bulk_update()`. `QuerySet.update()` permanece como o único caminho ORM capaz de contornar a validação; ele deve ser reservado a migrations controladas e operações que preservem explicitamente a hierarquia.
+LABTEC.IN é `laboratory` sem pai. LATEC é `academic_league` filha do LABTEC.IN. O banco impede autorreferência; `clean()` e `save()` impedem ciclos indiretos nas gravações usuais. `QuerySet.update()` não executa essa validação e deve ser reservado a operações controladas.
 
 ### `InstitutionMembership`
 
-Representa a participação de uma pessoa em uma unidade.
+Relaciona `Person` e `InstitutionalUnit` com:
 
-Campos conceituais:
+- `role` textual;
+- `start_date` e `end_date`, opcionais;
+- `is_active`, `is_public` e `display_order`.
 
-- `person`;
-- `unit`;
-- `role`;
-- `start_date`;
-- `end_date`;
-- `is_active`;
-- `is_public`;
-- `display_order`;
-- `created_at`;
-- `updated_at`.
+A combinação `(person, unit, role)` é única e `end_date` não pode anteceder `start_date`. Uma pessoa pode possuir vários papéis na mesma unidade e em unidades diferentes.
 
-Uma mesma pessoa pode possuir vários vínculos. Exemplo:
+## Pessoas e acesso administrativo
 
-- Marta Adelino no LABTEC.IN: coordenadora e pesquisadora;
-- Marta Adelino na LATEC: coordenadora e mentora de eixo.
+### `Person`
 
-Quando uma pessoa exerce mais de um papel simultâneo na mesma unidade, cada papel é registrado em um membership próprio.
+Mantém identidade pública, biografia, foto, contatos, ativação e ordenação. Não possui papel global nem flag de destaque. Seus papéis públicos são derivados de memberships ativos e públicos.
 
-A combinação `(person, unit, role)` é única. Datas nulas são aceitas; quando ambas existem, `end_date` deve ser maior ou igual a `start_date`. As duas regras existem como constraints de banco e como validação amigável no modelo. A migration que as antecede executa preflight e interrompe a aplicação com os IDs conflitantes, sem excluir ou corrigir dados automaticamente.
+### `Profile`
 
-## `core`
+Relaciona opcionalmente um usuário a uma pessoa e define:
 
-### Estado implementado
+- `role`: `lab_coordinator`, `unit_coordinator` ou `mentor`;
+- `primary_unit`;
+- `authorized_units`;
+- `inherit_descendants`;
+- `is_active_admin`.
 
-- `SiteSettings` usa LABTEC.IN como padrão e possui unidade opcional.
-- `HeroBanner`, `InstitutionalSection` e `SocialLink` possuem unidade opcional.
-- O seed associa `SiteSettings`, o hero principal e as seções iniciais ao LABTEC.IN.
+Superusuário é uma capacidade nativa do Django e não um valor de `Profile`.
 
-### Regras implementadas
+## Eixos
 
-- `SiteSettings` representa o portal LABTEC.IN e se vincula à unidade raiz.
-- Nome padrão do site: `LABTEC.IN`.
-- `HeroBanner`, `InstitutionalSection` e `SocialLink` possuem `unit` opcional.
-- A Home principal consulta exclusivamente conteúdo da unidade `labtec-in`.
-- A seção LATEC consulta conteúdo da unidade `latec`.
+### `ResearchAxis`
 
-## `people`
+Possui unidade obrigatória, número, título, slug, descrição, palavras-chave, ativação e ordem estrutural. Os sete registros canônicos pertencem à LATEC.
 
-### Estado implementado
+### `AxisMentorship`
 
-`Person` representa a pessoa física e possui uma relação opcional com `Role`, tratada hoje como papel público único.
+Relaciona pessoa e eixo com papel, indicação de mentor principal e ordem. `(axis, person)` é único.
 
-### Transição
-
-`Person` continua independente de autenticação e unidade. O campo atual `role` é legado; papéis institucionais são expressos por `InstitutionMembership`.
-
-O seed e o backfill criam os memberships conhecidos sem remover `Person.role`. A descontinuação e remoção do campo ocorrerão somente depois que consultas e interfaces deixarem de consumi-lo.
-
-## `accounts`
-
-O sistema usa `User` padrão do Django e `Profile` com os papéis `admin`, `lab_coordinator`, `unit_coordinator`, `mentor`, `editor` e `reader`.
-
-O perfil administrativo representa:
-
-- `primary_unit`, opcional;
-- `authorized_units`, relação muitos-para-muitos opcional;
-- `inherit_descendants`, desabilitado por padrão;
-- vínculo opcional com `people.Person`;
-- estado ativo do acesso administrativo.
-
-Superusuários permanecem irrestritos. Perfis inativos ou sem unidade autorizada não recebem acesso institucional. A coordenação do LABTEC.IN acessa a raiz, descendentes e conteúdo sem unidade; os demais papéis são limitados às unidades ou eixos autorizados. Apenas administrador e coordenação do LABTEC.IN realizam publicação final.
-
-## `axes`
-
-`ResearchAxis` e `AxisMentorship` estão implementados. `ResearchAxis.unit` permanece opcional durante a transição, e os sete registros iniciais pertencem explicitamente à LATEC.
-
-Campos de `ResearchAxis`:
-
-- `unit`;
-- `number`;
-- `title`;
-- `slug`;
-- `description`;
-- `keywords`;
-- `is_active`;
-- `display_order`;
-- timestamps.
-
-`AxisMentorship` continua relacionando eixo e pessoa, com papel, indicação de mentor principal e ordem. A unidade é inferida pelo eixo.
-
-## `research`
-
-App responsável por pesquisas formais e trabalhos acadêmicos subsidiados ou mantidos pelo LABTEC.IN.
+## Pesquisa e trabalhos acadêmicos
 
 ### `ResearchProject`
 
-Representa uma pesquisa científica formal.
+Representa o processo de pesquisa científica.
 
-Campos conceituais:
+Campos principais:
 
-- `title`;
-- `slug`;
-- `unit`;
-- `axis`, opcional;
-- `summary`;
-- `objectives`;
-- `methodology`;
-- `expected_results`;
-- `start_date`;
-- `end_date`;
-- `project_status`;
-- `editorial_status`;
-- `cover_image`;
-- `is_published`;
-- `published_at`;
-- `is_featured`;
-- timestamps.
+- `unit` obrigatória e `axis` opcional;
+- `title`, `slug` e `summary`;
+- `start_date`, `end_date` e `project_status`;
+- `file` e `external_url` opcionais;
+- `editorial_status` e `published_at`;
+- `include_in_parent_ecosystem`;
+- equipe por `ResearchProjectMember`.
 
-Uma pesquisa exige unidade com proteção contra exclusão da unidade referenciada. O eixo é opcional. Datas nulas são aceitas; quando ambas existem, `end_date` deve ser maior ou igual a `start_date`.
+`project_status` aceita `planned`, `in_progress`, `completed`, `suspended` e `canceled`. Quando as duas datas existem, `end_date >= start_date` é garantido no modelo e no banco.
 
 ### `ResearchProjectMember`
 
-Representa participantes da pesquisa.
-
-Campos:
-
-- `research_project`;
-- `person`;
-- `role`;
-- `is_coordinator`;
-- `display_order`;
-- timestamps.
-
-Papéis iniciais:
-
-- coordenador;
-- pesquisador;
-- orientador;
-- bolsista;
-- voluntário;
-- colaborador.
-
-Uma pessoa aparece no máximo uma vez em cada pesquisa.
+Relaciona pesquisa e pessoa com `role` e `display_order`. Os papéis são coordenador, pesquisador, orientador, bolsista, voluntário e colaborador. O valor `coordinator` é a única fonte da coordenação; não existe booleano duplicado. Cada pessoa aparece no máximo uma vez por pesquisa.
 
 ### `AcademicWork`
 
-Representa TCCs e outros trabalhos acadêmicos.
+Representa TCC, monografia, iniciação científica, dissertação, tese ou outro trabalho.
 
-Campos conceituais:
+Campos principais:
 
-- `title`;
-- `slug`;
-- `unit`;
-- `research_project`, opcional;
-- `work_type`;
-- `course`;
-- `institution`;
-- `year`;
-- `abstract`;
-- `keywords`;
-- `file`;
-- `external_url`;
-- `editorial_status`;
-- `is_published`;
-- `published_at`;
-- `is_featured`;
-- timestamps.
-
-Tipos iniciais:
-
-- `tcc`;
-- `monograph`;
-- `scientific_initiation`;
-- `dissertation`;
-- `thesis`;
-- `other`.
+- `unit` obrigatória e `research_project` opcional;
+- `title`, `slug`, `work_type`, curso, instituição e ano;
+- `abstract`, palavras-chave, `file` e `external_url`;
+- `editorial_status` e `published_at`;
+- `include_in_parent_ecosystem`;
+- contribuidores por `AcademicWorkContributor`.
 
 ### `AcademicWorkContributor`
 
-Representa autores, orientadores e outros participantes.
+Relaciona trabalho e pessoa com papel e ordem. Os papéis são autor, orientador, coorientador, avaliador e colaborador. `(academic_work, person, role)` é único.
 
-Campos:
+## Produção científica
 
-- `academic_work`;
-- `person`;
-- `role`;
-- `display_order`;
-- timestamps.
+### `ScientificOutput`
 
-Papéis iniciais:
+Representa resultado científico publicável.
 
-- autor;
-- orientador;
-- coorientador;
-- avaliador;
-- colaborador.
+Campos principais:
 
-Um mesmo papel de uma pessoa aparece no máximo uma vez em cada trabalho. `AcademicWork.unit` também é obrigatório e protegido.
+- `unit` obrigatória;
+- pesquisa, trabalho acadêmico e eixo opcionais;
+- `title`, `slug` e `output_type`;
+- `abstract`, `publication_date`, `file` e `external_url`;
+- `editorial_status` e `published_at`;
+- `include_in_parent_ecosystem`;
+- autorias por `ScientificAuthorship`.
 
-## Delimitação entre pesquisa, trabalho, produção e portfólio
+Os tipos são artigo, resumo, patente, e-book, livro, relatório técnico e outro. Não existe autoria textual paralela: pessoas cadastradas e ordem são mantidas em `ScientificAuthorship`.
 
-| Entidade | Uso |
-| --- | --- |
-| `research.ResearchProject` | Pesquisa científica formal, com objetivos, metodologia, equipe e período. |
-| `research.AcademicWork` | TCC, monografia, iniciação científica, dissertação, tese ou outro trabalho acadêmico. |
-| `scientific.ScientificOutput` | Resultado científico publicado, como artigo, resumo, patente, livro, e-book ou relatório. |
-| `portfolio.Project` | Iniciativa prática, extensão, produto, serviço, startup, solução tecnológica ou projeto de inovação. |
+### `ScientificAuthorship`
 
-Exemplo integrado:
+Relaciona produção e pessoa com `author_order` e `author_role` textual opcional. Pessoa e posição são únicas dentro de cada produção.
 
-- Pesquisa: “Desenvolvimento de bioativo amazônico”.
-- Trabalho acadêmico: “Avaliação fitoquímica da espécie X”.
-- Produção científica: “Artigo com os resultados da avaliação fitoquímica”.
-- Portfólio: “Protótipo de bioproduto desenvolvido a partir do bioativo”.
+## Portfólio
 
-## Ajustes nos módulos existentes
+### `Project`
 
-### `portfolio`
+Representa iniciativa prática, produto, serviço, extensão ou solução, e não pesquisa formal.
 
-`Project` possui `unit` opcional. Projetos podem pertencer ao LABTEC.IN ou à LATEC.
+Possui unidade obrigatória, eixo e classificações práticas opcionais, título, slug, ano, resumo, problema, solução, capa, workflow, `published_at`, `include_in_parent_ecosystem`, equipe, resultados e links.
 
-Pesquisa e produção científica deixam de ser responsabilidades centrais do portfólio. As categorias históricas “Pesquisa” e “Produção Científica” podem permanecer temporariamente por compatibilidade, mas seus registros devem ser revisados e migrados para os domínios corretos.
+As categorias históricas `pesquisa` e `producao-cientifica` não existem mais. O projeto de Bioativos que originou uma pesquisa permanece apenas como registro arquivado para rastreabilidade histórica.
 
-### `scientific`
+`ProjectTeamMember`, `ProjectResult` e `ProjectLink` mantêm `display_order`, pois a sequência faz parte da apresentação do projeto.
 
-`ScientificOutput` possui:
+## Notícias
 
-- `unit`;
-- `axis`, que permanece opcional;
-- relação opcional com `ResearchProject`;
-- relação opcional com `AcademicWork`;
-- autoria estruturada;
-- campo textual para autores externos não cadastrados.
+### `Post`
 
-Os tipos principais representam artigo, resumo, patente, e-book, livro e relatório. As opções históricas `project` e `scientific_production` permanecem temporariamente para compatibilidade.
+Possui unidade obrigatória, eixo opcional, título, slug, resumo, conteúdo, capa, `editorial_status`, `published_at` e `include_in_parent_ecosystem`.
 
-#### `ScientificAuthorship`
+Notícias não possuem categoria, tags ou autoria própria. O slug é sugerido a partir do título no Admin, permanece editável antes da publicação e não é recalculado automaticamente depois.
 
-Campos:
+## Aprendizagem
 
-- `scientific_output`;
-- `person`;
-- `author_order`;
-- `author_role`;
-- timestamps.
+### `Course`
 
-Cada pessoa e cada posição de autoria são únicas por produção. O campo textual `authors` continua disponível para nomes externos não cadastrados.
+Possui unidade obrigatória, eixo opcional, instrutores, título, slug, descrição, datas, carga horária, situação de inscrições, URL de inscrição, capa, workflow, `published_at` e `include_in_parent_ecosystem`.
 
-### `news`
+### `CourseMaterial`
 
-`Post` possui `unit` opcional.
+Pertence a um curso e mantém título, descrição, arquivo, URL externa e ordem estrutural. Não existe flag de visibilidade própria: todos os materiais de um curso publicado são públicos.
 
-- notícias gerais: LABTEC.IN;
-- notícias específicas da Liga: LATEC;
-- `axis` permanece opcional;
-- autores continuam vinculáveis.
+Não existem mais `LearningTrack` nem `Event`.
 
-### `learning`
+## Transparência
 
-`Course`, `LearningTrack` e `Event` possuem `unit` opcional. Materiais herdam o escopo do curso.
+### `TransparencyDocument`
 
-`Event` representa simpósios, palestras, cursos abertos, inaugurações, visitas institucionais, divulgação e extensão.
+Possui unidade obrigatória, título, slug, tipo, descrição, arquivo, data, processo relacionado, workflow, `published_at` e `include_in_parent_ecosystem`.
 
-Campos conceituais de `Event`:
+## Parcerias e contato
 
-- `title`;
-- `slug`;
-- `unit`;
-- `event_type`;
-- `description`;
-- `start_date`;
-- `end_date`;
-- `location`;
-- `cover_image`;
-- `registration_url`;
-- `event_status`;
-- `editorial_status`;
-- `is_published`;
-- `published_at`;
-- `is_featured`;
-- timestamps.
+### `Partner`
 
-O evento possui somente informações gerais. Não haverá entidade, CRUD, endpoint ou seed para detalhamento interno por horário.
+Relaciona-se a várias unidades por M2M, pois a mesma parceria pode servir simultaneamente ao LABTEC.IN e à LATEC. Mantém tipo, descrição, logo, site, ativação e ordem estrutural.
 
-### `transparency`
+### `ContactMessage`
 
-`TransparencyDocument` possui `unit` opcional.
+Registra tipo, assunto, remetente, organização, texto, situação e data de resposta. Não pertence a uma unidade e seu acesso administrativo é restrito à coordenação do LABTEC.IN e a superusuários.
 
-O padrão é LABTEC.IN, com suporte a documentos específicos da LATEC e de futuras unidades.
+## Métricas
 
-### `mediahub`
+### `ImpactMetric`
 
-`MediaAsset` possui unidade proprietária opcional.
+Possui unidade obrigatória, chave, rótulo, valor, sufixo, descrição, ativação e ordem estrutural. `MetricSnapshot` registra valores históricos por data e herda o escopo da métrica.
 
-Um arquivo pode pertencer ao LABTEC.IN, à LATEC ou permanecer sem unidade em casos técnicos. Nesta etapa, os demais domínios ainda não possuem relação estrutural com `MediaAsset`.
+## Core institucional
 
-### `partnerships`
+`SiteSettings`, `HeroBanner`, `InstitutionalSection` e `SocialLink` possuem unidade obrigatória. Banners, seções e links mantêm ordenação estrutural; banners e seções usam `is_published` simples. A Home consulta somente os registros cujo proprietário é LABTEC.IN.
 
-`Partner` se relaciona com uma ou mais unidades. Uma parceria pode ser institucional do LABTEC.IN, específica da LATEC ou compartilhada.
+## Remoções consolidadas
 
-`ContactMessage` permanece sem exposição pública e sob acesso funcional da coordenação do LABTEC.IN.
-
-### `metrics`
-
-`ImpactMetric` possui `unit` opcional e os campos atuais de chave, rótulo, valor, sufixo, descrição, ativação e ordem. `MetricSnapshot` herda o escopo da métrica.
-
-Métricas do LABTEC.IN podem incluir pesquisas, trabalhos acadêmicos, pesquisadores, produções, projetos, cursos, eventos, parcerias e iniciativas apoiadas.
-
-Métricas da LATEC podem incluir ligantes, mentores, eixos, projetos, cursos e publicações específicos.
-
-`MetricSnapshot` continua registrando valores históricos da métrica.
-
-## Relacionamentos principais
-
-- `InstitutionalUnit` possui autorrelacionamento pai/filho.
-- `Person` participa de unidades por `InstitutionMembership`.
-- `InstitutionalUnit` possui conteúdos em todos os domínios aplicáveis.
-- LATEC possui os sete `ResearchAxis`.
-- `ResearchProject` pertence a uma unidade e pode se relacionar com um eixo.
-- `ResearchProjectMember` relaciona pesquisa e pessoa.
-- `AcademicWork` pertence a uma unidade e pode se relacionar com uma pesquisa.
-- `AcademicWorkContributor` relaciona trabalho e pessoa.
-- `ScientificOutput` pode derivar de pesquisa ou trabalho acadêmico.
-- `ScientificAuthorship` ordena autores cadastrados.
-- `Project`, `Post`, `Course`, `LearningTrack`, `Event`, `TransparencyDocument`, `MediaAsset` e `ImpactMetric` podem pertencer a uma unidade durante a transição.
-- `Partner` pode se relacionar com várias unidades.
-- `MediaAsset` pode ter unidade opcional; sua reutilização por outros domínios ainda não é representada por relações no banco.
-
-## Compatibilidade e próximos cortes
-
-- `Person.role`, projetos de categorias históricas, `ScientificOutput.authors` e tipos científicos legados não foram removidos.
-- A conversão histórica cria registros novos em rascunho e mantém a origem de portfólio inalterada.
-- Pesquisas e produções derivadas guardam `legacy_portfolio_project_id` apenas como proveniência técnica para rollback seguro; o campo não integra a API nem o Admin.
-- Campos institucionais legados só serão tornados obrigatórios depois do inventário e backfill completos.
-
-As migrations são incrementais e reversíveis quando envolvem conversão de dados. O plano operacional está em [Migração para a arquitetura LABTEC.IN](12-migracao-labtec.md).
+- `people.Role`, `Person.role` e `Person.is_featured`;
+- `news.PostCategory`, `news.Tag`, categoria, tags e autores de `Post`;
+- `learning.LearningTrack`, `Course.track` e `learning.Event`;
+- o app `mediahub`, `MediaAsset` e o catálogo central de mídia;
+- flags `is_featured` e `is_published` dos modelos editoriais;
+- ordenação manual dos conteúdos editoriais de topo;
+- `ResearchProjectMember.is_coordinator`;
+- `ScientificOutput.authors`, tipos científicos históricos e campos de proveniência da conversão;
+- categorias de portfólio usadas para representar pesquisa e produção científica.

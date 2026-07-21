@@ -5,7 +5,7 @@ from apps.institutional.serializers import InstitutionalUnitSummarySerializer
 
 
 class SiteSettingsSerializer(serializers.ModelSerializer):
-    unit = InstitutionalUnitSummarySerializer(read_only=True, allow_null=True)
+    unit = InstitutionalUnitSummarySerializer(read_only=True)
 
     class Meta:
         model = SiteSettings
@@ -13,7 +13,7 @@ class SiteSettingsSerializer(serializers.ModelSerializer):
 
 
 class HeroBannerSerializer(serializers.ModelSerializer):
-    unit = InstitutionalUnitSummarySerializer(read_only=True, allow_null=True)
+    unit = InstitutionalUnitSummarySerializer(read_only=True)
 
     class Meta:
         model = HeroBanner
@@ -21,7 +21,7 @@ class HeroBannerSerializer(serializers.ModelSerializer):
 
 
 class InstitutionalSectionSerializer(serializers.ModelSerializer):
-    unit = InstitutionalUnitSummarySerializer(read_only=True, allow_null=True)
+    unit = InstitutionalUnitSummarySerializer(read_only=True)
 
     class Meta:
         model = InstitutionalSection
@@ -29,7 +29,7 @@ class InstitutionalSectionSerializer(serializers.ModelSerializer):
 
 
 class SocialLinkSerializer(serializers.ModelSerializer):
-    unit = InstitutionalUnitSummarySerializer(read_only=True, allow_null=True)
+    unit = InstitutionalUnitSummarySerializer(read_only=True)
 
     class Meta:
         model = SocialLink

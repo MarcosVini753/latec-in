@@ -23,4 +23,4 @@ flowchart TB
   Django --> Media
 ```
 
-Os containers técnicos permanecem os mesmos. A seção LATEC é renderizada pelo frontend e filtrada pela unidade `latec` na mesma API e aplicação Django.
+Os containers técnicos permanecem os mesmos. A seção LATEC usa `?unit=latec` na mesma API; recortes institucionais podem incluir conteúdo de filhas diretas que tenha optado pelo ecossistema da unidade consultada. O volume guarda arquivos referenciados diretamente pelos modelos de domínio, sem catálogo ou container MediaHub.

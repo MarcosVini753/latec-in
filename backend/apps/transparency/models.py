@@ -14,10 +14,8 @@ class TransparencyDocument(BaseModel):
 
     unit = models.ForeignKey(
         "institutional.InstitutionalUnit",
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         related_name="transparency_documents",
-        blank=True,
-        null=True,
     )
     title = models.CharField(max_length=180)
     slug = models.SlugField(max_length=200, unique=True)
@@ -26,14 +24,15 @@ class TransparencyDocument(BaseModel):
     file = models.FileField(upload_to="transparency/")
     publication_date = models.DateField(blank=True, null=True)
     related_process = models.CharField(max_length=160, blank=True)
-    status = models.CharField(max_length=32, choices=EditorialStatus.choices, default=EditorialStatus.DRAFT)
-    is_published = models.BooleanField(default=False)
+    editorial_status = models.CharField(max_length=32, choices=EditorialStatus.choices, default=EditorialStatus.DRAFT)
     published_at = models.DateTimeField(blank=True, null=True)
-    is_featured = models.BooleanField(default=False)
-    display_order = models.PositiveIntegerField(default=0)
+    include_in_parent_ecosystem = models.BooleanField(
+        default=False,
+        help_text="Inclui este conteúdo no recorte público da unidade mãe.",
+    )
 
     class Meta:
-        ordering = ("display_order", "-publication_date", "title")
+        ordering = ("-publication_date", "title")
         verbose_name = "documento de transparência"
         verbose_name_plural = "documentos de transparência"
 

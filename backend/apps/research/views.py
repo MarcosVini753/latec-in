@@ -1,15 +1,14 @@
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 
-from apps.common.viewsets import PublicReadOnlyModelViewSet
+from apps.common.viewsets import ECOSYSTEM_UNIT_PARAMETER, PublicReadOnlyModelViewSet
 from apps.research.models import AcademicWork, ResearchProject
 from apps.research.serializers import AcademicWorkSerializer, ResearchProjectSerializer
 
 
 COMMON_FILTERS = [
-    OpenApiParameter("unit", OpenApiTypes.STR, description="Slug da unidade institucional."),
+    ECOSYSTEM_UNIT_PARAMETER,
     OpenApiParameter("year", OpenApiTypes.INT, description="Ano do conteúdo."),
-    OpenApiParameter("featured", OpenApiTypes.BOOL, description="Filtra itens em destaque."),
     OpenApiParameter("search", OpenApiTypes.STR, description="Busca textual."),
 ]
 
@@ -30,11 +29,11 @@ COMMON_FILTERS = [
 )
 class ResearchProjectViewSet(PublicReadOnlyModelViewSet):
     queryset = ResearchProject.objects.select_related("unit", "axis__unit").prefetch_related(
-        "axis__mentorships__person__role",
-        "team_members__person__role",
+        "axis__mentorships__person",
+        "team_members__person",
     )
     serializer_class = ResearchProjectSerializer
-    search_fields = ("title", "summary", "objectives", "methodology", "expected_results")
+    search_fields = ("title", "summary")
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -57,7 +56,7 @@ class ResearchProjectViewSet(PublicReadOnlyModelViewSet):
 )
 class AcademicWorkViewSet(PublicReadOnlyModelViewSet):
     queryset = AcademicWork.objects.select_related("unit", "research_project").prefetch_related(
-        "work_contributors__person__role",
+        "work_contributors__person",
     )
     serializer_class = AcademicWorkSerializer
     search_fields = ("title", "course", "institution", "abstract", "keywords")

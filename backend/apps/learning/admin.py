@@ -2,22 +2,7 @@ from django.contrib import admin
 
 from apps.common.admin_actions import EDITORIAL_ADMIN_ACTIONS
 from apps.common.admin_scoping import UnitScopedAdminMixin, UnitScopedInlineMixin
-from apps.learning.models import Course, CourseMaterial, Event, LearningTrack
-
-
-@admin.register(LearningTrack)
-class LearningTrackAdmin(UnitScopedAdminMixin, admin.ModelAdmin):
-    list_display = ("title", "unit", "is_active", "display_order")
-    list_filter = ("unit", "is_active")
-    search_fields = ("title", "description", "unit__name", "unit__acronym")
-    prepopulated_fields = {"slug": ("title",)}
-    autocomplete_fields = ("unit",)
-    list_select_related = ("unit",)
-    fieldsets = (
-        ("Identificação", {"fields": ("unit", "title", "slug")}),
-        ("Conteúdo", {"fields": ("description",)}),
-        ("Exibição", {"fields": ("is_active", "display_order")}),
-    )
+from apps.learning.models import Course, CourseMaterial
 
 
 class CourseMaterialInline(UnitScopedInlineMixin, admin.TabularInline):
@@ -28,18 +13,18 @@ class CourseMaterialInline(UnitScopedInlineMixin, admin.TabularInline):
 @admin.register(Course)
 class CourseAdmin(UnitScopedAdminMixin, admin.ModelAdmin):
     axis_lookup = "axis"
-    list_display = ("title", "unit", "track", "axis", "enrollment_status", "editorial_status", "is_published", "is_featured", "start_date")
-    list_filter = ("unit", "track", "axis", "enrollment_status", "editorial_status", "is_published", "is_featured")
+    list_display = ("title", "unit", "axis", "enrollment_status", "editorial_status", "include_in_parent_ecosystem", "start_date")
+    list_filter = ("unit", "axis", "enrollment_status", "editorial_status", "include_in_parent_ecosystem")
     search_fields = ("title", "description", "unit__name", "unit__acronym")
     prepopulated_fields = {"slug": ("title",)}
-    autocomplete_fields = ("unit", "track", "axis", "instructors")
-    list_select_related = ("unit", "track", "axis")
+    autocomplete_fields = ("unit", "axis", "instructors")
+    list_select_related = ("unit", "axis")
     actions = EDITORIAL_ADMIN_ACTIONS
     fieldsets = (
-        ("Identificação", {"fields": ("unit", "title", "slug", "track", "axis", "instructors")}),
+        ("Identificação", {"fields": ("unit", "title", "slug", "axis", "instructors")}),
         ("Conteúdo", {"fields": ("description", "cover_image")}),
         ("Agenda e inscrição", {"fields": ("start_date", "end_date", "workload_hours", "enrollment_status", "registration_url")}),
-        ("Publicação", {"fields": ("editorial_status", "is_published", "published_at", "is_featured", "display_order")}),
+        ("Publicação", {"fields": ("editorial_status", "published_at", "include_in_parent_ecosystem")}),
     )
     inlines = (CourseMaterialInline,)
 
@@ -49,25 +34,6 @@ class CourseMaterialAdmin(UnitScopedAdminMixin, admin.ModelAdmin):
     unit_lookup = "course__unit"
     axis_lookup = "course__axis"
     publication_lookup = "course"
-    list_display = ("title", "course", "is_public", "display_order")
-    list_filter = ("is_public",)
+    list_display = ("title", "course", "display_order")
     search_fields = ("title", "description", "course__title")
     autocomplete_fields = ("course",)
-
-
-@admin.register(Event)
-class EventAdmin(UnitScopedAdminMixin, admin.ModelAdmin):
-    axis_lookup = "axis"
-    list_display = ("title", "unit", "event_type", "axis", "event_status", "editorial_status", "is_published", "is_featured", "start_date")
-    list_filter = ("unit", "event_type", "axis", "event_status", "editorial_status", "is_published", "is_featured")
-    search_fields = ("title", "description", "location", "unit__name", "unit__acronym")
-    prepopulated_fields = {"slug": ("title",)}
-    autocomplete_fields = ("unit", "axis")
-    list_select_related = ("unit", "axis")
-    actions = EDITORIAL_ADMIN_ACTIONS
-    fieldsets = (
-        ("Identificação", {"fields": ("unit", "title", "slug", "event_type", "axis")}),
-        ("Conteúdo", {"fields": ("description",)}),
-        ("Agenda e inscrição", {"fields": ("start_date", "end_date", "location", "event_status", "registration_url")}),
-        ("Publicação", {"fields": ("editorial_status", "is_published", "published_at", "is_featured", "display_order")}),
-    )

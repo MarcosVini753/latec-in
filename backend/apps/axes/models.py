@@ -6,10 +6,8 @@ from apps.common.models import BaseModel
 class ResearchAxis(BaseModel):
     unit = models.ForeignKey(
         "institutional.InstitutionalUnit",
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         related_name="research_axes",
-        blank=True,
-        null=True,
     )
     number = models.PositiveSmallIntegerField(unique=True)
     title = models.CharField(max_length=180)

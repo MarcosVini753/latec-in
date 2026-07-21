@@ -4,6 +4,10 @@
 
 Aceita
 
+## Estado atual
+
+O workflow está consolidado exclusivamente em `editorial_status`; não existe fallback editorial para um campo genérico `status` nem flag `is_published` paralela nos conteúdos editoriais. `HeroBanner` e `InstitutionalSection` mantêm publicação estrutural simples. A menção à uniformização gradual abaixo descreve a etapa de transição já concluída.
+
 ## Contexto
 
 O portal LABTEC.IN terá publicações criadas por coordenação, pesquisadores, professores e mentores da LATEC. Conteúdos não devem ficar públicos antes de revisão.

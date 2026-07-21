@@ -6,12 +6,9 @@ from apps.common.models import BaseModel
 
 class Profile(BaseModel):
     class AdminRole(models.TextChoices):
-        ADMIN = "admin", "Administrador"
         LAB_COORDINATOR = "lab_coordinator", "Coordenação LABTEC.IN"
         UNIT_COORDINATOR = "unit_coordinator", "Coordenação de unidade"
         MENTOR = "mentor", "Mentor/Professor"
-        EDITOR = "editor", "Editor"
-        READER = "reader", "Leitor administrativo"
 
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="profile")
     person = models.OneToOneField(
@@ -34,7 +31,7 @@ class Profile(BaseModel):
         blank=True,
     )
     inherit_descendants = models.BooleanField(default=False)
-    role = models.CharField(max_length=32, choices=AdminRole.choices, default=AdminRole.READER)
+    role = models.CharField(max_length=32, choices=AdminRole.choices)
     is_active_admin = models.BooleanField(default=True)
 
     class Meta:
@@ -43,10 +40,6 @@ class Profile(BaseModel):
 
     def __str__(self) -> str:
         return f"{self.user} ({self.get_role_display()})"
-
-    @property
-    def is_global_admin(self) -> bool:
-        return self.is_active_admin and self.role == self.AdminRole.ADMIN
 
     @property
     def is_lab_coordinator(self) -> bool:
@@ -59,7 +52,7 @@ class Profile(BaseModel):
 
     @property
     def can_publish(self) -> bool:
-        return self.is_global_admin or self.is_lab_coordinator
+        return self.is_lab_coordinator
 
     def accessible_unit_ids(self) -> set[int]:
         """Return the explicit institutional scope for this active profile."""
@@ -67,9 +60,6 @@ class Profile(BaseModel):
             return set()
 
         from apps.institutional.models import InstitutionalUnit
-
-        if self.is_global_admin:
-            return set(InstitutionalUnit.objects.values_list("pk", flat=True))
 
         if self.role == self.AdminRole.LAB_COORDINATOR:
             if not self.is_lab_coordinator:

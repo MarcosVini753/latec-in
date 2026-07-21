@@ -2,11 +2,11 @@ from rest_framework import serializers
 
 from apps.axes.models import AxisMentorship, ResearchAxis
 from apps.institutional.serializers import InstitutionalUnitSummarySerializer
-from apps.people.serializers import PersonSerializer
+from apps.people.serializers import PersonSummarySerializer
 
 
 class AxisMentorshipSerializer(serializers.ModelSerializer):
-    person = PersonSerializer(read_only=True)
+    person = PersonSummarySerializer(read_only=True)
 
     class Meta:
         model = AxisMentorship
@@ -14,7 +14,7 @@ class AxisMentorshipSerializer(serializers.ModelSerializer):
 
 
 class ResearchAxisSerializer(serializers.ModelSerializer):
-    unit = InstitutionalUnitSummarySerializer(read_only=True, allow_null=True)
+    unit = InstitutionalUnitSummarySerializer(read_only=True)
     mentorships = AxisMentorshipSerializer(many=True, read_only=True)
 
     class Meta:

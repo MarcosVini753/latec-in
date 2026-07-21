@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from apps.axes.serializers import ResearchAxisSerializer
 from apps.institutional.serializers import InstitutionalUnitSummarySerializer
-from apps.people.serializers import PersonSerializer
+from apps.people.serializers import PersonSummarySerializer
 from apps.research.models import AcademicWork, AcademicWorkContributor, ResearchProject, ResearchProjectMember
 
 
@@ -13,11 +13,11 @@ class ResearchProjectSummarySerializer(serializers.ModelSerializer):
 
 
 class ResearchProjectMemberSerializer(serializers.ModelSerializer):
-    person = PersonSerializer(read_only=True)
+    person = PersonSummarySerializer(read_only=True)
 
     class Meta:
         model = ResearchProjectMember
-        fields = ("person", "role", "is_coordinator", "display_order")
+        fields = ("person", "role", "display_order")
 
 
 class ResearchProjectSerializer(serializers.ModelSerializer):
@@ -34,16 +34,12 @@ class ResearchProjectSerializer(serializers.ModelSerializer):
             "title",
             "slug",
             "summary",
-            "objectives",
-            "methodology",
-            "expected_results",
+            "file",
+            "external_url",
             "start_date",
             "end_date",
             "project_status",
-            "cover_image",
             "published_at",
-            "is_featured",
-            "display_order",
             "team_members",
         )
 
@@ -55,7 +51,7 @@ class AcademicWorkSummarySerializer(serializers.ModelSerializer):
 
 
 class AcademicWorkContributorSerializer(serializers.ModelSerializer):
-    person = PersonSerializer(read_only=True)
+    person = PersonSummarySerializer(read_only=True)
 
     class Meta:
         model = AcademicWorkContributor
@@ -84,7 +80,5 @@ class AcademicWorkSerializer(serializers.ModelSerializer):
             "file",
             "external_url",
             "published_at",
-            "is_featured",
-            "display_order",
             "contributors",
         )

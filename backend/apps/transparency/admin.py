@@ -7,8 +7,8 @@ from apps.transparency.models import TransparencyDocument
 
 @admin.register(TransparencyDocument)
 class TransparencyDocumentAdmin(UnitScopedAdminMixin, admin.ModelAdmin):
-    list_display = ("title", "unit", "document_type", "status", "is_published", "is_featured", "publication_date")
-    list_filter = ("unit", "document_type", "status", "is_published", "is_featured")
+    list_display = ("title", "unit", "document_type", "editorial_status", "include_in_parent_ecosystem", "publication_date")
+    list_filter = ("unit", "document_type", "editorial_status", "include_in_parent_ecosystem")
     search_fields = ("title", "description", "related_process", "unit__name", "unit__acronym")
     prepopulated_fields = {"slug": ("title",)}
     autocomplete_fields = ("unit",)
@@ -17,5 +17,5 @@ class TransparencyDocumentAdmin(UnitScopedAdminMixin, admin.ModelAdmin):
     fieldsets = (
         ("Identificação", {"fields": ("unit", "title", "slug", "document_type", "related_process")}),
         ("Conteúdo", {"fields": ("description", "file", "publication_date")}),
-        ("Publicação", {"fields": ("status", "is_published", "published_at", "is_featured", "display_order")}),
+        ("Publicação", {"fields": ("editorial_status", "published_at", "include_in_parent_ecosystem")}),
     )

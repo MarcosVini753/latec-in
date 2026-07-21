@@ -1,175 +1,78 @@
 # Estrutura institucional do portal LABTEC.IN
 
-## Motivação
+## Organização
 
-A arquitetura anterior tratava a LATEC.IN como proprietária direta do portal. A organização institucional aprovada estabelece:
-
-- LABTEC.IN — Laboratório de Biotecnologia, Biodiversidade e Inovação — como instituição raiz;
-- LATEC como liga acadêmica ou iniciativa vinculada ao laboratório;
-- possibilidade de futuras unidades sem remodelar todos os conteúdos.
-
-Essa mudança exige uma camada institucional genérica, em vez de renomear textos ou adicionar booleanos específicos.
-
-## Estado implementado
-
-O backend atual:
-
-- possui o app `institutional`, com `InstitutionalUnit` e `InstitutionMembership`;
-- cria LABTEC.IN e LATEC por seed idempotente;
-- expõe unidades ativas e públicas em `/api/v1/institutional-units/`;
-- associa conteúdos a unidades e parceiros a uma ou mais unidades;
-- preserva `Person.role`, mas usa memberships para os papéis por unidade;
-- cria 43 memberships no seed, incluindo nove mentores da LATEC;
-- associa explicitamente os sete eixos à LATEC;
-- aplica escopo administrativo por unidade, descendência e eixo.
-
-Referências persistidas à antiga identificação LATEC.IN são tratadas somente por fallback de compatibilidade, sem alterar os slugs públicos.
-
-## Hierarquia alvo
+LABTEC.IN é a instituição raiz. LATEC é uma liga acadêmica filha. Futuras unidades podem ser adicionadas sem criar colunas ou booleanos específicos em cada conteúdo.
 
 ```txt
-LABTEC.IN
-├── conteúdos institucionais do laboratório
-├── pessoas e vínculos institucionais
-├── pesquisas e trabalhos acadêmicos
-├── produções científicas
-├── projetos e soluções
-├── notícias, cursos e eventos
-├── transparência, parceiros e métricas
-└── LATEC
-    ├── ligantes
-    ├── mentores
-    ├── sete eixos de atuação
-    └── conteúdos próprios da Liga
+LABTEC.IN (labtec-in)
+├── conteúdos próprios do laboratório
+├── pessoas e memberships
+├── pesquisas, trabalhos, produções e projetos
+├── notícias, cursos, transparência e métricas
+└── LATEC (latec)
+    ├── ligantes e mentores
+    ├── sete eixos
+    └── conteúdos próprios
 ```
 
-LABTEC.IN não é apenas um rótulo visual: é a unidade proprietária do portal e a raiz da hierarquia.
+## Unidades
 
-## `InstitutionalUnit`
-
-`institutional.InstitutionalUnit` representa qualquer unidade organizacional.
-
-Campos conceituais:
-
-- `id`;
-- `name`;
-- `acronym`;
-- `slug`;
-- `unit_type`;
-- `parent`;
-- `description`;
-- `mission`;
-- `vision`;
-- `logo`;
-- `cover_image`;
-- `contact_email`;
-- `website_url`;
-- `is_active`;
-- `is_public`;
-- `display_order`;
-- timestamps.
-
-Tipos iniciais:
-
-- `laboratory`;
-- `academic_league`;
-- `program`;
-- `research_group`;
-- `initiative`.
-
-Dados iniciais:
+`InstitutionalUnit` contém nome, sigla, slug, tipo, pai opcional, descrição, identidade visual, contatos e ordem. Toda unidade cadastrada é pública; não existem campos de ativação ou visibilidade no modelo. O banco impede `parent_id == id`; o modelo percorre ancestrais e rejeita ciclos indiretos.
 
 | Nome | Slug | Tipo | Pai |
 | --- | --- | --- | --- |
 | LABTEC.IN | `labtec-in` | `laboratory` | nenhum |
 | LATEC | `latec` | `academic_league` | LABTEC.IN |
 
-O banco impede `parent_id == id`. O preflight anterior à constraint informa os IDs de qualquer ciclo existente, inclusive indireto. `clean()` percorre ancestrais e rejeita ciclos indiretos; `save()` chama a validação para Admin, seed e gravações ORM comuns. O manager impede `bulk_create()` de inserir unidades com pai e impede mudanças de pai por `bulk_update()`. `QuerySet.update()` não executa `save()` e continua sendo o único caminho ORM capaz de contornar essa validação; seu uso deve garantir a integridade explicitamente.
+`save()` executa validação de hierarquia e o manager bloqueia mudanças inseguras via `bulk_create()` e `bulk_update()`. `QuerySet.update()` é o único bypass ORM conhecido e deve ser usado apenas quando a integridade for garantida explicitamente.
 
-## `InstitutionMembership`
+## Memberships
 
-`institutional.InstitutionMembership` representa o papel de uma pessoa em uma unidade e em um período.
-
-Campos conceituais:
-
-- `person`;
-- `unit`;
-- `role`;
-- `start_date`;
-- `end_date`;
-- `is_active`;
-- `is_public`;
-- `display_order`;
-- timestamps.
-
-O vínculo não substitui `people.Person`; ele acrescenta contexto institucional.
+`InstitutionMembership` representa o papel de uma pessoa em uma unidade e período. Contém pessoa, unidade, papel, datas, ativação, visibilidade e ordem.
 
 Exemplo:
 
 | Pessoa | Unidade | Papel |
 | --- | --- | --- |
 | Marta Adelino | LABTEC.IN | Coordenadora |
-| Marta Adelino | LABTEC.IN | Pesquisadora |
 | Marta Adelino | LATEC | Coordenadora |
-| Marta Adelino | LATEC | Mentora de eixo |
+| Marta Adelino | LATEC | Mentor |
 
-A combinação `(person, unit, role)` é única. Datas podem ser nulas, mas `end_date` não pode anteceder `start_date`. As regras existem no modelo e em constraints de banco. Uma migration de preflight lista os IDs de duplicatas ou períodos inválidos e falha antes de criar as constraints, sem apagar dados.
+`(person, unit, role)` é único e `end_date` não pode anteceder `start_date`. A API de pessoas deriva os papéis públicos dos memberships ativos e públicos; não existe `Person.role`.
 
-## Propriedade dos conteúdos
+As flags do membership pertencem ao vínculo, não à unidade. Assim, a unidade sempre aparece na API, mas um papel de pessoa pode continuar oculto, inativo, ainda não iniciado ou encerrado.
 
-Todo conteúdo é gerenciado dentro da estrutura do LABTEC.IN.
+## Propriedade
 
-Um conteúdo pode pertencer:
+Todo conteúdo institucional possui uma única unidade obrigatória com `PROTECT`. Isso vale para configurações, banners, seções, links, eixos, projetos, notícias, cursos, pesquisas, trabalhos, produções, transparência e métricas.
 
-- diretamente ao LABTEC.IN;
-- à LATEC;
-- a uma futura unidade.
+Parceiros usam M2M porque uma parceria pode pertencer simultaneamente a várias unidades. Eixo é classificação acadêmica e não substitui a unidade.
 
-Regras:
+## Ecossistema da unidade mãe
 
-- usar relação com `InstitutionalUnit`;
-- não criar `is_latec`, `belongs_to_latec` ou equivalentes;
-- manter eixo separado de unidade;
-- manter unidade opcional nos modelos legados durante a migração e exigi-la nos novos models de `research`;
-- validar a compatibilidade entre eixo e unidade; uma pesquisa do LABTEC.IN pode se relacionar explicitamente com um eixo da unidade filha LATEC.
+Projetos, notícias, cursos, pesquisas, trabalhos acadêmicos, produções científicas e documentos de transparência possuem `include_in_parent_ecosystem`.
 
-## Escopo inicial por domínio
+Ao consultar `?unit=<slug>`, a API retorna:
 
-| Domínio | LABTEC.IN | LATEC |
-| --- | --- | --- |
-| Institucional | Home, missão, visão, contatos | Perfil e seções próprias |
-| Pessoas | Coordenação, pesquisadores, professores | Ligantes, mentores e coordenação da Liga |
-| Eixos | Não organiza globalmente o laboratório | Sete eixos |
-| Pesquisa | Pesquisas e trabalhos acadêmicos | Relação opcional por unidade ou eixo |
-| Portfólio | Projetos e soluções do laboratório | Projetos específicos |
-| Produção científica | Produção geral | Produção específica |
-| Notícias e aprendizagem | Conteúdo geral | Conteúdo específico |
-| Transparência | Documentos institucionais | Documentos próprios, quando existirem |
-| Métricas | Valores diretos ou agregados | Valores próprios |
+- conteúdo próprio da unidade consultada;
+- conteúdo de suas filhas diretas com a opção habilitada.
 
-## Consultas públicas
+Não há propagação recursiva. Um conteúdo de uma neta não aparece no recorte da avó por essa regra, e o conteúdo continua serializando a filha como proprietária.
 
-- `?unit=labtec-in` e `?unit=latec` filtram propriedade direta, sem agregarem descendentes implicitamente;
-- a Home retorna exclusivamente conteúdo direto do LABTEC.IN;
-- a API oferece o recorte LATEC por `?unit=latec`;
-- agregação futura não alterará a propriedade do conteúdo.
+Exemplo: uma notícia da LATEC com a opção habilitada aparece tanto em `?unit=latec` quanto em `?unit=labtec-in`. Ela continua pertencendo somente à LATEC.
 
-## Permissões
+A Home é uma exceção deliberada: usa somente configurações, banners, seções e links diretamente do LABTEC.IN e ignora a agregação editorial.
 
-- Superusuário e administrador: todas as unidades e conteúdo sem unidade.
-- Coordenação do LABTEC.IN: unidade raiz, descendentes, conteúdo sem unidade e publicação final.
-- Coordenação de unidade e editor: unidades autorizadas, sem publicação final.
-- Mentor da LATEC: somente os próprios eixos, sem publicação final.
-- Reader: somente leitura nas unidades autorizadas.
+## Escopo administrativo
 
-O acesso a descendentes deve ser uma permissão declarada, não uma consequência automática para todos os papéis.
+- Superusuário: todas as unidades.
+- Coordenação do LABTEC.IN: raiz, descendentes e publicação final.
+- Coordenação de unidade: unidades autorizadas e descendentes apenas quando habilitados, sem publicação final.
+- Mentor: LATEC e apenas os próprios eixos, sem publicação final.
 
-## Futuras unidades
+O acesso administrativo a descendentes é uma permissão do perfil; a inclusão pública no ecossistema é uma decisão do conteúdo. São mecanismos distintos.
 
-Novos programas, grupos de pesquisa ou iniciativas serão criados como `InstitutionalUnit` com `parent` adequado. Os conteúdos existentes reutilizarão o mesmo campo `unit`, sem novas colunas específicas.
+## Estado do corte
 
-## Estado da migração
-
-LABTEC.IN, LATEC, memberships, `unit` opcional, backfill inicial, filtros públicos e escopo do Admin estão implementados. Permanecem para etapas posteriores a obrigatoriedade dos campos institucionais legados, a retirada de `Person.role`, o frontend e a eventual agregação da Home.
-
-O detalhamento e o corte dos legados estão em [Migração para a arquitetura LABTEC.IN](12-migracao-labtec.md).
+Unidades obrigatórias e sempre públicas, memberships com visibilidade própria, filtros com agregação de um nível e remoção de `Person.role` estão consolidados. O frontend e a expansão da Home continuam como trabalhos posteriores.

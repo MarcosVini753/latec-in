@@ -1,115 +1,108 @@
-# Migração para a arquitetura institucional LABTEC.IN
+# Migração e corte institucional do LABTEC.IN
 
-Este documento registra o estado implementado da migração do backend para LABTEC.IN como instituição raiz e LATEC como unidade filha, além dos cortes que ainda exigem revisão manual.
+Este documento registra a sequência aplicada para consolidar LABTEC.IN como raiz, LATEC como filha e remover os legados editoriais.
 
-## Estado implementado
+## Resultado
 
-- LABTEC.IN e LATEC existem como unidades, com slugs `labtec-in` e `latec`.
-- Memberships possuem unicidade por pessoa, unidade e papel e validação de período.
-- A hierarquia impede autorreferência e ciclos indiretos em gravações usuais.
-- O seed cria 43 memberships, sete eixos da LATEC e nove mentores sem duplicação.
-- Conteúdos legados possuem `unit` opcional; parceiros possuem várias unidades.
-- `Profile` possui papel, unidade principal, unidades autorizadas e herança opcional de descendentes.
-- O Django Admin aplica escopo por unidade e eixo e reserva publicação final a administrador e coordenação do LABTEC.IN.
-- O app `research` modela pesquisas, trabalhos acadêmicos, equipes e contribuidores.
-- Produções científicas podem apontar para pesquisas e trabalhos e possuem autoria interna ordenada.
-- A API `/api/v1/` expõe pesquisas e trabalhos, filtra por unidade e preserva os slugs existentes.
-- A Home retorna exclusivamente o conteúdo direto do LABTEC.IN.
+- LABTEC.IN e LATEC usam os slugs públicos `labtec-in` e `latec`.
+- Toda unidade cadastrada é pública; os antigos estados de ativação e visibilidade da unidade foram removidos.
+- Todo conteúdo possui unidade obrigatória com `PROTECT`.
+- O seed mantém 43 memberships, sete eixos e nove mentores sem duplicação.
+- Pessoas públicas usam memberships; `Person.role` e `people.Role` foram removidos.
+- Perfis administrativos usam somente `lab_coordinator`, `unit_coordinator` e `mentor`.
+- O workflow editorial usa somente `editorial_status`.
+- Conteúdo de uma filha pode optar pelo ecossistema da mãe direta.
+- Pesquisa, trabalho acadêmico, produção científica e portfólio são domínios separados.
+- Notícias, cursos e arquivos foram simplificados.
+- Todos os materiais de um curso publicado são públicos e não possuem flag própria.
+- O app, a tabela, o ContentType e as permissões do MediaHub foram removidos.
+- Bioativos é uma pesquisa publicada e seu projeto legado está arquivado.
 
-## Integridade antes das constraints
+## Preflights
 
-A migration institucional executa preflight antes de criar as constraints. Ela procura:
+As migrations de corte falham com IDs claros antes de modificar o schema quando encontram:
 
-- memberships duplicados por `(person, unit, role)`;
-- memberships com `end_date < start_date`;
-- ciclos na hierarquia, inclusive indiretos.
+- memberships duplicados ou períodos inválidos;
+- ciclos diretos ou indiretos de unidades;
+- conteúdos sem unidade;
+- contradição entre o status editorial e o antigo `is_published`;
+- papel público sem membership equivalente;
+- produção científica com autores textuais ainda não convertidos;
+- projeto histórico de pesquisa/produção sem registro de destino.
 
-Se encontrar dados inválidos, a migration falha e informa IDs claros. Nenhum dado é apagado ou corrigido automaticamente. Depois do preflight, o banco garante unicidade, período válido e ausência de autorreferência.
+Essas verificações não inferem nem apagam dados para corrigir inconsistências.
 
-`InstitutionalUnit.clean()` percorre os ancestrais para detectar ciclos indiretos, e `save()` executa essa validação no Admin, seed e gravações ORM comuns. O manager também bloqueia operações hierárquicas inseguras por `bulk_create()` e `bulk_update()`. `QuerySet.update()` não chama `save()` e pode contornar a validação; migrations ou rotinas que o utilizem devem preservar a hierarquia explicitamente.
+## Papéis e pessoas
 
-## Backfill institucional
+Perfis `admin`, `editor` e `reader` foram tecnicamente convertidos para `unit_coordinator`, desativados e retirados do Django Admin quando o usuário não era superusuário. Nenhum perfil foi promovido automaticamente.
 
-| Registro | Classificação inicial |
-| --- | --- |
-| `SiteSettings`, heroes, seções, links e métricas atuais | LABTEC.IN |
-| Sete eixos e mentorias | LATEC |
-| Ligantes | Membership na LATEC |
-| Professores e pesquisadores | Membership no LABTEC.IN |
-| Coordenação | LABTEC.IN e LATEC |
-| Nove pessoas em `AxisMentorship` | Membership `Mentor` na LATEC |
-| Notícias e cursos explicitamente da Liga | LATEC |
-| Projetos existentes | Classificação provisória preservada |
+Antes de remover `Person.role`, a migration confirmou que o papel histórico tinha membership institucional equivalente. A API de pessoas passou a serializar apenas memberships públicos ativos.
 
-`Person.role` não foi removido. Os memberships são a representação institucional nova, mas o campo antigo continua disponível até o corte de todos os consumidores.
+## Unidade obrigatória
 
-## Perfis e permissões
+Depois do backfill, `unit` tornou-se obrigatória em:
 
-A migration de perfis aplica somente mapeamentos inequívocos:
+- configurações, banners, seções e links sociais;
+- eixos;
+- projetos, notícias e cursos;
+- pesquisas, trabalhos e produções científicas;
+- documentos de transparência;
+- métricas.
 
-- `coordinator` legado vira `lab_coordinator`, com unidade principal LABTEC.IN e herança de descendentes;
-- mentor legado recebe LATEC quando sua pessoa está em `AxisMentorship`;
-- editor e reader permanecem sem acesso a conteúdo até receberem unidade;
-- perfil inativo ou inexistente não recebe escopo;
-- superusuário permanece irrestrito.
+Parceiros continuam com várias unidades. `PROTECT` evita excluir uma unidade ainda referenciada.
 
-Somente superusuário, `admin` e `lab_coordinator` podem publicar ou arquivar. Coordenador de unidade, mentor e editor trabalham em rascunho ou revisão e não alteram registros já publicados. Reader possui somente leitura. Conteúdo sem unidade fica restrito a administrador e coordenação do LABTEC.IN.
+## Workflow e contratos
 
-## Conversão histórica
+O corte normalizou os campos antigos `status` para `editorial_status`, confirmou sua equivalência com `is_published` e removeu a flag duplicada. Flags de destaque e ordenação manual dos conteúdos editoriais de topo também foram removidas.
 
-A conversão é uma migration de dados reversível:
+Antes de retirar `ResearchProjectMember.is_coordinator`, valores verdadeiros foram convertidos para o papel `coordinator`. Assim, a informação de coordenação permanece no campo `role`, que passa a ser sua única fonte.
 
-1. exige `unit` nos projetos de categoria `pesquisa` ou `producao-cientifica`;
-2. cria `ResearchProject` ou `ScientificOutput` em rascunho;
-3. preserva unidade, eixo, título, slug, resumo e status compatível;
-4. converte equipe de pesquisa, com líder como coordenador e demais membros como colaboradores;
-5. não infere autoria científica, metodologia, datas ou instituição;
-6. mantém o projeto legado inalterado e público;
-7. registra o ID da origem em `legacy_portfolio_project_id`, campo técnico não exposto;
-8. no reverse, remove somente os registros marcados como derivados, sem depender do slug atual.
+Notícias perderam categoria, tags e autores. Cursos perderam trilha; trilhas e eventos foram apagados. Materiais passaram a herdar integralmente a publicação do curso.
 
-No banco inicial, `pesquisa-de-bioativos-da-amazonia` gera uma pesquisa em rascunho. Não há produção científica histórica para converter. Em banco novo, o seed cria somente a pesquisa nova; em banco atualizado, o projeto legado continua até o corte manual. O seed não republica um legado arquivado posteriormente.
+O app MediaHub foi retirado de `INSTALLED_APPS` e do repositório. Uma migration final remove a tabela residual, o ContentType e as permissões tanto em instalações atualizadas quanto em bancos novos. O histórico de migrations aplicadas permanece no Django e não constitui compatibilidade em execução.
 
-## Corte manual
+## Conversão científica
 
-O projeto legado só deve ser arquivado depois que a pesquisa derivada for revisada, completada e publicada com aprovação institucional. O corte não integra a migration porque depende da validação de autoria, metodologia, datas, arquivos e responsabilidade institucional.
+Projetos das categorias históricas foram associados aos destinos já convertidos. Estado de publicação e `published_at` foram transferidos quando aplicável, e as origens de portfólio foram arquivadas e desvinculadas das categorias antigas.
+
+Para Bioativos:
+
+1. a pesquisa nova preservou slug, unidade, eixo, resumo e equipe compatíveis;
+2. o papel do líder foi convertido para `coordinator`;
+3. a pesquisa foi publicada mesmo sem arquivo;
+4. o projeto de portfólio foi arquivado;
+5. o identificador de proveniência e as categorias históricas foram removidos.
+
+Em banco novo, o seed cria somente a pesquisa publicada. Em banco atualizado, ele não republica o projeto legado.
 
 ## Ordem operacional
 
-1. Fazer backup e executar o preflight de duplicatas, datas, ciclos e projetos sem unidade.
-2. Aplicar migrations institucionais e de `Profile`.
-3. Aplicar a migration inicial de `research` e as relações de `scientific`.
-4. Aplicar a conversão histórica.
-5. Executar o seed duas vezes para confirmar idempotência.
-6. Executar `check`, testes, `makemigrations --check --dry-run` e validação OpenAPI.
-7. Revisar manualmente a pesquisa convertida.
-8. Arquivar o legado somente após aprovação institucional.
+1. Fazer backup do banco e dos arquivos.
+2. Aplicar migrations institucionais de integridade.
+3. Aplicar preflights e backfills de pessoas, unidades e workflow.
+4. Aplicar o corte científico e as remoções de schema.
+5. Executar `seed_initial_data` duas vezes.
+6. Inventariar arquivos com `cleanup_orphan_media`, revisar os alvos e executar novamente com `--delete`.
+7. Repetir o inventário e confirmar que não restaram órfãos.
+8. Executar `check`, testes, verificação de drift e validação OpenAPI.
+9. Revisar manualmente conteúdos, autorias e arquivos publicados.
 
-## Migrations desta etapa
+As migrations de remoção são destrutivas e não oferecem reversão integral. Recuperação depende do backup anterior ao corte.
 
-| App | Migration | Responsabilidade |
-| --- | --- | --- |
-| `institutional` | `0002_validate_and_add_institutional_constraints` | Preflight e constraints institucionais. |
-| `accounts` | `0002_add_institutional_admin_scope` | Campos de escopo, novos papéis e conversão conservadora dos perfis. |
-| `research` | `0001_initial` | Pesquisas, trabalhos, equipes e contribuidores. |
-| `scientific` | `0003_scientificoutput_academic_work_and_more` | Relações com `research` e autoria estruturada. |
-| `research` | `0002_convert_legacy_portfolio_categories` | Conversão histórica reversível em rascunhos. |
+## Contratos mantidos e quebras intencionais
 
-## Compatibilidade preservada
+- `/api/v1/` e os endpoints principais permanecem.
+- `HeroBanner` e `InstitutionalSection` mantêm sua flag simples de publicação.
+- Ordem estrutural permanece em equipes, autorias, materiais, resultados, links, banners, seções, eixos, memberships, métricas e parceiros.
 
-- `Person.role`, papéis administrativos migrados, categorias antigas e dados existentes não foram removidos.
-- Os campos `unit` dos models legados continuam `null=True` e `blank=True`.
-- Os novos `ResearchProject` e `AcademicWork` exigem unidade com `PROTECT`.
-- Tipos científicos `project` e `scientific_production` e o campo textual `authors` permanecem temporariamente.
-- Nenhum slug público foi alterado.
+As compatibilidades residuais de nomes institucionais, unidade nula e status editorial foram removidas. Dois slugs de notícias foram corrigidos de `latecin` para `latec`; as URLs antigas retornam `404`, sem alias ou redirecionamento. Os demais slugs públicos não foram modificados por este corte.
 
-## Fora do escopo desta entrega
+Arquivos órfãos foram inventariados e excluídos explicitamente pelo comando de manutenção. Não foi criado registro operacional persistente do corte.
 
-- frontend `latec-app/`;
-- expansão do payload da Home;
-- endpoint público de eventos;
-- tornar obrigatórios os campos `unit` dos models legados;
-- remoção de `Person.role`, categorias ou tipos legados;
-- arquivamento automático do projeto convertido;
-- autenticação ou permissões por unidade na API pública;
-- usuários administrativos ou credenciais criados pelo seed.
+## Fora do escopo
+
+- frontend;
+- expansão da Home;
+- autenticação pública;
+- permissões institucionais na API anônima;
+- infraestrutura ou storage externo.

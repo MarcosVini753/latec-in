@@ -1,63 +1,64 @@
-# Permissões e acesso administrativo
+# Permissões administrativas do portal LABTEC.IN
 
-## Princípios
+O sistema usa o `User` padrão do Django, o Django Admin e um `accounts.Profile` para definir escopo institucional. Pessoas públicas continuam independentes de usuários administrativos.
 
-- Visitantes acessam somente conteúdo público e publicado.
-- Pessoas públicas continuam separadas de usuários administrativos.
-- O sistema usa o `User` padrão do Django e o Django Admin como CMS.
-- A autorização administrativa combina papel, estado ativo, unidade e, para mentores, eixo.
-- Somente administrador e coordenação do LABTEC.IN realizam publicação final ou arquivamento.
+## Papéis administrativos
 
-## Perfil administrativo
+Além do superusuário nativo, existem somente:
 
-`accounts.Profile` possui:
+- `lab_coordinator`: coordenação do LABTEC.IN;
+- `unit_coordinator`: coordenação de uma unidade;
+- `mentor`: mentor da LATEC.
 
-- `role`: `admin`, `lab_coordinator`, `unit_coordinator`, `mentor`, `editor` ou `reader`;
-- `primary_unit`, opcional;
-- `authorized_units`, relação muitos-para-muitos opcional;
-- `inherit_descendants`, `False` por padrão;
+Os antigos papéis customizados `admin`, `editor` e `reader` foram removidos. Perfis com esses valores foram convertidos tecnicamente para `unit_coordinator`, desativados com `is_active_admin=False` e tiveram `is_staff` removido quando o usuário não era superusuário. A reativação exige uma decisão administrativa explícita.
+
+## Escopo do perfil
+
+`Profile` mantém:
+
 - `person`, opcional;
+- `primary_unit`, opcional;
+- `authorized_units`, opcional;
+- `inherit_descendants`;
+- `role`;
 - `is_active_admin`.
 
-Superusuários são irrestritos. Um perfil inativo não recebe acesso institucional. Perfis de mentor, editor ou leitor sem unidade ou eixo aplicável não recebem acesso a conteúdo.
+Perfil inativo, sem escopo aplicável ou usuário sem acesso ao Admin não recebe permissão institucional.
 
-A migration de dados converte `coordinator` legado em `lab_coordinator`, define `labtec-in` como unidade principal e habilita descendentes. Mentores legados recebem `latec` apenas quando existe correspondência entre a pessoa vinculada e uma mentoria. Editor e reader são preservados sem ganhar unidades implicitamente. Perfis inexistentes ou inativos não recebem escopo.
+## Matriz
 
-## Matriz aplicada
-
-| Papel | Escopo de leitura | Criar/editar | Publicar/arquivar |
+| Papel | Escopo | Criar e revisar | Publicar, arquivar, excluir ou alterar conteúdo final |
 | --- | --- | --- | --- |
-| Superusuário ou `admin` | Todas as unidades e conteúdo sem unidade | Sim | Sim |
-| `lab_coordinator` | LABTEC.IN, descendentes e conteúdo sem unidade | Sim | Sim |
-| `unit_coordinator` | Unidade principal, autorizadas e descendentes quando `inherit_descendants` estiver habilitado | Rascunho e revisão | Não |
-| `mentor` | LATEC, limitado aos eixos em `AxisMentorship` da pessoa vinculada | Rascunho e revisão | Não |
-| `editor` | Unidades explicitamente autorizadas | Rascunho e revisão | Não |
-| `reader` | Unidades explicitamente autorizadas | Somente leitura | Não |
+| Superusuário | Todas as unidades | Sim | Sim |
+| `lab_coordinator` | LABTEC.IN e todos os descendentes | Sim | Sim |
+| `unit_coordinator` | Unidade principal, autorizadas e descendentes quando habilitados | Sim, em rascunho/revisão | Não |
+| `mentor` | LATEC e somente os eixos em que possui `AxisMentorship` | Sim, em rascunho/revisão | Não |
 
-Conteúdo sem unidade é visível somente a superusuário, administrador e coordenação do LABTEC.IN. Mentor, editor e coordenador de unidade não podem alterar registros já publicados.
+Somente superusuários e a coordenação do LABTEC.IN realizam a publicação final.
 
-## Aplicação no Django Admin
+## Proteções do Admin
 
-Um mixin compartilhado recebe `unit_lookup` e, quando necessário, `axis_lookup`. Ele cobre:
+O escopo é aplicado em:
 
-- modelos com `unit` direto;
-- filhos cujo escopo vem do pai, como resultados, equipes, materiais, snapshots, contribuidores e autorias;
-- parceiros com unidades em relação muitos-para-muitos;
-- querysets, formulários, inlines, autocomplete e escolhas de unidade ou eixo;
-- validação do objeto enviado, impedindo POST adulterado;
-- remoção das ações de publicação e arquivamento para papéis sem essa capacidade.
+- querysets de conteúdo e de filhos;
+- escolhas de unidade e eixo em formulários;
+- autocomplete;
+- inlines;
+- validação do objeto submetido, inclusive POST adulterado;
+- ações de publicação e arquivamento.
 
-Filtrar as opções visuais não substitui a autorização: inclusão e alteração validam novamente o escopo do registro e de suas relações.
+Coordenadores de unidade e mentores não alteram registros publicados. Eles podem definir `include_in_parent_ecosystem` em rascunho ou revisão; a publicação pela coordenação do LABTEC.IN aprova simultaneamente o conteúdo e essa opção.
 
-## Regras especiais
+Regras especiais:
 
-- Mentores acessam apenas objetos associados aos seus próprios eixos da LATEC.
-- Parceiro associado a mais de uma unidade é editável somente por superusuário, administrador ou coordenação do LABTEC.IN.
-- Mensagens de contato são restritas aos mesmos três grupos e nunca aparecem na API pública.
-- Usuários, perfis, papéis e unidades são geridos somente por superusuário ou administrador.
-- A coordenação do LABTEC.IN pode gerir `InstitutionMembership`, sem elevar papéis administrativos.
-- A API pública permanece anônima, somente leitura e independente dos escopos do Admin.
+- mentor acessa apenas objetos relacionados aos próprios eixos;
+- parceiro ligado a várias unidades é editável somente por superusuário ou coordenação do LABTEC.IN;
+- mensagens de contato ficam restritas a esses dois perfis;
+- usuários, perfis e unidades são geridos somente por superusuário;
+- coordenação do LABTEC.IN pode gerir memberships, mas não elevar privilégios administrativos.
 
-## Limites
+Unidades institucionais não possuem estado privado ou inativo: toda unidade cadastrada aparece publicamente. Essa regra não torna memberships automaticamente públicos; cada vínculo continua sujeito a `is_active`, `is_public` e ao seu período de validade.
 
-O frontend não foi alterado. Permissões públicas por unidade, painel administrativo próprio e novos mecanismos de autenticação permanecem fora do escopo.
+Materiais não têm autorização ou publicação próprias. O escopo administrativo vem do curso e todos os materiais do curso tornam-se públicos quando ele é publicado.
+
+A API pública permanece anônima, read-only para catálogos e independente dos escopos administrativos.

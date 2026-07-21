@@ -11,21 +11,12 @@ class ScientificOutput(BaseModel):
         EBOOK = "ebook", "E-book"
         BOOK = "book", "Livro"
         TECHNICAL_REPORT = "technical_report", "Relatório técnico"
-        PROJECT = "project", "Projeto"
-        SCIENTIFIC_PRODUCTION = "scientific_production", "Produção científica"
+        OTHER = "other", "Outro"
 
     unit = models.ForeignKey(
         "institutional.InstitutionalUnit",
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         related_name="scientific_outputs",
-        blank=True,
-        null=True,
-    )
-    legacy_portfolio_project_id = models.PositiveBigIntegerField(
-        blank=True,
-        null=True,
-        editable=False,
-        unique=True,
     )
     research_project = models.ForeignKey(
         "research.ResearchProject",
@@ -45,19 +36,19 @@ class ScientificOutput(BaseModel):
     slug = models.SlugField(max_length=240, unique=True)
     output_type = models.CharField(max_length=40, choices=OutputType.choices)
     axis = models.ForeignKey("axes.ResearchAxis", on_delete=models.SET_NULL, related_name="scientific_outputs", blank=True, null=True)
-    authors = models.TextField(blank=True)
     abstract = models.TextField(blank=True)
     publication_date = models.DateField(blank=True, null=True)
     file = models.FileField(upload_to="scientific/", blank=True)
     external_url = models.URLField(blank=True)
-    status = models.CharField(max_length=32, choices=EditorialStatus.choices, default=EditorialStatus.DRAFT)
-    is_published = models.BooleanField(default=False)
+    editorial_status = models.CharField(max_length=32, choices=EditorialStatus.choices, default=EditorialStatus.DRAFT)
     published_at = models.DateTimeField(blank=True, null=True)
-    is_featured = models.BooleanField(default=False)
-    display_order = models.PositiveIntegerField(default=0)
+    include_in_parent_ecosystem = models.BooleanField(
+        default=False,
+        help_text="Inclui este conteúdo no recorte público da unidade mãe.",
+    )
 
     class Meta:
-        ordering = ("display_order", "-publication_date", "title")
+        ordering = ("-publication_date", "title")
         verbose_name = "produção científica"
         verbose_name_plural = "produções científicas"
 

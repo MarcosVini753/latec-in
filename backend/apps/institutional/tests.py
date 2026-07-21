@@ -6,13 +6,12 @@ from django.db.models import F
 from django.test import TestCase
 
 from apps.institutional.models import InstitutionMembership, InstitutionalUnit
-from apps.people.models import Person, Role
+from apps.people.models import Person
 
 
 class InstitutionalIntegrityTests(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.role = Role.objects.create(name="Pesquisador", slug="pesquisador-integridade")
         cls.person = Person.objects.create(full_name="Pessoa Teste", slug="pessoa-teste-integridade")
         cls.root = InstitutionalUnit.objects.create(
             name="Unidade raiz",

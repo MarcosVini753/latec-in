@@ -6,10 +6,8 @@ from apps.common.models import BaseModel
 class ImpactMetric(BaseModel):
     unit = models.ForeignKey(
         "institutional.InstitutionalUnit",
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         related_name="impact_metrics",
-        blank=True,
-        null=True,
     )
     key = models.SlugField(max_length=80, unique=True)
     label = models.CharField(max_length=120)

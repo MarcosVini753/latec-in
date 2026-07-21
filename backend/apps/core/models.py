@@ -6,10 +6,8 @@ from apps.common.models import BaseModel
 class SiteSettings(BaseModel):
     unit = models.ForeignKey(
         "institutional.InstitutionalUnit",
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         related_name="site_settings",
-        blank=True,
-        null=True,
     )
     site_name = models.CharField(max_length=120, default="LABTEC.IN")
     description = models.TextField(blank=True)
@@ -29,10 +27,8 @@ class SiteSettings(BaseModel):
 class HeroBanner(BaseModel):
     unit = models.ForeignKey(
         "institutional.InstitutionalUnit",
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         related_name="hero_banners",
-        blank=True,
-        null=True,
     )
     title = models.CharField(max_length=180)
     subtitle = models.TextField(blank=True)
@@ -61,10 +57,8 @@ class InstitutionalSection(BaseModel):
 
     unit = models.ForeignKey(
         "institutional.InstitutionalUnit",
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         related_name="institutional_sections",
-        blank=True,
-        null=True,
     )
     section_type = models.CharField(max_length=32, choices=SectionType.choices)
     title = models.CharField(max_length=140)
@@ -86,10 +80,8 @@ class InstitutionalSection(BaseModel):
 class SocialLink(BaseModel):
     unit = models.ForeignKey(
         "institutional.InstitutionalUnit",
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         related_name="social_links",
-        blank=True,
-        null=True,
     )
     label = models.CharField(max_length=80)
     url = models.URLField()

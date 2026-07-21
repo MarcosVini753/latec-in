@@ -41,8 +41,8 @@ class ProjectLinkInline(UnitScopedInlineMixin, admin.TabularInline):
 @admin.register(Project)
 class ProjectAdmin(UnitScopedAdminMixin, admin.ModelAdmin):
     axis_lookup = "axis"
-    list_display = ("title", "unit", "axis", "category", "status", "editorial_status", "is_published", "is_featured", "year")
-    list_filter = ("unit", "axis", "category", "status", "editorial_status", "is_published", "is_featured", "year")
+    list_display = ("title", "unit", "axis", "category", "status", "editorial_status", "include_in_parent_ecosystem", "year")
+    list_filter = ("unit", "axis", "category", "status", "editorial_status", "include_in_parent_ecosystem", "year")
     search_fields = ("title", "summary", "area", "problem", "solution", "unit__name", "unit__acronym")
     prepopulated_fields = {"slug": ("title",)}
     autocomplete_fields = ("unit", "axis", "category", "status")
@@ -51,7 +51,7 @@ class ProjectAdmin(UnitScopedAdminMixin, admin.ModelAdmin):
     fieldsets = (
         ("Identificação", {"fields": ("unit", "title", "slug", "axis", "category", "area", "status", "year")}),
         ("Conteúdo", {"fields": ("summary", "problem", "solution", "cover_image")}),
-        ("Publicação", {"fields": ("editorial_status", "is_published", "published_at", "is_featured", "display_order")}),
+        ("Publicação", {"fields": ("editorial_status", "published_at", "include_in_parent_ecosystem")}),
     )
     inlines = (ProjectTeamMemberInline, ProjectResultInline, ProjectLinkInline)
 

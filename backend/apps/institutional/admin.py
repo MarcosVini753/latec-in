@@ -8,8 +8,8 @@ from apps.institutional.models import InstitutionMembership, InstitutionalUnit
 class InstitutionalUnitAdmin(ReferenceAdminMixin, admin.ModelAdmin):
     unit_lookup = "pk"
     mentor_requires_axis = False
-    list_display = ("hierarchy", "unit_type", "is_active", "is_public", "display_order")
-    list_filter = ("unit_type", "is_active", "is_public", "parent")
+    list_display = ("hierarchy", "unit_type", "display_order")
+    list_filter = ("unit_type", "parent")
     search_fields = ("name", "acronym", "description", "mission", "vision")
     prepopulated_fields = {"slug": ("name",)}
     autocomplete_fields = ("parent",)

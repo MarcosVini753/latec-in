@@ -18,12 +18,6 @@ class ResearchProject(BaseModel):
         on_delete=models.PROTECT,
         related_name="research_projects",
     )
-    legacy_portfolio_project_id = models.PositiveBigIntegerField(
-        blank=True,
-        null=True,
-        editable=False,
-        unique=True,
-    )
     axis = models.ForeignKey(
         "axes.ResearchAxis",
         on_delete=models.SET_NULL,
@@ -34,9 +28,8 @@ class ResearchProject(BaseModel):
     title = models.CharField(max_length=220)
     slug = models.SlugField(max_length=240, unique=True)
     summary = models.TextField(blank=True)
-    objectives = models.TextField(blank=True)
-    methodology = models.TextField(blank=True)
-    expected_results = models.TextField(blank=True)
+    file = models.FileField(upload_to="research/projects/", blank=True)
+    external_url = models.URLField(blank=True)
     start_date = models.DateField(blank=True, null=True)
     end_date = models.DateField(blank=True, null=True)
     project_status = models.CharField(
@@ -49,11 +42,11 @@ class ResearchProject(BaseModel):
         choices=EditorialStatus.choices,
         default=EditorialStatus.DRAFT,
     )
-    cover_image = models.ImageField(upload_to="research/projects/", blank=True)
-    is_published = models.BooleanField(default=False)
     published_at = models.DateTimeField(blank=True, null=True)
-    is_featured = models.BooleanField(default=False)
-    display_order = models.PositiveIntegerField(default=0)
+    include_in_parent_ecosystem = models.BooleanField(
+        default=False,
+        help_text="Inclui este conteúdo no recorte público da unidade mãe.",
+    )
     team = models.ManyToManyField(
         "people.Person",
         through="ResearchProjectMember",
@@ -62,7 +55,7 @@ class ResearchProject(BaseModel):
     )
 
     class Meta:
-        ordering = ("display_order", "-start_date", "title")
+        ordering = ("-start_date", "title")
         constraints = [
             models.CheckConstraint(
                 check=Q(end_date__isnull=True) | Q(start_date__isnull=True) | Q(end_date__gte=F("start_date")),
@@ -101,7 +94,6 @@ class ResearchProjectMember(BaseModel):
         related_name="research_project_memberships",
     )
     role = models.CharField(max_length=32, choices=Role.choices, default=Role.COLLABORATOR)
-    is_coordinator = models.BooleanField(default=False)
     display_order = models.PositiveIntegerField(default=0)
 
     class Meta:
@@ -155,10 +147,11 @@ class AcademicWork(BaseModel):
         choices=EditorialStatus.choices,
         default=EditorialStatus.DRAFT,
     )
-    is_published = models.BooleanField(default=False)
     published_at = models.DateTimeField(blank=True, null=True)
-    is_featured = models.BooleanField(default=False)
-    display_order = models.PositiveIntegerField(default=0)
+    include_in_parent_ecosystem = models.BooleanField(
+        default=False,
+        help_text="Inclui este conteúdo no recorte público da unidade mãe.",
+    )
     contributors = models.ManyToManyField(
         "people.Person",
         through="AcademicWorkContributor",
@@ -167,7 +160,7 @@ class AcademicWork(BaseModel):
     )
 
     class Meta:
-        ordering = ("display_order", "-year", "title")
+        ordering = ("-year", "title")
         verbose_name = "trabalho acadêmico"
         verbose_name_plural = "trabalhos acadêmicos"
 

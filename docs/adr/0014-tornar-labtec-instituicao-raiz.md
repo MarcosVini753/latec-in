@@ -4,6 +4,10 @@
 
 Aceita.
 
+## Estado atual
+
+A migração foi concluída: LABTEC.IN é a raiz, LATEC é sua filha, os conteúdos possuem unidade obrigatória e `Person.role` foi removido. Toda `InstitutionalUnit` cadastrada é pública por definição e não possui flags de ativação ou visibilidade. Fallbacks de nomes institucionais antigos foram retirados. As referências abaixo à LATEC.IN e a campos opcionais permanecem como contexto histórico do problema e da estratégia incremental.
+
 ## Contexto
 
 A documentação e o backend atuais ainda refletem parcialmente a LATEC.IN como proprietária do portal. A definição institucional aprovada estabelece o LABTEC.IN — Laboratório de Biotecnologia, Biodiversidade e Inovação — como proprietário do portal, do backend e dos conteúdos institucionais.

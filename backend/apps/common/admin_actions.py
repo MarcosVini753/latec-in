@@ -6,11 +6,7 @@ from apps.common.models import EditorialStatus
 
 def _editorial_status_field(model):
     field_names = {field.name for field in model._meta.fields}
-    if "editorial_status" in field_names:
-        return "editorial_status"
-    if "status" in field_names:
-        return "status"
-    return None
+    return "editorial_status" if "editorial_status" in field_names else None
 
 
 def _authorized_queryset(modeladmin, request, queryset, *, publication=False):
@@ -26,7 +22,7 @@ def _authorized_queryset(modeladmin, request, queryset, *, publication=False):
             published |= Q(
                 **{f"{status_field}__in": (EditorialStatus.PUBLISHED, EditorialStatus.ARCHIVED)}
             )
-        if any(field.name == "is_published" for field in queryset.model._meta.fields):
+        elif any(field.name == "is_published" for field in queryset.model._meta.fields):
             published |= Q(is_published=True)
         if published:
             allowed = allowed.exclude(published)
@@ -39,7 +35,7 @@ def mark_as_published(modeladmin, request, queryset):
     updates = {}
     if status_field:
         updates[status_field] = EditorialStatus.PUBLISHED
-    if any(field.name == "is_published" for field in queryset.model._meta.fields):
+    elif any(field.name == "is_published" for field in queryset.model._meta.fields):
         updates["is_published"] = True
     if any(field.name == "published_at" for field in queryset.model._meta.fields):
         updates["published_at"] = timezone.now()
@@ -56,7 +52,7 @@ def mark_as_in_review(modeladmin, request, queryset):
     updates = {}
     if status_field:
         updates[status_field] = EditorialStatus.IN_REVIEW
-    if any(field.name == "is_published" for field in queryset.model._meta.fields):
+    elif any(field.name == "is_published" for field in queryset.model._meta.fields):
         updates["is_published"] = False
     if updates:
         queryset.update(**updates)
@@ -71,7 +67,7 @@ def mark_as_archived(modeladmin, request, queryset):
     updates = {}
     if status_field:
         updates[status_field] = EditorialStatus.ARCHIVED
-    if any(field.name == "is_published" for field in queryset.model._meta.fields):
+    elif any(field.name == "is_published" for field in queryset.model._meta.fields):
         updates["is_published"] = False
     if updates:
         queryset.update(**updates)

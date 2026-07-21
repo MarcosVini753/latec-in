@@ -25,8 +25,7 @@ class ResearchProjectAdmin(UnitScopedAdminMixin, admin.ModelAdmin):
         "axis",
         "project_status",
         "editorial_status",
-        "is_published",
-        "is_featured",
+        "include_in_parent_ecosystem",
         "start_date",
     )
     list_filter = (
@@ -34,15 +33,11 @@ class ResearchProjectAdmin(UnitScopedAdminMixin, admin.ModelAdmin):
         "axis",
         "project_status",
         "editorial_status",
-        "is_published",
-        "is_featured",
+        "include_in_parent_ecosystem",
     )
     search_fields = (
         "title",
         "summary",
-        "objectives",
-        "methodology",
-        "expected_results",
         "unit__name",
         "unit__acronym",
     )
@@ -52,17 +47,15 @@ class ResearchProjectAdmin(UnitScopedAdminMixin, admin.ModelAdmin):
     actions = EDITORIAL_ADMIN_ACTIONS
     fieldsets = (
         ("Identificação", {"fields": ("unit", "axis", "title", "slug", "project_status")}),
-        ("Conteúdo", {"fields": ("summary", "objectives", "methodology", "expected_results", "cover_image")}),
+        ("Conteúdo", {"fields": ("summary", "file", "external_url")}),
         ("Período", {"fields": ("start_date", "end_date")}),
         (
             "Publicação",
             {
                 "fields": (
                     "editorial_status",
-                    "is_published",
                     "published_at",
-                    "is_featured",
-                    "display_order",
+                    "include_in_parent_ecosystem",
                 )
             },
         ),
@@ -75,8 +68,8 @@ class ResearchProjectMemberAdmin(UnitScopedAdminMixin, admin.ModelAdmin):
     unit_lookup = "research_project__unit"
     axis_lookup = "research_project__axis"
     publication_lookup = "research_project"
-    list_display = ("research_project", "person", "role", "is_coordinator", "display_order")
-    list_filter = ("role", "is_coordinator")
+    list_display = ("research_project", "person", "role", "display_order")
+    list_filter = ("role",)
     search_fields = ("research_project__title", "person__full_name")
     autocomplete_fields = ("research_project", "person")
 
@@ -97,10 +90,9 @@ class AcademicWorkAdmin(UnitScopedAdminMixin, admin.ModelAdmin):
         "research_project",
         "year",
         "editorial_status",
-        "is_published",
-        "is_featured",
+        "include_in_parent_ecosystem",
     )
-    list_filter = ("unit", "work_type", "year", "editorial_status", "is_published", "is_featured")
+    list_filter = ("unit", "work_type", "year", "editorial_status", "include_in_parent_ecosystem")
     search_fields = (
         "title",
         "course",
@@ -123,10 +115,8 @@ class AcademicWorkAdmin(UnitScopedAdminMixin, admin.ModelAdmin):
             {
                 "fields": (
                     "editorial_status",
-                    "is_published",
                     "published_at",
-                    "is_featured",
-                    "display_order",
+                    "include_in_parent_ecosystem",
                 )
             },
         ),

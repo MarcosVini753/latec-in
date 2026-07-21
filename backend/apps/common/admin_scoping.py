@@ -35,12 +35,12 @@ def has_active_admin_scope(request) -> bool:
 
 
 def is_global_admin(request) -> bool:
-    if not request.user.is_authenticated or not request.user.is_active or not request.user.is_staff:
-        return False
-    if request.user.is_superuser:
-        return True
-    profile = get_admin_profile(request)
-    return bool(profile and profile.is_global_admin)
+    return bool(
+        request.user.is_authenticated
+        and request.user.is_active
+        and request.user.is_staff
+        and request.user.is_superuser
+    )
 
 
 def is_lab_coordinator(request) -> bool:
@@ -71,11 +71,9 @@ def can_edit_drafts(request) -> bool:
         and (profile.role != Profile.AdminRole.LAB_COORDINATOR or profile.is_lab_coordinator)
         and profile.role
         in {
-            Profile.AdminRole.ADMIN,
             Profile.AdminRole.LAB_COORDINATOR,
             Profile.AdminRole.UNIT_COORDINATOR,
             Profile.AdminRole.MENTOR,
-            Profile.AdminRole.EDITOR,
         }
     )
 
@@ -92,13 +90,6 @@ def _published_filter(model) -> Q:
     published = Q()
     if _has_model_field(model, "editorial_status"):
         published |= Q(editorial_status__in=(EditorialStatus.PUBLISHED, EditorialStatus.ARCHIVED))
-    elif _has_model_field(model, "status"):
-        status_field = model._meta.get_field("status")
-        status_values = {value for value, _label in status_field.choices or ()}
-        if EditorialStatus.PUBLISHED in status_values:
-            published |= Q(status__in=(EditorialStatus.PUBLISHED, EditorialStatus.ARCHIVED))
-    if _has_model_field(model, "is_published"):
-        published |= Q(is_published=True)
     if not published:
         for field_name in _publication_boolean_fields(model):
             published |= Q(**{field_name: True})
@@ -106,16 +97,10 @@ def _published_filter(model) -> Q:
 
 
 def _publication_boolean_fields(model) -> tuple[str, ...]:
-    if (
-        _has_model_field(model, "editorial_status")
-        or _has_model_field(model, "is_published")
-        or (
-            _has_model_field(model, "status")
-            and EditorialStatus.PUBLISHED
-            in {value for value, _label in model._meta.get_field("status").choices or ()}
-        )
-    ):
+    if _has_model_field(model, "editorial_status"):
         return ()
+    if _has_model_field(model, "is_published"):
+        return ("is_published",)
     return tuple(field_name for field_name in ("is_active", "is_public") if _has_model_field(model, field_name))
 
 
@@ -129,7 +114,6 @@ def _related_queryset_for_request(queryset: QuerySet, request) -> QuerySet:
         return queryset.none()
 
     unit_ids = profile.accessible_unit_ids()
-    include_unassigned = profile.is_lab_coordinator
     model = queryset.model
     if model._meta.label_lower == "institutional.institutionalunit":
         return queryset.filter(pk__in=unit_ids)
@@ -140,14 +124,11 @@ def _related_queryset_for_request(queryset: QuerySet, request) -> QuerySet:
         return scoped
     if model._meta.label_lower == "people.person":
         scope = Q(institution_memberships__unit_id__in=unit_ids)
-        if include_unassigned:
+        if profile.is_lab_coordinator:
             scope |= Q(institution_memberships__isnull=True)
         return queryset.filter(scope).distinct()
     if _has_model_field(model, "unit"):
-        scope = Q(unit_id__in=unit_ids)
-        if include_unassigned:
-            scope |= Q(unit__isnull=True)
-        scoped = queryset.filter(scope)
+        scoped = queryset.filter(unit_id__in=unit_ids)
         if profile.role == Profile.AdminRole.MENTOR:
             if _has_model_field(model, "axis"):
                 scoped = scoped.filter(axis_id__in=profile.mentor_axis_ids())
@@ -156,7 +137,7 @@ def _related_queryset_for_request(queryset: QuerySet, request) -> QuerySet:
         return scoped
     if _has_model_field(model, "units"):
         scope = Q(units__id__in=unit_ids)
-        if include_unassigned:
+        if profile.is_lab_coordinator:
             scope |= Q(units__isnull=True)
         return queryset.filter(scope).distinct()
     return queryset
@@ -194,9 +175,9 @@ class UnitScopedAdminMixin:
         if profile.is_lab_coordinator:
             if not self.unit_lookup:
                 return queryset
-            scope = Q(**{f"{self.unit_lookup}__in": profile.accessible_unit_ids()}) | Q(
-                **{f"{self.unit_lookup}__isnull": True}
-            )
+            scope = Q(**{f"{self.unit_lookup}__in": profile.accessible_unit_ids()})
+            if self.unit_lookup_is_many:
+                scope |= Q(**{f"{self.unit_lookup}__isnull": True})
             scoped = queryset.filter(scope)
             return scoped.distinct() if self.unit_lookup_is_many else scoped
 
@@ -284,7 +265,7 @@ class UnitScopedAdminMixin:
     def get_readonly_fields(self, request, obj=None):
         readonly = list(super().get_readonly_fields(request, obj))
         if not can_publish(request):
-            for field_name in ("is_published", "published_at"):
+            for field_name in ("published_at",):
                 if _has_model_field(self.model, field_name) and field_name not in readonly:
                     readonly.append(field_name)
             if not self.publication_lookup:
@@ -329,33 +310,28 @@ class UnitScopedAdminMixin:
         if not can_publish(request) and self._is_published(publication_object):
             raise PermissionDenied("Registros publicados só podem ser alterados pela coordenação do LABTEC.IN.")
         if not can_publish(request) and self._is_submitted_as_final(obj):
-            raise PermissionDenied("Somente administradores e a coordenação do LABTEC.IN podem publicar ou arquivar.")
+            raise PermissionDenied("Somente superusuários e a coordenação do LABTEC.IN podem publicar ou arquivar.")
         return super().save_model(request, obj, form, change)
 
     @staticmethod
     def _is_editorial_status_field(field) -> bool:
-        if field.name == "editorial_status":
-            return True
-        if field.name != "status" or not field.choices:
-            return False
-        values = {value for value, _label in field.choices}
-        return set(EditorialStatus.values).issubset(values)
+        return field.name == "editorial_status"
 
     @classmethod
     def _is_published(cls, obj) -> bool:
-        if getattr(obj, "is_published", False):
+        if getattr(obj, "editorial_status", None) in {
+            EditorialStatus.PUBLISHED,
+            EditorialStatus.ARCHIVED,
+        }:
             return True
-        for name in ("editorial_status", "status"):
-            if getattr(obj, name, None) in {EditorialStatus.PUBLISHED, EditorialStatus.ARCHIVED}:
-                return True
         return any(getattr(obj, field_name, False) for field_name in _publication_boolean_fields(type(obj)))
 
     @classmethod
     def _is_submitted_as_final(cls, obj) -> bool:
-        for name in ("editorial_status", "status"):
-            if getattr(obj, name, None) in {EditorialStatus.PUBLISHED, EditorialStatus.ARCHIVED}:
-                return True
-        return bool(getattr(obj, "is_published", False))
+        return getattr(obj, "editorial_status", None) in {
+            EditorialStatus.PUBLISHED,
+            EditorialStatus.ARCHIVED,
+        }
 
     def _submitted_scope_is_allowed(self, request, obj) -> bool:
         if is_global_admin(request):
@@ -375,7 +351,7 @@ class UnitScopedAdminMixin:
         unit = self._resolve_lookup_value(obj, self.unit_lookup)
         unit_id = getattr(unit, "pk", unit)
         if profile.is_lab_coordinator:
-            return unit_id is None or unit_id in profile.accessible_unit_ids()
+            return unit_id in profile.accessible_unit_ids()
         if not unit_id or unit_id not in profile.accessible_unit_ids():
             return False
         if profile.role == Profile.AdminRole.MENTOR and self.mentor_requires_axis:

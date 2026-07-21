@@ -48,8 +48,6 @@ class InstitutionalUnit(BaseModel):
     cover_image = models.ImageField(upload_to="institutional/covers/", blank=True)
     contact_email = models.EmailField(blank=True)
     website_url = models.URLField(blank=True)
-    is_active = models.BooleanField(default=True)
-    is_public = models.BooleanField(default=True)
     display_order = models.PositiveIntegerField(default=0)
 
     objects = InstitutionalUnitQuerySet.as_manager()

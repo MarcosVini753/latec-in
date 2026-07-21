@@ -5,7 +5,7 @@ from apps.metrics.models import ImpactMetric
 
 
 class ImpactMetricSerializer(serializers.ModelSerializer):
-    unit = InstitutionalUnitSummarySerializer(read_only=True, allow_null=True)
+    unit = InstitutionalUnitSummarySerializer(read_only=True)
 
     class Meta:
         model = ImpactMetric

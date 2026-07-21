@@ -4,6 +4,10 @@
 
 Aceita.
 
+## Estado atual
+
+A separação está implementada. A pesquisa de Bioativos foi publicada em `research`, sua origem no portfólio foi arquivada e as categorias históricas de pesquisa e produção científica foram removidas. A sequência de migração abaixo registra o processo já concluído.
+
 ## Contexto
 
 O modelo atual permite que pesquisas e produção científica sejam tratadas como categorias de `portfolio.Project`, enquanto TCCs não possuem entidade própria.
