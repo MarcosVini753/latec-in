@@ -32,6 +32,8 @@ As migrations de corte falham com IDs claros antes de modificar o schema quando 
 
 Essas verificações não inferem nem apagam dados para corrigir inconsistências.
 
+Atualização *in-place* de uma base populada anterior ao corte não é suportada. Em desenvolvimento, teste e homologação, descarte a base configurada e inicialize-a vazia antes de aplicar as migrations e o seed; o preflight permanece como proteção contra uma migração acidental de conteúdo legado sem unidade.
+
 ## Papéis e pessoas
 
 Perfis `admin`, `editor` e `reader` foram tecnicamente convertidos para `unit_coordinator`, desativados e retirados do Django Admin quando o usuário não era superusuário. Nenhum perfil foi promovido automaticamente.
@@ -40,7 +42,7 @@ Antes de remover `Person.role`, a migration confirmou que o papel histórico tin
 
 ## Unidade obrigatória
 
-Depois do backfill, `unit` tornou-se obrigatória em:
+Em uma base recriada, `unit` é obrigatória em:
 
 - configurações, banners, seções e links sociais;
 - eixos;
@@ -77,17 +79,13 @@ Em banco novo, o seed cria somente a pesquisa publicada. Em banco atualizado, el
 
 ## Ordem operacional
 
-1. Fazer backup do banco e dos arquivos.
-2. Aplicar migrations institucionais de integridade.
-3. Aplicar preflights e backfills de pessoas, unidades e workflow.
-4. Aplicar o corte científico e as remoções de schema.
-5. Executar `seed_initial_data` duas vezes.
-6. Inventariar arquivos com `cleanup_orphan_media`, revisar os alvos e executar novamente com `--delete`.
-7. Repetir o inventário e confirmar que não restaram órfãos.
-8. Executar `check`, testes, verificação de drift e validação OpenAPI.
-9. Revisar manualmente conteúdos, autorias e arquivos publicados.
+1. Em desenvolvimento, teste ou homologação, descartar a base configurada e os arquivos de mídia de teste.
+2. Aplicar todas as migrations em uma base vazia.
+3. Executar `seed_initial_data` duas vezes.
+4. Executar `check`, testes, verificação de drift e validação OpenAPI.
+5. Revisar manualmente conteúdos, autorias e arquivos publicados.
 
-As migrations de remoção são destrutivas e não oferecem reversão integral. Recuperação depende do backup anterior ao corte.
+O procedimento suportado pressupõe dados descartáveis. Se uma base tiver conteúdo a preservar, não aplique este corte nela.
 
 ## Contratos mantidos e quebras intencionais
 

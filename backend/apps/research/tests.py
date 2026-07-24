@@ -201,6 +201,74 @@ class ResearchDomainTests(TestCase):
         self.assertEqual(output["academic_work"]["slug"], self.academic_work.slug)
         self.assertTrue(output["file"].endswith(self.scientific_output.file.url))
 
+    def test_public_relations_hide_unpublished_records(self):
+        hidden_outputs = []
+        for status in (EditorialStatus.DRAFT, EditorialStatus.IN_REVIEW, EditorialStatus.ARCHIVED):
+            project = ResearchProject.objects.create(
+                unit=self.labtec,
+                title=f"Pesquisa {status}",
+                slug=f"pesquisa-{status}",
+                editorial_status=status,
+            )
+            hidden_outputs.append(
+                ScientificOutput.objects.create(
+                    unit=self.labtec,
+                    research_project=project,
+                    title=f"Artigo da pesquisa {status}",
+                    slug=f"artigo-pesquisa-{status}",
+                    output_type=ScientificOutput.OutputType.ARTICLE,
+                    editorial_status=EditorialStatus.PUBLISHED,
+                )
+            )
+
+        hidden_work = AcademicWork.objects.create(
+            unit=self.labtec,
+            title="Trabalho em rascunho vinculado",
+            slug="trabalho-em-rascunho-vinculado",
+            work_type=AcademicWork.WorkType.OTHER,
+        )
+        output_with_hidden_work = ScientificOutput.objects.create(
+            unit=self.labtec,
+            research_project=self.research_project,
+            academic_work=hidden_work,
+            title="Artigo com trabalho em rascunho",
+            slug="artigo-com-trabalho-em-rascunho",
+            output_type=ScientificOutput.OutputType.ARTICLE,
+            editorial_status=EditorialStatus.PUBLISHED,
+        )
+        work_with_hidden_project = AcademicWork.objects.create(
+            unit=self.labtec,
+            research_project=hidden_outputs[0].research_project,
+            title="TCC com pesquisa em rascunho",
+            slug="tcc-com-pesquisa-em-rascunho",
+            work_type=AcademicWork.WorkType.TCC,
+            editorial_status=EditorialStatus.PUBLISHED,
+        )
+
+        output_by_slug = {
+            item["slug"]: item
+            for item in self.client.get("/api/v1/scientific-outputs/").json()["results"]
+        }
+        for output in hidden_outputs:
+            self.assertIsNone(output_by_slug[output.slug]["research_project"])
+        self.assertIsNone(output_by_slug[output_with_hidden_work.slug]["academic_work"])
+
+        hidden_project_detail = self.client.get(
+            f"/api/v1/scientific-outputs/{hidden_outputs[0].slug}/"
+        ).json()
+        self.assertIsNone(hidden_project_detail["research_project"])
+        output_detail = self.client.get(
+            f"/api/v1/scientific-outputs/{output_with_hidden_work.slug}/"
+        ).json()
+        self.assertIsNone(output_detail["academic_work"])
+
+        work_by_slug = {
+            item["slug"]: item for item in self.client.get("/api/v1/academic-works/").json()["results"]
+        }
+        self.assertIsNone(work_by_slug[work_with_hidden_project.slug]["research_project"])
+        work_detail = self.client.get(f"/api/v1/academic-works/{work_with_hidden_project.slug}/").json()
+        self.assertIsNone(work_detail["research_project"])
+
     def test_invalid_year_returns_400_and_featured_is_absent_from_openapi(self):
         for endpoint in ("research-projects", "academic-works", "scientific-outputs"):
             self.assertEqual(self.client.get(f"/api/v1/{endpoint}/", {"year": "abc"}).status_code, 400)

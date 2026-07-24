@@ -45,7 +45,7 @@ Para acessar o Django Admin, crie um superusuário separadamente:
 python manage.py createsuperuser
 ```
 
-Faça backup do banco e de `MEDIA_ROOT` antes de aplicar migrations em uma instalação que já possua dados. O corte de legados remove estruturas e dados incompatíveis, como eventos, trilhas e o antigo catálogo de mídia.
+Esta versão suporta inicialização limpa: em desenvolvimento, teste e homologação, descarte a base configurada e o `MEDIA_ROOT` de teste antes de executar `migrate` e `seed_initial_data`. Não há caminho de atualização *in-place* para uma base populada anterior ao corte institucional; a migration falha intencionalmente ao encontrar conteúdo legado sem unidade.
 
 ## 2. Configurar o frontend e o CORS
 

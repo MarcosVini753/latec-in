@@ -1,12 +1,18 @@
 from rest_framework import serializers
 
 from apps.axes.serializers import ResearchAxisSerializer
+from apps.common.models import EditorialStatus
 from apps.institutional.serializers import InstitutionalUnitSummarySerializer
 from apps.people.serializers import PersonSummarySerializer
 from apps.research.models import AcademicWork, AcademicWorkContributor, ResearchProject, ResearchProjectMember
 
 
 class ResearchProjectSummarySerializer(serializers.ModelSerializer):
+    def to_representation(self, instance):
+        if instance.editorial_status != EditorialStatus.PUBLISHED:
+            return None
+        return super().to_representation(instance)
+
     class Meta:
         model = ResearchProject
         fields = ("id", "title", "slug", "project_status")
@@ -45,6 +51,11 @@ class ResearchProjectSerializer(serializers.ModelSerializer):
 
 
 class AcademicWorkSummarySerializer(serializers.ModelSerializer):
+    def to_representation(self, instance):
+        if instance.editorial_status != EditorialStatus.PUBLISHED:
+            return None
+        return super().to_representation(instance)
+
     class Meta:
         model = AcademicWork
         fields = ("id", "title", "slug", "work_type", "year")
