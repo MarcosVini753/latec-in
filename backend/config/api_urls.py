@@ -3,24 +3,28 @@ from rest_framework.routers import DefaultRouter
 
 from apps.axes.views import ResearchAxisViewSet
 from apps.core.views import HomeAPIView, SiteSettingsViewSet
+from apps.institutional.views import InstitutionalUnitViewSet
 from apps.learning.views import CourseViewSet
 from apps.metrics.views import ImpactMetricViewSet
-from apps.news.views import PostTagViewSet, PostViewSet
+from apps.news.views import PostViewSet
 from apps.partnerships.views import ContactMessageViewSet, PartnerViewSet
 from apps.people.views import PersonViewSet
 from apps.portfolio.views import ProjectCategoryViewSet, ProjectViewSet
+from apps.research.views import AcademicWorkViewSet, ResearchProjectViewSet
 from apps.scientific.views import ScientificOutputViewSet
 from apps.transparency.views import TransparencyDocumentViewSet
 
 
 router = DefaultRouter()
 router.register("site/settings", SiteSettingsViewSet, basename="site-settings")
+router.register("institutional-units", InstitutionalUnitViewSet, basename="institutional-units")
 router.register("people", PersonViewSet, basename="people")
 router.register("axes", ResearchAxisViewSet, basename="axes")
 router.register("projects/categories", ProjectCategoryViewSet, basename="project-categories")
 router.register("projects", ProjectViewSet, basename="projects")
+router.register("research-projects", ResearchProjectViewSet, basename="research-projects")
+router.register("academic-works", AcademicWorkViewSet, basename="academic-works")
 router.register("scientific-outputs", ScientificOutputViewSet, basename="scientific-outputs")
-router.register("posts/tags", PostTagViewSet, basename="post-tags")
 router.register("posts", PostViewSet, basename="posts")
 router.register("courses", CourseViewSet, basename="courses")
 router.register("transparency-documents", TransparencyDocumentViewSet, basename="transparency-documents")

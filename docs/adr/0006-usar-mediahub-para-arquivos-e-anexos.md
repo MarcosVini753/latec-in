@@ -2,7 +2,11 @@
 
 ## Status
 
-Aceita
+Superada pelo [ADR 0016](0016-simplificar-conteudo-e-cortar-legados.md).
+
+## Estado atual
+
+O app, o model, a tabela, o ContentType e as permissões do MediaHub foram removidos. Arquivos pertencem diretamente aos modelos de domínio. Órfãos são inventariados por `cleanup_orphan_media` e excluídos apenas com `--delete`, sem registro operacional permanente. O restante deste ADR é preservado somente como histórico da decisão superada.
 
 ## Contexto
 

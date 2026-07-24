@@ -15,17 +15,30 @@ from apps.core.serializers import (
 
 class SiteSettingsViewSet(PublicReadOnlyModelViewSet):
     lookup_field = "pk"
-    queryset = SiteSettings.objects.all()
+    queryset = SiteSettings.objects.select_related("unit").order_by("pk")
     serializer_class = SiteSettingsSerializer
 
 
 class HomeAPIView(APIView):
     @extend_schema(responses=OpenApiTypes.OBJECT)
     def get(self, request):
-        settings = SiteSettings.objects.filter(is_active=True).first()
-        heroes = HeroBanner.objects.filter(is_published=True).order_by("display_order", "title")
-        sections = InstitutionalSection.objects.filter(is_published=True).order_by("display_order", "title")
-        social_links = SocialLink.objects.filter(is_active=True).order_by("display_order", "label")
+        unit_slug = "labtec-in"
+        settings = SiteSettings.objects.select_related("unit").filter(is_active=True, unit__slug=unit_slug).first()
+        heroes = (
+            HeroBanner.objects.select_related("unit")
+            .filter(is_published=True, unit__slug=unit_slug)
+            .order_by("display_order", "title")
+        )
+        sections = (
+            InstitutionalSection.objects.select_related("unit")
+            .filter(is_published=True, unit__slug=unit_slug)
+            .order_by("display_order", "title")
+        )
+        social_links = (
+            SocialLink.objects.select_related("unit")
+            .filter(is_active=True, unit__slug=unit_slug)
+            .order_by("display_order", "label")
+        )
 
         return Response(
             {

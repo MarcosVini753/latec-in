@@ -1,7 +1,8 @@
 from rest_framework import serializers
 
 from apps.axes.serializers import ResearchAxisSerializer
-from apps.people.serializers import PersonSerializer
+from apps.institutional.serializers import InstitutionalUnitSummarySerializer
+from apps.people.serializers import PersonSummarySerializer
 from apps.portfolio.models import Project, ProjectCategory, ProjectLink, ProjectResult, ProjectStatus, ProjectTeamMember
 
 
@@ -18,7 +19,7 @@ class ProjectStatusSerializer(serializers.ModelSerializer):
 
 
 class ProjectTeamMemberSerializer(serializers.ModelSerializer):
-    person = PersonSerializer(read_only=True)
+    person = PersonSummarySerializer(read_only=True)
 
     class Meta:
         model = ProjectTeamMember
@@ -38,6 +39,7 @@ class ProjectLinkSerializer(serializers.ModelSerializer):
 
 
 class ProjectSerializer(serializers.ModelSerializer):
+    unit = InstitutionalUnitSummarySerializer(read_only=True)
     axis = ResearchAxisSerializer(read_only=True)
     category = ProjectCategorySerializer(read_only=True)
     status = ProjectStatusSerializer(read_only=True)
@@ -49,6 +51,7 @@ class ProjectSerializer(serializers.ModelSerializer):
         model = Project
         fields = (
             "id",
+            "unit",
             "title",
             "slug",
             "axis",
@@ -61,8 +64,6 @@ class ProjectSerializer(serializers.ModelSerializer):
             "solution",
             "cover_image",
             "published_at",
-            "is_featured",
-            "display_order",
             "team_members",
             "results",
             "links",

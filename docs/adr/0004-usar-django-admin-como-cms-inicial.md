@@ -6,21 +6,24 @@ Aceita
 
 ## Contexto
 
-A LATEC.IN precisa gerenciar membros, eixos, projetos, notícias, cursos, materiais, documentos de transparência, produções científicas, parceiros e mensagens de contato.
+O LABTEC.IN precisa administrar conteúdos do laboratório e de unidades filhas, incluindo a LATEC, com revisão editorial e permissões por escopo institucional.
 
-Construir um painel administrativo customizado logo no início aumentaria prazo e complexidade.
+Construir um painel próprio nesta fase aumentaria prazo e complexidade sem necessidade comprovada.
 
 ## Decisão
 
-Usar Django Admin como CMS inicial da plataforma.
+Usar Django Admin como CMS inicial do portal LABTEC.IN.
+
+O Admin gerenciará unidades, memberships, pesquisas, trabalhos acadêmicos e os demais conteúdos. Listas, formulários e ações deverão respeitar as unidades autorizadas do usuário.
 
 ## Consequências positivas
 
-- Redução do tempo de desenvolvimento inicial.
-- Foco na modelagem, API e organização do conteúdo.
-- Facilidade para cadastrar e revisar dados durante homologação.
+- Menor tempo de implementação.
+- Foco em modelagem, migração, API e qualidade dos dados.
+- Administração do laboratório e de unidades filhas no mesmo sistema.
 
 ## Riscos e cuidados
 
-- O Django Admin deve ser ajustado para boa usabilidade.
-- Um painel customizado poderá ser avaliado depois, caso o admin se torne insuficiente.
+- Filtrar registros e opções de relacionamento por unidade.
+- Evitar que coordenadores ou mentores acessem unidades não autorizadas.
+- Avaliar painel próprio somente quando limitações concretas do Admin justificarem.

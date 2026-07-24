@@ -1,47 +1,64 @@
-# Permissões e acesso administrativo
+# Permissões administrativas do portal LABTEC.IN
 
-## Princípios
+O sistema usa o `User` padrão do Django, o Django Admin e um `accounts.Profile` para definir escopo institucional. Pessoas públicas continuam independentes de usuários administrativos.
 
-O visitante público acessa apenas conteúdos publicados. A equipe autorizada acessa o Django Admin conforme seu papel.
+## Papéis administrativos
 
-O modelo público de pessoas será separado do usuário administrativo. O sistema usará o usuário padrão do Django, com autenticação básica por usuário e senha.
+Além do superusuário nativo, existem somente:
 
-## Papéis iniciais
+- `lab_coordinator`: coordenação do LABTEC.IN;
+- `unit_coordinator`: coordenação de uma unidade;
+- `mentor`: mentor da LATEC.
 
-- Administrador: acesso completo ao Django Admin.
-- Coordenadora: gerencia conteúdos institucionais, usuários administrativos, eixos, publicações, mensagens de contato e publicação final.
-- Mentor/Professor: cria e edita conteúdos referentes aos próprios eixos de atuação.
-- Editor: cadastra e edita notícias, cursos, materiais e projetos conforme permissão.
-- Leitor administrativo: visualiza registros internos, sem alterar conteúdo.
+Os antigos papéis customizados `admin`, `editor` e `reader` foram removidos. Perfis com esses valores foram convertidos tecnicamente para `unit_coordinator`, desativados com `is_active_admin=False` e tiveram `is_staff` removido quando o usuário não era superusuário. A reativação exige uma decisão administrativa explícita.
 
-## Regras por eixo
+## Escopo do perfil
 
-- Cada professor, orientador ou mentor pode ser vinculado a um ou mais eixos.
-- O mentor pode criar e editar publicações, projetos, cursos ou produções científicas referentes aos seus eixos.
-- O mentor pode enviar conteúdo para revisão.
-- A publicação final cabe à coordenadora.
-- Visitantes públicos só visualizam conteúdos publicados.
+`Profile` mantém:
 
-## Conteúdos públicos
+- `person`, opcional;
+- `primary_unit`, opcional;
+- `authorized_units`, opcional;
+- `inherit_descendants`;
+- `role`;
+- `is_active_admin`.
 
-Conteúdos públicos devem possuir controle de publicação por `is_published`, `published_at`, `status` e `slug`, quando aplicável.
+Perfil inativo, sem escopo aplicável ou usuário sem acesso ao Admin não recebe permissão institucional.
 
-O workflow editorial inicial será `draft`, `in_review`, `published` e `archived`.
+## Matriz
 
-## Mensagens de contato
+| Papel | Escopo | Criar e revisar | Publicar, arquivar, excluir ou alterar conteúdo final |
+| --- | --- | --- | --- |
+| Superusuário | Todas as unidades | Sim | Sim |
+| `lab_coordinator` | LABTEC.IN e todos os descendentes | Sim | Sim |
+| `unit_coordinator` | Unidade principal, autorizadas e descendentes quando habilitados | Sim, em rascunho/revisão | Não |
+| `mentor` | LATEC e somente os eixos em que possui `AxisMentorship` | Sim, em rascunho/revisão | Não |
 
-Mensagens de contato não devem ser públicas.
+Somente superusuários e a coordenação do LABTEC.IN realizam a publicação final.
 
-Na fase inicial, mensagens de contato ficarão armazenadas por tempo indeterminado e serão acessíveis somente pela coordenadora. Superusuários técnicos podem ter acesso operacional ao banco e ao admin, mas a regra funcional de uso será acesso restrito à coordenação.
+## Proteções do Admin
 
-## Decisões consolidadas
+O escopo é aplicado em:
 
-- Não haverá login por e-mail.
-- Não haverá múltiplos tipos de autenticação na primeira versão.
-- O sistema usará `User` padrão do Django.
-- O vínculo entre usuário administrativo e pessoa pública será opcional via `Profile`.
+- querysets de conteúdo e de filhos;
+- escolhas de unidade e eixo em formulários;
+- autocomplete;
+- inlines;
+- validação do objeto submetido, inclusive POST adulterado;
+- ações de publicação e arquivamento.
 
-## Decisões futuras
+Coordenadores de unidade e mentores não alteram registros publicados. Eles podem definir `include_in_parent_ecosystem` em rascunho ou revisão; a publicação pela coordenação do LABTEC.IN aprova simultaneamente o conteúdo e essa opção.
 
-- Definir o nível de auditoria necessário para alterações editoriais.
-- Definir política formal de revisão periódica das mensagens de contato.
+Regras especiais:
+
+- mentor acessa apenas objetos relacionados aos próprios eixos;
+- parceiro ligado a várias unidades é editável somente por superusuário ou coordenação do LABTEC.IN;
+- mensagens de contato ficam restritas a esses dois perfis;
+- usuários, perfis e unidades são geridos somente por superusuário;
+- coordenação do LABTEC.IN pode gerir memberships, mas não elevar privilégios administrativos.
+
+Unidades institucionais não possuem estado privado ou inativo: toda unidade cadastrada aparece publicamente. Essa regra não torna memberships automaticamente públicos; cada vínculo continua sujeito a `is_active`, `is_public` e ao seu período de validade.
+
+Materiais não têm autorização ou publicação próprias. O escopo administrativo vem do curso e todos os materiais do curso tornam-se públicos quando ele é publicado.
+
+A API pública permanece anônima, read-only para catálogos e independente dos escopos administrativos.

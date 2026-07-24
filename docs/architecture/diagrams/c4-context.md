@@ -1,20 +1,21 @@
-# Diagrama C4 — Contexto
+# Diagrama C4 — Contexto do portal LABTEC.IN
 
 ```mermaid
 flowchart LR
-  Visitor[Visitante público] --> Site[Portal LATEC.IN]
-  Member[Membro da liga] --> Site
-  Partner[Parceiro institucional] --> Site
-  Mentor[Professor ou mentor] --> Admin[Django Admin]
-  Coordinator[Coordenadora] --> Admin
+  Visitor["Visitante público"] --> Portal["Portal LABTEC.IN"]
+  Researcher["Pesquisador ou professor"] --> Portal
+  Researcher --> Admin["Django Admin"]
+  Mentor["Mentor da LATEC"] --> Admin
+  Coordinator["Coordenador do LABTEC.IN"] --> Admin
 
-  Site --> API[API pública /api/v1]
-  Admin --> Backend[Backend Django]
+  Portal -->|contém| Latec["Seção LATEC<br/>recorte institucional"]
+  Portal --> API["API pública /api/v1/"]
+  Latec --> API
+  Admin --> Backend["Backend Django"]
   API --> Backend
 
   Backend --> DB[(PostgreSQL)]
-  Backend --> Media[Volume de mídia]
-  Site --> Social[Redes sociais e canais oficiais]
+  Backend --> Media["Volume de mídia"]
 ```
 
-O visitante público consome páginas e dados publicados. Mentores e coordenadora usam o Django Admin. O backend persiste dados em PostgreSQL e gerencia arquivos no volume de mídia.
+O portal pertence ao LABTEC.IN. A LATEC é uma unidade e seção dentro do mesmo sistema, não uma aplicação separada. Visitantes consomem conteúdo público; pesquisadores, professores, mentores e coordenação usam o Django Admin conforme suas permissões institucionais.

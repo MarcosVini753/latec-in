@@ -1,84 +1,39 @@
-# Eixos de atuação — LATEC.IN
+# Eixos de atuação da LATEC
 
-As imagens institucionais da LATEC.IN definem os eixos de atuação como parte central da identidade da liga. Portanto, os eixos não devem ser tratados apenas como texto estático: eles serão modelados como entidades do backend.
+A LATEC é uma unidade filha apoiada pelo LABTEC.IN. Seus sete eixos organizam mentorias e atividades próprias da Liga; eles não representam a estrutura global do laboratório.
 
-## Decisão de modelagem
+## Estado implementado
 
-Será criado o app `axes`, responsável por `ResearchAxis` e `AxisMentorship`.
+O app `axes` possui `ResearchAxis` e `AxisMentorship`, com sete eixos e nove vínculos de mentoria carregados pelo seed. Cada eixo possui unidade obrigatória e pertence explicitamente à LATEC.
 
-`ResearchAxis` representa um eixo formal de atuação. `AxisMentorship` representa a relação entre um eixo e seus professores, orientadores ou mentores.
+`AxisMentorship` registra a relação entre eixo e pessoa. O papel institucional da pessoa é expresso separadamente por `InstitutionMembership`.
 
 ## Eixos iniciais
 
-### Eixo 1 — Etnobotânica e Pós-Colheita
+1. Etnobotânica e Pós-Colheita.
+2. Práticas em Laboratório e Nanotecnologia.
+3. Nutrição e Ciências dos Alimentos.
+4. Saúde e bem-estar.
+5. Produção Vegetal e Biotecnologia.
+6. Agroindustrialização.
+7. Redação Científica.
 
-Cultivo, manejo e óleos essenciais.
+Os títulos, descrições, palavras-chave e mentorias completos são dados editoriais administrados no backend. A grafia institucional dos nomes de mentores deve ser validada antes de mudanças no seed.
 
-Mentoria inicial: Profa. Almecina.
+## Modelagem
 
-### Eixo 2 — Práticas em Laboratório e Nanotecnologia
+`ResearchAxis` contém unidade, número, título, slug, descrição, palavras-chave, ativação e ordem estrutural.
 
-Farmácia Viva, farmacologia aplicada a plantas medicinais e fitoquímica.
+`AxisMentorship` contém eixo, pessoa, papel, indicação de mentor principal e ordem. A combinação `(axis, person)` é única.
 
-Mentoria inicial: Profa. Marta.
+## Regras
 
-### Eixo 3 — Nutrição e Ciências dos Alimentos
+- Cada eixo pertence à LATEC.
+- Um eixo pode ter vários mentores e uma pessoa pode atuar em vários eixos.
+- Projetos, cursos, notícias, pesquisas e produções podem usar eixo quando aplicável.
+- Uma pesquisa do LABTEC.IN pode se relacionar com um eixo da LATEC sem mudar de unidade proprietária.
+- Conteúdo geral do laboratório não precisa de eixo.
+- Mentor administrativo exige perfil ativo, pessoa vinculada e `AxisMentorship`.
+- O vínculo com um eixo não amplia acesso para outros eixos ou conteúdos.
 
-Educação alimentar, desenvolvimento e avaliação de alimentos, interface clínica e eventos científicos.
-
-Mentoria inicial: Profa. Bruna.
-
-### Eixo 4 — Saúde e bem-estar
-
-Produção de ativos para aplicação em saúde integrativa.
-
-Mentoria inicial: Prof. Kleyton.
-
-### Eixo 5 — Produção Vegetal e Biotecnologia
-
-Produção vegetal, biotecnologia de plantas, fitotecnia, genética vegetal, horticultura, manejo de culturas e PANCs.
-
-Mentoria inicial: Profa. Marilene e Prof. Bruno.
-
-### Eixo 6 — Agroindustrialização
-
-Desenvolvimento de produtos, processamento de matérias-primas amazônicas e inovação tecnológica.
-
-Mentoria inicial: Profa. Luciana.
-
-### Eixo 7 — Redação Científica
-
-Produção acadêmica, escrita de artigos, resumos, projetos e revisão de literatura.
-
-Mentoria inicial: Prof. Dayam/Dayan e Profa. Anne.
-
-Observação: a grafia `Dayam` ou `Dayan` deve ser validada antes da carga definitiva dos dados.
-
-## Campos mínimos de `ResearchAxis`
-
-- `number`;
-- `title`;
-- `slug`;
-- `description`;
-- `keywords`;
-- `is_active`;
-- `display_order`;
-- `created_at`;
-- `updated_at`.
-
-## Campos mínimos de `AxisMentorship`
-
-- `axis`;
-- `person`;
-- `role`;
-- `is_main_mentor`;
-- `display_order`;
-- `created_at`;
-- `updated_at`.
-
-## Regras de negócio
-
-- Um eixo pode ter um ou mais mentores.
-- Uma pessoa pode atuar em mais de um eixo.
-- Projetos, cursos, posts e produções científicas podem ser vinculados a um eixo.
-- Professores, orientadores e mentores poderão criar publicações associadas aos seus próprios eixos.
+O seed cria nove memberships `Mentor` na LATEC. Marta pode acumular `Coordenadora` e `Mentor` porque a unicidade do membership inclui o papel.

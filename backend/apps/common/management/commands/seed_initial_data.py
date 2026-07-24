@@ -11,17 +11,19 @@ from django.utils.text import slugify
 from apps.axes.models import AxisMentorship, ResearchAxis
 from apps.common.models import EditorialStatus
 from apps.core.models import HeroBanner, InstitutionalSection, SiteSettings
-from apps.learning.models import Course, CourseMaterial, LearningTrack
+from apps.institutional.models import InstitutionMembership, InstitutionalUnit
+from apps.learning.models import Course, CourseMaterial
 from apps.metrics.models import ImpactMetric
-from apps.news.models import Post, PostCategory
-from apps.people.models import Person, Role
+from apps.news.models import Post
+from apps.people.models import Person
 from apps.portfolio.models import Project, ProjectCategory, ProjectLink, ProjectResult, ProjectStatus, ProjectTeamMember
+from apps.research.models import ResearchProject, ResearchProjectMember
 
 
 PEOPLE = [
-    (1, "Marta Adelino", "Coordenadora", "Professora doutora e coordenadora da LATEC.IN, com larga experiência em biotecnologia e gestão de projetos.", "js/pics/marta.png"),
+    (1, "Marta Adelino", "Coordenadora", "Professora doutora e coordenadora do LABTEC.IN e da LATEC, com larga experiência em biotecnologia e gestão de projetos.", "js/pics/marta.png"),
     (2, "Gabriel Daniel", "Estagiário", "Estudante de Sistemas de Informação na UFAC, responsável pela criação deste protótipo.", "js/pics/gabriel.png"),
-    (3, "Ana Souza", "Pesquisadora", "Discente pesquisadora focada em bioinformática e biodiversidade amazônica.", "js/pics/ana.png"),
+    (3, "Ana Souza", "Pesquisador", "Discente pesquisadora focada em bioinformática e biodiversidade amazônica.", "js/pics/ana.png"),
     (4, "Marcos Moraes", "Ligante", "Estudante de Sistemas de Informação na UFAC, responsável pela criação deste protótipo.", "js/pics/marcos.png"),
     (5, "Kleyton Passos", "Professor", "Dr. em Ciências da Saúde", "js/pics/kleyton.png"),
     (6, "Luciana Castello", "Professor", "Engenheira de alimentos e Dra. em Ciência de Alimentos", "js/pics/luciana.png"),
@@ -56,13 +58,12 @@ PEOPLE = [
 
 PROJECTS = [
     {
-        "source_id": 1,
         "title": "Fábrica de Ensino: Bootcamp de Startups",
         "category": "Ensino",
         "area": "Fábrica de Ensino",
         "status": "Concluído",
         "year": 2025,
-        "summary": "Bootcamp intensivo de Startups para novos membros da LATEC.IN.",
+        "summary": "Bootcamp intensivo de Startups para novos membros da LATEC.",
         "problem": "Falta de capacitação em desenvolvimento de negócios entre os integrantes.",
         "solution": "Proporcionar um treinamento prático e imersivo em desenvolvimento de startups.",
         "results": ["Relatório de atividades", "Apostila digital"],
@@ -70,21 +71,6 @@ PROJECTS = [
         "link": "",
     },
     {
-        "source_id": 2,
-        "title": "Pesquisa de Bioativos da Amazônia",
-        "category": "Pesquisa",
-        "area": "Projetos de Pesquisa",
-        "status": "Em andamento",
-        "year": 2026,
-        "summary": "Estudo dos compostos bioativos presentes em espécies amazônicas.",
-        "problem": "Necessidade de explorar novos fármacos e compostos naturais.",
-        "solution": "Investigar propriedades bioativas de plantas da região amazônica.",
-        "results": ["Artigo científico", "Protótipo de extrato"],
-        "team": [1, 3],
-        "link": "",
-    },
-    {
-        "source_id": 3,
         "title": "Extensão em Tecnologias Sustentáveis",
         "category": "Extensão",
         "area": "Extensão Tecnológica",
@@ -99,19 +85,31 @@ PROJECTS = [
     },
 ]
 
+RESEARCH_PROJECTS = [
+    {
+        "title": "Pesquisa de Bioativos da Amazônia",
+        "slug": "pesquisa-de-bioativos-da-amazonia",
+        "summary": "Estudo dos compostos bioativos presentes em espécies amazônicas.",
+        "project_status": ResearchProject.ProjectStatus.IN_PROGRESS,
+        "team": [1, 3],
+    },
+]
+
 POSTS = [
     {
-        "title": "Coordenadora do LATEC.IN é premiada por inovação tecnológica",
+        "title": "Coordenadora da LATEC é premiada por inovação tecnológica",
+        "slug": "coordenadora-da-latec-e-premiada-por-inovacao-tecnologica",
         "date": "2026-05-29",
-        "summary": "A professora Marta Adelino recebeu o prêmio de inovação tecnológica da UFAC por seu trabalho à frente da LATEC.IN.",
-        "content": "A coordenadora da LATEC.IN, professora Marta Adelino, foi reconhecida com o prêmio de inovação tecnológica da Universidade Federal do Acre (UFAC) em 2026. O prêmio destaca sua liderança e os resultados alcançados pela liga em projetos de ensino, pesquisa e extensão. A cerimônia de premiação ocorreu no auditório central da UFAC, onde Marta recebeu um certificado e um troféu em reconhecimento ao seu trabalho inovador.",
+        "summary": "A professora Marta Adelino recebeu o prêmio de inovação tecnológica da UFAC por seu trabalho à frente da LATEC.",
+        "content": "A coordenadora da LATEC, professora Marta Adelino, foi reconhecida com o prêmio de inovação tecnológica da Universidade Federal do Acre (UFAC) em 2026. O prêmio destaca sua liderança e os resultados alcançados pela Liga em projetos de ensino, pesquisa e extensão. A cerimônia de premiação ocorreu no auditório central da UFAC, onde Marta recebeu um certificado e um troféu em reconhecimento ao seu trabalho inovador.",
         "image": "js/pics/certificado.png",
     },
     {
-        "title": "LATEC.IN participa do congresso nacional de inovação",
+        "title": "LATEC participa do congresso nacional de inovação",
+        "slug": "latec-participa-do-congresso-nacional-de-inovacao",
         "date": "2026-05-15",
-        "summary": "A LATEC.IN apresentou três projetos no congresso nacional, recebendo destaque na sessão de biotecnologia.",
-        "content": "No congresso nacional de inovação tecnológica, a LATEC.IN foi representada pelos projetos “Fábrica de Ensino”, “Pesquisa de Bioativos da Amazônia” e “Extensão em Tecnologias Sustentáveis”. As apresentações foram bem recebidas e destacaram o potencial dos alunos da UFAC.",
+        "summary": "A LATEC apresentou três projetos no congresso nacional, recebendo destaque na sessão de biotecnologia.",
+        "content": "No congresso nacional de inovação tecnológica, a LATEC foi representada pelos projetos “Fábrica de Ensino”, “Pesquisa de Bioativos da Amazônia” e “Extensão em Tecnologias Sustentáveis”. As apresentações foram bem recebidas e destacaram o potencial dos alunos da UFAC.",
         "image": "",
     },
 ]
@@ -138,68 +136,93 @@ COURSES = [
 MATERIALS = {
     "Apostila Nanotecnologia.pdf": {
         "title": "Apostila de Nanotecnologia",
-        "description": "Apostila utilizada no curso de Nanotecnologia da LATEC.IN.",
+        "description": "Apostila utilizada no curso de Nanotecnologia da LATEC.",
         "file": "assets/images/apostila-nanotecnologia.pdf",
     }
 }
-
-ROLE_ALIASES = {
-    "Pesquisadora": "pesquisador",
-}
-
 
 class Command(BaseCommand):
     help = "Cria dados iniciais idempotentes para desenvolvimento e homologação."
 
     def handle(self, *args, **options):
         self.person_by_source_id = {}
-        self.seed_roles()
+        self.membership_role_by_source_id = {}
+        self.seed_institutional_units()
         self.seed_people()
+        self.seed_institution_memberships()
         self.seed_axes()
         self.seed_axis_mentorships()
+        self.seed_mentor_memberships()
         self.seed_project_categories()
         self.seed_project_statuses()
         self.seed_projects()
-        self.seed_post_categories()
+        self.seed_research_projects()
         self.seed_posts()
-        self.seed_learning_tracks()
         self.seed_courses()
         self.seed_metrics()
         self.seed_site_settings()
         self.stdout.write(self.style.SUCCESS("Seed inicial concluído."))
 
-    def seed_roles(self):
-        roles = [
-            ("Coordenadora", "Responsável pela coordenação institucional e publicação final."),
-            ("Professor", "Docente, orientador ou mentor vinculado à LATEC.IN."),
-            ("Ligante", "Membro discente da liga acadêmica."),
-            ("Pesquisador", "Pessoa vinculada à pesquisa e produção científica."),
-            ("Estagiário", "Pessoa em estágio ou colaboração formativa."),
-            ("Colaborador", "Colaborador externo ou institucional."),
-            ("Egresso", "Pessoa que já integrou a LATEC.IN."),
-        ]
-        for order, (name, description) in enumerate(roles, start=1):
-            Role.objects.update_or_create(
-                slug=slugify(name),
-                defaults={"name": name, "description": description, "is_active": True, "display_order": order},
-            )
+    def seed_institutional_units(self):
+        self.labtec_unit, _created = InstitutionalUnit.objects.update_or_create(
+            slug="labtec-in",
+            defaults={
+                "name": "LABTEC.IN",
+                "acronym": "LABTEC.IN",
+                "unit_type": InstitutionalUnit.UnitType.LABORATORY,
+                "parent": None,
+                "description": "Laboratório de Biotecnologia, Biodiversidade e Inovação.",
+                "display_order": 1,
+            },
+        )
+        self.latec_unit, _created = InstitutionalUnit.objects.update_or_create(
+            slug="latec",
+            defaults={
+                "name": "LATEC",
+                "acronym": "LATEC",
+                "unit_type": InstitutionalUnit.UnitType.ACADEMIC_LEAGUE,
+                "parent": self.labtec_unit,
+                "description": "Liga acadêmica vinculada ao LABTEC.IN.",
+                "display_order": 2,
+            },
+        )
 
     def seed_people(self):
         for order, (source_id, name, role_name, bio, photo_path) in enumerate(PEOPLE, start=1):
-            role = Role.objects.get(slug=ROLE_ALIASES.get(role_name, slugify(role_name)))
             person, _created = Person.objects.update_or_create(
                 slug=slugify(name),
                 defaults={
                     "full_name": name,
-                    "role": role,
                     "short_bio": bio,
                     "is_active": True,
-                    "is_featured": source_id <= 12,
                     "display_order": order,
                 },
             )
             self.attach_local_file(person, "photo", photo_path)
             self.person_by_source_id[source_id] = person
+            self.membership_role_by_source_id[source_id] = role_name
+
+    def seed_institution_memberships(self):
+        units_by_role = {
+            "Coordenadora": (self.labtec_unit, self.latec_unit),
+            "Estagiário": (self.labtec_unit,),
+            "Ligante": (self.latec_unit,),
+            "Pesquisador": (self.labtec_unit,),
+            "Professor": (self.labtec_unit,),
+        }
+        for source_id, person in self.person_by_source_id.items():
+            role_name = self.membership_role_by_source_id[source_id]
+            for unit in units_by_role.get(role_name, ()):
+                InstitutionMembership.objects.get_or_create(
+                    person=person,
+                    unit=unit,
+                    role=role_name,
+                    defaults={
+                        "is_active": True,
+                        "is_public": True,
+                        "display_order": person.display_order,
+                    },
+                )
 
     def seed_axes(self):
         axes = [
@@ -215,6 +238,7 @@ class Command(BaseCommand):
             ResearchAxis.objects.update_or_create(
                 number=number,
                 defaults={
+                    "unit": self.latec_unit,
                     "title": title,
                     "slug": slugify(title),
                     "description": description,
@@ -247,8 +271,22 @@ class Command(BaseCommand):
                 defaults={"role": "Mentor", "is_main_mentor": True, "display_order": order},
             )
 
+    def seed_mentor_memberships(self):
+        mentorships = AxisMentorship.objects.filter(axis__unit=self.latec_unit).select_related("person")
+        for mentorship in mentorships:
+            InstitutionMembership.objects.get_or_create(
+                person=mentorship.person,
+                unit=self.latec_unit,
+                role="Mentor",
+                defaults={
+                    "is_active": True,
+                    "is_public": True,
+                    "display_order": mentorship.person.display_order,
+                },
+            )
+
     def seed_project_categories(self):
-        categories = ["Ensino", "Pesquisa", "Extensão", "Produção Científica", "Startup", "Premiação"]
+        categories = ["Ensino", "Extensão", "Startup", "Premiação"]
         for order, name in enumerate(categories, start=1):
             ProjectCategory.objects.update_or_create(
                 slug=slugify(name),
@@ -264,25 +302,29 @@ class Command(BaseCommand):
             )
 
     def seed_projects(self):
-        for order, item in enumerate(PROJECTS, start=1):
+        for item in PROJECTS:
+            project_defaults = {
+                "title": item["title"],
+                "category": ProjectCategory.objects.get(slug=slugify(item["category"])),
+                "area": item["area"],
+                "status": ProjectStatus.objects.get(slug=slugify(item["status"])),
+                "year": item["year"],
+                "summary": item["summary"],
+                "problem": item["problem"],
+                "solution": item["solution"],
+            }
             project, _created = Project.objects.update_or_create(
                 slug=slugify(item["title"]),
-                defaults={
-                    "title": item["title"],
-                    "category": ProjectCategory.objects.get(slug=slugify(item["category"])),
-                    "area": item["area"],
-                    "status": ProjectStatus.objects.get(slug=slugify(item["status"])),
-                    "year": item["year"],
-                    "summary": item["summary"],
-                    "problem": item["problem"],
-                    "solution": item["solution"],
+                defaults=project_defaults,
+                create_defaults={
+                    **project_defaults,
+                    "unit": self.latec_unit,
                     "editorial_status": EditorialStatus.PUBLISHED,
-                    "is_published": True,
                     "published_at": self.datetime_from_date(date(item["year"], 1, 1)),
-                    "is_featured": order <= 2,
-                    "display_order": order,
                 },
             )
+            # Classificação provisória: estes registros vieram do protótipo
+            # histórico da Liga e ainda aguardam revisão institucional manual.
             for result_order, result_title in enumerate(item["results"], start=1):
                 ProjectResult.objects.update_or_create(
                     project=project,
@@ -290,7 +332,7 @@ class Command(BaseCommand):
                     defaults={"description": "", "display_order": result_order},
                 )
             for member_order, source_id in enumerate(item["team"], start=1):
-                person = self.person_by_source_id.get(source_id) or Person.objects.filter(slug=slugify(dict((p[0], p[1]) for p in PEOPLE).get(source_id, ""))).first()
+                person = self.person_by_source_id.get(source_id)
                 if not person:
                     continue
                 ProjectTeamMember.objects.update_or_create(
@@ -305,59 +347,73 @@ class Command(BaseCommand):
                     defaults={"label": "Link externo", "link_type": "externo", "display_order": 1},
                 )
 
-    def seed_post_categories(self):
-        categories = ["Notícia", "Blog", "Jornal", "Evento", "Premiação", "Artigo técnico", "Comunicado"]
-        for order, name in enumerate(categories, start=1):
-            PostCategory.objects.update_or_create(
-                slug=slugify(name),
-                defaults={"name": name, "is_active": True, "display_order": order},
+    def seed_research_projects(self):
+        for item in RESEARCH_PROJECTS:
+            research_project, _created = ResearchProject.objects.get_or_create(
+                slug=item["slug"],
+                defaults={
+                    "unit": self.latec_unit,
+                    "title": item["title"],
+                    "summary": item["summary"],
+                    "project_status": item["project_status"],
+                    "editorial_status": EditorialStatus.PUBLISHED,
+                    "published_at": self.datetime_from_date(date(2026, 1, 1)),
+                },
             )
+            for member_order, source_id in enumerate(item["team"], start=1):
+                person = self.person_by_source_id.get(source_id)
+                if not person:
+                    continue
+                ResearchProjectMember.objects.get_or_create(
+                    research_project=research_project,
+                    person=person,
+                    defaults={
+                        "role": (
+                            ResearchProjectMember.Role.COORDINATOR
+                            if member_order == 1
+                            else ResearchProjectMember.Role.COLLABORATOR
+                        ),
+                        "display_order": member_order,
+                    },
+                )
 
     def seed_posts(self):
-        category = PostCategory.objects.get(slug=slugify("Notícia"))
-        for order, item in enumerate(POSTS, start=1):
+        for item in POSTS:
             published_at = self.datetime_from_iso_date(item["date"])
+            post_defaults = {
+                "unit": self.latec_unit,
+                "title": item["title"],
+                "summary": item["summary"],
+                "content": item["content"],
+            }
             post, _created = Post.objects.update_or_create(
-                slug=slugify(item["title"]),
-                defaults={
-                    "title": item["title"],
-                    "category": category,
-                    "summary": item["summary"],
-                    "content": item["content"],
-                    "status": EditorialStatus.PUBLISHED,
-                    "is_published": True,
+                slug=item["slug"],
+                defaults=post_defaults,
+                create_defaults={
+                    **post_defaults,
+                    "editorial_status": EditorialStatus.PUBLISHED,
                     "published_at": published_at,
-                    "is_featured": order <= 2,
-                    "display_order": order,
                 },
             )
             self.attach_local_file(post, "cover_image", item["image"])
 
-    def seed_learning_tracks(self):
-        tracks = ["Cursos e oficinas", "Workshops", "Simpósios e palestras", "Materiais abertos"]
-        for order, title in enumerate(tracks, start=1):
-            LearningTrack.objects.update_or_create(
-                slug=slugify(title),
-                defaults={"title": title, "is_active": True, "display_order": order},
-            )
-
     def seed_courses(self):
-        track = LearningTrack.objects.get(slug=slugify("Cursos e oficinas"))
-        for order, item in enumerate(COURSES, start=1):
+        for item in COURSES:
+            course_defaults = {
+                "unit": self.latec_unit,
+                "title": item["title"],
+                "description": item["description"],
+                "start_date": date.fromisoformat(item["date"]),
+                "enrollment_status": item["enrollment_status"],
+                "registration_url": item["link"],
+            }
             course, _created = Course.objects.update_or_create(
                 slug=slugify(item["title"]),
-                defaults={
-                    "title": item["title"],
-                    "track": track,
-                    "description": item["description"],
-                    "start_date": date.fromisoformat(item["date"]),
-                    "enrollment_status": item["enrollment_status"],
-                    "registration_url": item["link"],
+                defaults=course_defaults,
+                create_defaults={
+                    **course_defaults,
                     "editorial_status": EditorialStatus.PUBLISHED,
-                    "is_published": True,
                     "published_at": self.datetime_from_iso_date(item["date"]),
-                    "is_featured": order == 1,
-                    "display_order": order,
                 },
             )
             for material_order, material_name in enumerate(item["materials"], start=1):
@@ -367,7 +423,6 @@ class Command(BaseCommand):
                     title=material_data["title"],
                     defaults={
                         "description": material_data["description"],
-                        "is_public": True,
                         "display_order": material_order,
                     },
                 )
@@ -380,28 +435,35 @@ class Command(BaseCommand):
             ("publicacoes", "Artigos e publicações", 12),
             ("parcerias", "Parcerias", 5),
             ("cursos", "Cursos", 2),
-            ("eventos", "Eventos", 0),
             ("premiacoes", "Premiações", 1),
         ]
         for order, (key, label, value) in enumerate(metrics, start=1):
             ImpactMetric.objects.update_or_create(
                 key=key,
-                defaults={"label": label, "value": value, "is_active": True, "display_order": order},
+                defaults={
+                    "unit": self.labtec_unit,
+                    "label": label,
+                    "value": value,
+                    "is_active": True,
+                    "display_order": order,
+                },
             )
 
     def seed_site_settings(self):
-        SiteSettings.objects.update_or_create(
-            site_name="LATEC.IN",
-            defaults={
-                "description": "Liga Acadêmica de Biotecnologia, Biodiversidade e Inovação.",
-                "institution": "LATEC.IN",
-                "is_active": True,
-            },
-        )
+        site_settings = SiteSettings.objects.filter(unit=self.labtec_unit).order_by("id").first() or SiteSettings()
+        site_settings.unit = self.labtec_unit
+        site_settings.site_name = "LABTEC.IN"
+        site_settings.institution = "Laboratório de Biotecnologia, Biodiversidade e Inovação"
+        site_settings.is_active = True
+        if not site_settings.description:
+            site_settings.description = "Portal institucional do LABTEC.IN."
+        site_settings.save()
+
         HeroBanner.objects.update_or_create(
             title="Biotecnologia, biodiversidade e inovação",
             defaults={
-                "subtitle": "Uma liga acadêmica conectando ensino, pesquisa e extensão para transformar ciência em soluções para a Amazônia.",
+                "unit": self.labtec_unit,
+                "subtitle": "Um laboratório conectando ensino, pesquisa e extensão para transformar ciência em soluções para a Amazônia.",
                 "cta_label": "Conheça os projetos",
                 "cta_url": "#portfolio",
                 "is_published": True,
@@ -417,6 +479,7 @@ class Command(BaseCommand):
             InstitutionalSection.objects.update_or_create(
                 slug=slugify(title),
                 defaults={
+                    "unit": self.labtec_unit,
                     "section_type": section_type,
                     "title": title,
                     "content": content,

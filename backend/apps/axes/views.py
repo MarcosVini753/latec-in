@@ -4,6 +4,6 @@ from apps.common.viewsets import PublicReadOnlyModelViewSet
 
 
 class ResearchAxisViewSet(PublicReadOnlyModelViewSet):
-    queryset = ResearchAxis.objects.prefetch_related("mentorships__person__role").all()
+    queryset = ResearchAxis.objects.select_related("unit").prefetch_related("mentorships__person")
     serializer_class = ResearchAxisSerializer
     search_fields = ("title", "description", "keywords")

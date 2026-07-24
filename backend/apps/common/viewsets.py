@@ -1,6 +1,20 @@
 from rest_framework import viewsets
+from rest_framework.exceptions import ValidationError
+from django.db.models import Q
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter
 
 from apps.common.models import EditorialStatus
+
+
+ECOSYSTEM_UNIT_PARAMETER = OpenApiParameter(
+    "unit",
+    OpenApiTypes.STR,
+    description=(
+        "Slug da unidade. Inclui conteúdo próprio e conteúdo de filhas diretas "
+        "com opt-in no ecossistema; não agrega netas."
+    ),
+)
 
 
 class PublicReadOnlyModelViewSet(viewsets.ReadOnlyModelViewSet):
@@ -10,15 +24,24 @@ class PublicReadOnlyModelViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
         model_fields = {field.name: field for field in queryset.model._meta.fields}
+        many_to_many_fields = {field.name for field in queryset.model._meta.many_to_many}
 
         if "is_active" in model_fields:
             queryset = queryset.filter(is_active=True)
-        if "is_published" in model_fields:
-            queryset = queryset.filter(is_published=True)
         if "editorial_status" in model_fields:
             queryset = queryset.filter(editorial_status=EditorialStatus.PUBLISHED)
-        if self._is_editorial_status_field(model_fields.get("status")):
-            queryset = queryset.filter(status=EditorialStatus.PUBLISHED)
+
+        unit = self.request.query_params.get("unit")
+        if unit and "unit" in model_fields:
+            unit_scope = Q(unit__slug=unit)
+            if "include_in_parent_ecosystem" in model_fields:
+                unit_scope |= Q(
+                    unit__parent__slug=unit,
+                    include_in_parent_ecosystem=True,
+                )
+            queryset = queryset.filter(unit_scope)
+        elif unit and "units" in many_to_many_fields:
+            queryset = queryset.filter(units__slug=unit).distinct()
 
         axis = self.request.query_params.get("axis")
         if axis and "axis" in model_fields:
@@ -29,22 +52,28 @@ class PublicReadOnlyModelViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(category__slug=category)
 
         status = self.request.query_params.get("status")
-        if status and "status" in model_fields and not self._is_editorial_status_field(model_fields["status"]):
+        if status and "status" in model_fields:
             queryset = queryset.filter(status__slug=status)
 
         year = self.request.query_params.get("year")
-        if year and "year" in model_fields:
-            queryset = queryset.filter(year=year)
-        elif year and "start_date" in model_fields:
-            queryset = queryset.filter(start_date__year=year)
-        elif year and "publication_date" in model_fields:
-            queryset = queryset.filter(publication_date__year=year)
-        elif year and "published_at" in model_fields:
-            queryset = queryset.filter(published_at__year=year)
+        year_lookup = None
+        if "year" in model_fields:
+            year_lookup = "year"
+        elif "start_date" in model_fields:
+            year_lookup = "start_date__year"
+        elif "publication_date" in model_fields:
+            year_lookup = "publication_date__year"
+        elif "published_at" in model_fields:
+            year_lookup = "published_at__year"
 
-        featured = self.request.query_params.get("featured")
-        if featured in {"true", "1"} and "is_featured" in model_fields:
-            queryset = queryset.filter(is_featured=True)
+        if year is not None and year_lookup:
+            try:
+                year_value = int(year)
+            except (TypeError, ValueError):
+                raise ValidationError({"year": "Informe um ano inteiro válido."})
+            if not 1 <= year_value <= 9999:
+                raise ValidationError({"year": "Informe um ano entre 1 e 9999."})
+            queryset = queryset.filter(**{year_lookup: year_value})
 
         search = self.request.query_params.get("search")
         if search:
@@ -57,9 +86,3 @@ class PublicReadOnlyModelViewSet(viewsets.ReadOnlyModelViewSet):
                 queryset = search_query.distinct()
 
         return queryset
-
-    def _is_editorial_status_field(self, field):
-        if not field or not field.choices:
-            return False
-        choice_values = {value for value, _label in field.choices}
-        return EditorialStatus.PUBLISHED in choice_values and EditorialStatus.ARCHIVED in choice_values

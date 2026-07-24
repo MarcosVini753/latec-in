@@ -1,45 +1,49 @@
-# Workflow editorial
+# Workflow editorial do portal LABTEC.IN
 
-O portal da LATEC.IN terá fluxo editorial simples, suficiente para o Django Admin e para a primeira versão da API.
+O portal usa um único campo de workflow e o escopo institucional do usuário para controlar edição e publicação.
 
-## Status editoriais
+## Status
 
 ```txt
-draft       -> rascunho
-in_review   -> em revisão
-published   -> publicado
-archived    -> arquivado
+draft       rascunho
+in_review   em revisão
+published   publicado
+archived    arquivado
 ```
 
-## Regras gerais
+`editorial_status` é a única fonte de visibilidade dos conteúdos editoriais. Não existe `is_published` paralelo nem flag de destaque. `published_at` registra quando a publicação ocorreu.
 
-- Visitantes públicos só acessam conteúdos publicados.
-- Conteúdos publicados devem ter `is_published=True` e status `published`.
-- Conteúdos com página pública devem possuir `slug`.
-- Conteúdos publicados devem registrar `published_at` quando aplicável.
+## Fluxo
 
-## Fluxo de publicação
+1. Coordenador de unidade ou mentor cria o conteúdo como `draft` dentro do escopo autorizado.
+2. Completa os metadados, vínculos, arquivo ou texto necessários e escolhe se o registro participará do ecossistema da unidade mãe.
+3. Move o registro para `in_review`.
+4. A coordenação do LABTEC.IN revisa unidade, eixo, autoria, arquivo, direitos e a opção de ecossistema.
+5. Superusuário ou coordenação do LABTEC.IN define `published`, `archived` ou devolve o conteúdo para ajuste.
 
-1. O autor cria o conteúdo como rascunho.
-2. O autor envia o conteúdo para revisão.
-3. A coordenação revisa o conteúdo.
-4. A coordenação publica, arquiva ou devolve para ajuste.
-
-## Professores, orientadores e mentores
-
-Professores, orientadores e mentores poderão cadastrar conteúdos referentes aos seus eixos de atuação.
-
-Regra inicial:
-
-- o mentor pode criar e editar conteúdo do próprio eixo;
-- o mentor pode enviar conteúdo para revisão;
-- a coordenadora decide a publicação final;
-- a API pública só exibe itens publicados.
+Coordenadores de unidade e mentores não publicam, arquivam, excluem nem alteram registros já publicados.
 
 ## Conteúdos sujeitos ao workflow
 
-- Projetos;
+- projetos de portfólio;
+- pesquisas;
+- trabalhos acadêmicos;
 - produções científicas;
-- notícias e posts;
-- cursos, simpósios e palestras;
-- documentos de transparência, quando aplicável.
+- notícias;
+- cursos;
+- documentos de transparência.
+
+Banners e seções institucionais usam `is_published` simples, pois sua publicação é estrutural e não passa pelo workflow editorial completo.
+
+`CourseMaterial` também não possui workflow próprio. O material herda o estado editorial do curso: todos os seus arquivos e links tornam-se públicos quando o curso está `published` e deixam de ser descobertos pela API quando o curso sai desse estado.
+
+## Ecossistema da unidade mãe
+
+`include_in_parent_ecosystem` é editável durante rascunho e revisão. Quando verdadeiro, um conteúdo publicado pode aparecer no filtro da mãe direta, preservando sua unidade proprietária. A publicação final também aprova essa inclusão.
+
+## Proteções
+
+- Todo conteúdo editorial exige unidade.
+- Querysets, formulários, inlines, autocomplete, ações e validação do POST aplicam o mesmo escopo.
+- A API pública oculta `draft`, `in_review` e `archived` independentemente do perfil administrativo.
+- Slugs publicados não são recalculados automaticamente.

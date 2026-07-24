@@ -1,39 +1,40 @@
-# Mapa de módulos
+# Mapa de relações de modelo consolidadas
 
 ```mermaid
 flowchart LR
-  accounts --> core
+  accounts --> institutional
   accounts --> people
-  accounts --> axes
-  accounts --> portfolio
-  accounts --> scientific
-  accounts --> news
-  accounts --> learning
-  accounts --> transparency
-  accounts --> partnerships
+  institutional --> people
 
-  people --> axes
-  axes --> portfolio
-  axes --> scientific
-  axes --> news
-  axes --> learning
+  core --> institutional
+  axes --> institutional
+  axes --> people
 
-  mediahub --> core
-  mediahub --> portfolio
-  mediahub --> scientific
-  mediahub --> news
-  mediahub --> learning
-  mediahub --> transparency
+  research --> institutional
+  research --> axes
+  research --> people
 
-  partnerships --> portfolio
+  portfolio --> institutional
+  portfolio --> axes
+  portfolio --> people
 
-  portfolio --> metrics
-  scientific --> metrics
-  news --> metrics
-  learning --> metrics
-  transparency --> metrics
-  people --> metrics
-  partnerships --> metrics
+  scientific --> institutional
+  scientific --> axes
+  scientific --> research
+  scientific --> people
+
+  news --> institutional
+  news --> axes
+
+  learning --> institutional
+  learning --> axes
+  learning --> people
+
+  transparency --> institutional
+  partnerships --> institutional
+  metrics --> institutional
 ```
 
-`axes` passa a ser módulo central de organização institucional. `mediahub` centraliza arquivos. `metrics` agrega dados públicos dos demais apps para a Home.
+Cada seta parte do app que mantém a FK ou M2M e aponta para o app referenciado. Relações internas e o autorrelacionamento de `InstitutionalUnit` foram omitidos.
+
+`common` fornece `BaseModel`, workflow, viewsets e escopo administrativo sem relações próprias de banco. Arquivos pertencem aos apps de domínio; não existe app central de mídia no grafo ou em `INSTALLED_APPS`.

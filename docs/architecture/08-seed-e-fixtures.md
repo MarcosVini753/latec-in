@@ -1,75 +1,76 @@
-# Seed e fixtures iniciais
+# Seed e fixtures do portal LABTEC.IN
 
-O backend deve nascer com dados mínimos para facilitar desenvolvimento, homologação e migração do protótipo.
-
-## Estratégia
-
-Usaremos dados iniciais em fixtures e/ou comando idempotente de seed.
-
-A estratégia recomendada é criar um comando:
+O comando idempotente é:
 
 ```txt
 python manage.py seed_initial_data
 ```
 
-Esse comando deve criar ou atualizar registros básicos sem duplicar dados já existentes.
+Ele cria ou atualiza dados canônicos sem duplicação e sem criar usuários administrativos ou credenciais.
 
-## Dados iniciais previstos
+## Conteúdo inicial
 
-```txt
-backend/apps/people/fixtures/initial_roles.json
-backend/apps/people/fixtures/initial_people.json
-backend/apps/axes/fixtures/initial_research_axes.json
-backend/apps/portfolio/fixtures/initial_project_categories.json
-backend/apps/news/fixtures/initial_post_categories.json
-backend/apps/learning/fixtures/initial_course_statuses.json
-backend/apps/core/fixtures/initial_site_settings.json
-backend/apps/transparency/fixtures/initial_transparency_types.json
-```
+- LABTEC.IN como unidade raiz e LATEC como filha.
+- 33 pessoas e 43 memberships institucionais.
+- Sete eixos da LATEC e nove mentorias.
+- Projetos de portfólio práticos, equipes e resultados.
+- A pesquisa formal “Pesquisa de Bioativos da Amazônia” publicada.
+- Duas notícias e dois cursos, além dos materiais iniciais.
+- Seis métricas vinculadas ao LABTEC.IN.
+- Configuração do site, hero e seções institucionais.
 
-## Eixos iniciais
+O seed não cria papéis públicos globais, categorias ou tags de notícia, trilhas, eventos, MediaAssets nem a métrica `eventos`.
 
-O seed inicial deve incluir os sete eixos de atuação da LATEC.IN:
+Unidades são criadas sem flags de ativação ou visibilidade, pois todo registro de `InstitutionalUnit` é público. Materiais também não recebem configuração de privacidade: sua exposição acompanha a publicação do curso.
 
-1. Etnobotânica e Pós-Colheita.
-2. Práticas em Laboratório e Nanotecnologia.
-3. Nutrição e Ciências dos Alimentos.
-4. Saúde e bem-estar.
-5. Produção Vegetal e Biotecnologia.
-6. Agroindustrialização.
-7. Redação Científica.
+## Classificação institucional
 
-## Categorias iniciais
+| Dado | Unidade inicial |
+| --- | --- |
+| Configuração, hero, seções e métricas | LABTEC.IN |
+| Sete eixos e mentorias | LATEC |
+| Ligantes | membership na LATEC |
+| Pesquisadores e professores | membership no LABTEC.IN |
+| Coordenação | memberships no LABTEC.IN e na LATEC |
+| Notícias e cursos da Liga | LATEC |
+| Pesquisa de Bioativos | LATEC |
+| Produção científica e transparência gerais | LABTEC.IN |
 
-### Projetos
+Conteúdos semeados para a LATEC usam `include_in_parent_ecosystem=False`. Sua inclusão no recorte do LABTEC.IN depende de decisão editorial posterior.
 
-- Ensino;
-- Pesquisa;
-- Extensão;
-- Produção Científica;
-- Startup;
-- Premiação.
+## Memberships
 
-### Transparência
+Os 43 vínculos incluem:
 
-- Edital;
-- Ata;
-- Homologação;
-- Julgamento de recurso;
-- Resultado;
-- Comunicado.
+- ligantes na LATEC;
+- professores, pesquisadores e estagiários aplicáveis no LABTEC.IN;
+- coordenação no LABTEC.IN e na LATEC;
+- nove memberships `Mentor` na LATEC.
 
-### Produção científica
+A chave estável é `(person, unit, role)`, portanto a mesma pessoa pode possuir `Coordenadora` e `Mentor` na LATEC.
 
-- Artigo;
-- Resumo;
-- Patente;
-- E-book;
-- Livro;
-- Relatório técnico;
-- Projeto;
-- Produção científica.
+## Pesquisa de Bioativos
 
-## Observação
+`pesquisa-de-bioativos-da-amazonia` é semeada como `ResearchProject` publicada, mesmo sem arquivo. Em banco atualizado, o projeto de portfólio que serviu de origem permanece arquivado e não é republicado pelo seed. Em banco novo, a pesquisa não volta a ser criada como projeto de portfólio.
 
-Os dados atuais de `js/data.js` devem ser usados como base temporária para gerar fixtures, mas a modelagem do backend passa a ser a fonte principal de verdade.
+O comando não infere metodologia, instituição, datas ou autoria que não estejam nos dados canônicos.
+
+## Idempotência
+
+- Usar `slug`, `key` ou combinação única como chave estável.
+- Criar unidades antes de memberships e conteúdos.
+- Criar pessoas antes de equipes, contribuições e autorias.
+- Criar eixos antes de mentorias.
+- Não apagar registros editoriais criados manualmente.
+- Não elevar novamente um registro que a coordenação arquivou depois do seed.
+
+Dois ciclos consecutivos devem manter as mesmas 43 memberships, nove mentorias e seis métricas.
+
+## Textos e identificadores atuais
+
+- O hero descreve o LABTEC.IN como laboratório.
+- Conteúdos da Liga usam “LATEC”.
+- A biografia da coordenação distingue LABTEC.IN e LATEC.
+- O seed localiza a configuração diretamente pela unidade LABTEC.IN e não aceita nomes institucionais legados como fallback.
+- Os slugs atuais das notícias usam `latec`, não `latecin`. As duas URLs antigas não são recriadas nem recebem redirecionamento.
+- Demais slugs explícitos permanecem estáveis quando apenas o título visível é corrigido.

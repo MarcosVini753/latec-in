@@ -34,6 +34,11 @@ class ProjectStatus(BaseModel):
 
 
 class Project(BaseModel):
+    unit = models.ForeignKey(
+        "institutional.InstitutionalUnit",
+        on_delete=models.PROTECT,
+        related_name="projects",
+    )
     title = models.CharField(max_length=180)
     slug = models.SlugField(max_length=200, unique=True)
     axis = models.ForeignKey("axes.ResearchAxis", on_delete=models.SET_NULL, related_name="projects", blank=True, null=True)
@@ -46,14 +51,15 @@ class Project(BaseModel):
     solution = models.TextField(blank=True)
     cover_image = models.ImageField(upload_to="portfolio/projects/", blank=True)
     editorial_status = models.CharField(max_length=32, choices=EditorialStatus.choices, default=EditorialStatus.DRAFT)
-    is_published = models.BooleanField(default=False)
     published_at = models.DateTimeField(blank=True, null=True)
-    is_featured = models.BooleanField(default=False)
-    display_order = models.PositiveIntegerField(default=0)
+    include_in_parent_ecosystem = models.BooleanField(
+        default=False,
+        help_text="Inclui este conteúdo no recorte público da unidade mãe.",
+    )
     team = models.ManyToManyField("people.Person", through="ProjectTeamMember", related_name="projects", blank=True)
 
     class Meta:
-        ordering = ("display_order", "-year", "title")
+        ordering = ("-year", "title")
         verbose_name = "projeto"
         verbose_name_plural = "projetos"
 

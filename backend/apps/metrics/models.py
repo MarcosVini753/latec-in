@@ -4,6 +4,11 @@ from apps.common.models import BaseModel
 
 
 class ImpactMetric(BaseModel):
+    unit = models.ForeignKey(
+        "institutional.InstitutionalUnit",
+        on_delete=models.PROTECT,
+        related_name="impact_metrics",
+    )
     key = models.SlugField(max_length=80, unique=True)
     label = models.CharField(max_length=120)
     value = models.PositiveIntegerField(default=0)

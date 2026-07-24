@@ -1,30 +1,53 @@
-# Módulos do backend
+# Módulos do backend do portal LABTEC.IN
 
-O backend será dividido em apps Django por domínio.
+O backend é dividido em apps Django por domínio. `institutional` centraliza a organização e `research` separa pesquisas e trabalhos acadêmicos do portfólio.
 
-## Apps planejados
+## Apps ativos
 
-- `accounts`: autenticação, perfis administrativos e permissões.
-- `core`: configurações institucionais, hero, seções e links sociais.
-- `people`: membros, professores, coordenadores, ligantes e pesquisadores.
-- `axes`: eixos de atuação da LATEC.IN e suas mentorias.
-- `portfolio`: projetos, categorias, resultados, equipe, links e anexos.
-- `scientific`: repositório científico, artigos, resumos, patentes e produções vinculadas aos eixos.
-- `news`: notícias, blog, editais editoriais, jornal e tags.
-- `learning`: cursos, trilhas, workshops, simpósios, palestras e materiais.
-- `transparency`: editais, atas, homologações, julgamentos de recursos e comunicados institucionais.
-- `mediahub`: imagens, documentos, PDFs e arquivos reutilizáveis.
-- `partnerships`: parceiros e mensagens de contato.
-- `metrics`: números de impacto da Home.
+| App | Responsabilidade |
+| --- | --- |
+| `institutional` | Unidades, hierarquia e memberships. |
+| `accounts` | Perfis administrativos e escopo autorizado por unidade. |
+| `core` | Configurações, banners, seções institucionais e links sociais. |
+| `people` | Cadastro da pessoa física, independente de autenticação. |
+| `axes` | Sete eixos da LATEC e mentorias. |
+| `research` | Pesquisas formais, TCCs e outros trabalhos acadêmicos. |
+| `portfolio` | Projetos práticos, extensão, produtos, serviços e soluções. |
+| `scientific` | Produções científicas, autorias e relações com pesquisas e trabalhos. |
+| `news` | Notícias institucionais, sem taxonomias ou autores próprios. |
+| `learning` | Cursos e seus materiais. |
+| `transparency` | Documentos de transparência. |
+| `partnerships` | Parceiros por unidade e mensagens de contato. |
+| `metrics` | Métricas e históricos de valores por unidade. |
+| `common` | Modelos-base, status editorial e utilidades compartilhadas. |
 
-## Dependências principais
+Não existe app ou catálogo central de mídia. Cada arquivo pertence diretamente ao modelo de domínio que o publica.
 
-- `axes` é uma entidade central para projetos, publicações científicas, posts e cursos.
-- `people` se relaciona com `axes`, `portfolio`, `scientific`, `news` e `learning`.
-- `mediahub` se relaciona com `core`, `portfolio`, `scientific`, `news`, `learning` e `transparency`.
-- `metrics` consolida dados públicos para a Home.
-- `accounts` protege a área administrativa.
+## Relações centrais
 
-## Papel da plataforma web
+- `institutional` fornece unidade, hierarquia e memberships.
+- `people` se relaciona com memberships, mentorias, equipes, contribuições e autorias.
+- `axes` classifica opcionalmente conteúdo ligado à atuação da LATEC.
+- `research` pode originar registros em `scientific`.
+- `accounts` protege o Django Admin por unidade, descendência e eixo.
+- `metrics` registra valores informados; não calcula agregações automaticamente.
 
-A plataforma web deve contemplar quatro funções institucionais: transparência, repositório científico, vitrine biotecnológica e difusão/extensão.
+O [mapa de módulos](diagrams/module-map.md) representa as dependências persistidas.
+
+## Delimitação entre domínios
+
+- Pesquisa formal: `research.ResearchProject`.
+- TCC ou outro trabalho acadêmico: `research.AcademicWork`.
+- Resultado científico publicado: `scientific.ScientificOutput`.
+- Iniciativa prática, produto ou solução: `portfolio.Project`.
+- Capacitação: `learning.Course` e materiais associados.
+
+Todos os materiais associados a um curso publicado são públicos. `CourseMaterial` não possui workflow ou flag de visibilidade independente.
+
+Não existem mais models de trilha, evento, categoria ou tag de notícia, papel público global ou catálogo central de mídia. Arquivos pertencem aos próprios modelos que os publicam.
+
+## Limites atuais
+
+- O frontend ainda consome contratos anteriores e deve ser adaptado separadamente.
+- A Home não agrega pesquisas, projetos, notícias ou cursos.
+- Não há endpoint público para memberships nem snapshots de métricas.

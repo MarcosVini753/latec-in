@@ -4,7 +4,12 @@ from apps.common.models import BaseModel
 
 
 class SiteSettings(BaseModel):
-    site_name = models.CharField(max_length=120, default="LATEC.IN")
+    unit = models.ForeignKey(
+        "institutional.InstitutionalUnit",
+        on_delete=models.PROTECT,
+        related_name="site_settings",
+    )
+    site_name = models.CharField(max_length=120, default="LABTEC.IN")
     description = models.TextField(blank=True)
     institution = models.CharField(max_length=180, blank=True)
     contact_email = models.EmailField(blank=True)
@@ -20,6 +25,11 @@ class SiteSettings(BaseModel):
 
 
 class HeroBanner(BaseModel):
+    unit = models.ForeignKey(
+        "institutional.InstitutionalUnit",
+        on_delete=models.PROTECT,
+        related_name="hero_banners",
+    )
     title = models.CharField(max_length=180)
     subtitle = models.TextField(blank=True)
     cta_label = models.CharField(max_length=80, blank=True)
@@ -45,6 +55,11 @@ class InstitutionalSection(BaseModel):
         HISTORY = "history", "Histórico"
         PURPOSE = "purpose", "Propósito"
 
+    unit = models.ForeignKey(
+        "institutional.InstitutionalUnit",
+        on_delete=models.PROTECT,
+        related_name="institutional_sections",
+    )
     section_type = models.CharField(max_length=32, choices=SectionType.choices)
     title = models.CharField(max_length=140)
     slug = models.SlugField(max_length=160, unique=True)
@@ -63,6 +78,11 @@ class InstitutionalSection(BaseModel):
 
 
 class SocialLink(BaseModel):
+    unit = models.ForeignKey(
+        "institutional.InstitutionalUnit",
+        on_delete=models.PROTECT,
+        related_name="social_links",
+    )
     label = models.CharField(max_length=80)
     url = models.URLField()
     icon = models.CharField(max_length=80, blank=True)

@@ -1,8 +1,26 @@
-# Documentação técnica — LATEC.IN
+# Documentação técnica — Portal LABTEC.IN
 
-Esta pasta concentra a documentação técnica e arquitetural do projeto LATEC.IN.
+Esta pasta documenta a arquitetura do portal do LABTEC.IN — Laboratório de Biotecnologia, Biodiversidade e Inovação.
 
-O objetivo é manter as decisões de arquitetura, modelagem de dados, módulos do backend, API pública, permissões e estratégias de implantação versionadas no próprio repositório. Assim, as decisões deixam de ficar espalhadas entre conversas, protótipos e documentos externos.
+O LABTEC.IN é a instituição raiz e proprietária do portal. A LATEC é uma unidade filha do tipo liga acadêmica, apresentada dentro do mesmo backend e da mesma API.
+
+## Estado consolidado
+
+O backend Django implementa:
+
+- unidades hierárquicas e memberships institucionais;
+- unidades sempre públicas, sem estados próprios de ativação ou ocultação;
+- unidade proprietária obrigatória nos conteúdos;
+- escopo administrativo por unidade, descendência e eixo;
+- workflow editorial único por `editorial_status`;
+- inclusão opcional de conteúdo de uma filha no ecossistema da mãe;
+- pesquisas, trabalhos acadêmicos, produção científica e portfólio como domínios distintos;
+- API pública versionada em `/api/v1/`;
+- seed idempotente com 43 memberships, sete eixos da LATEC e a pesquisa de Bioativos publicada.
+
+Materiais de curso não possuem visibilidade independente: quando o curso está publicado, todos os seus materiais são públicos.
+
+O corte definitivo removeu papéis públicos globais, papéis administrativos redundantes, categorias, tags e autoria de notícias, trilhas, eventos, o catálogo MediaHub, flags de destaque, a duplicidade de publicação e categorias históricas de pesquisa no portfólio. O projeto legado de Bioativos foi arquivado após a publicação do registro em `research`.
 
 ## Estrutura
 
@@ -20,6 +38,9 @@ docs/
     07-workflow-editorial.md
     08-seed-e-fixtures.md
     09-transparencia-e-repositorio.md
+    10-estrutura-institucional.md
+    11-pesquisas-e-trabalhos-academicos.md
+    12-migracao-labtec.md
     diagrams/
       c4-context.md
       c4-container.md
@@ -27,41 +48,33 @@ docs/
       module-map.md
   adr/
     0001-usar-django-e-drf.md
-    0002-dividir-backend-em-apps-por-dominio.md
-    0003-usar-postgresql-em-producao.md
-    0004-usar-django-admin-como-cms-inicial.md
-    0005-separar-pessoas-de-usuarios.md
-    0006-usar-mediahub-para-arquivos-e-anexos.md
-    0007-versionar-api-com-api-v1.md
-    0008-usar-user-padrao-django.md
-    0009-adotar-eixos-de-atuacao.md
-    0010-adotar-workflow-editorial.md
-    0011-usar-storage-local-e-volumes.md
-    0012-politica-mensagens-contato.md
-    0013-seed-inicial-dados.md
+    ...
+    0015-separar-pesquisas-tccs-portfolio.md
+    0016-simplificar-conteudo-e-cortar-legados.md
 ```
 
-## Como usar esta documentação
+## Mapa de leitura
 
-1. Decisões estruturais devem ser registradas em `docs/adr/`.
-2. A arquitetura corrente do sistema deve ser mantida em `docs/architecture/`.
-3. A modelagem do banco deve evoluir em `docs/architecture/02-modelagem-banco.md` e no diagrama `docs/architecture/diagrams/erd.md`.
-4. Novos módulos devem ser descritos em `docs/architecture/01-modulos.md` antes ou durante sua implementação.
-5. Alterações relevantes na arquitetura devem atualizar os ADRs existentes ou gerar novos ADRs.
+- [Visão geral](architecture/00-visao-geral.md): contexto institucional e regras consolidadas.
+- [Módulos](architecture/01-modulos.md): responsabilidades e dependências dos apps.
+- [Modelagem](architecture/02-modelagem-banco.md): entidades e relações atuais.
+- [API pública](architecture/03-api-publica.md): endpoints, filtros e agregação institucional.
+- [Permissões](architecture/04-permissoes.md): papéis administrativos e escopos.
+- [Estrutura institucional](architecture/10-estrutura-institucional.md): LABTEC.IN, LATEC, hierarquia e ecossistema.
+- [Pesquisas e trabalhos acadêmicos](architecture/11-pesquisas-e-trabalhos-academicos.md): pesquisa, trabalho, produção e portfólio.
+- [Migração](architecture/12-migracao-labtec.md): preflights, corte dos legados e operação segura.
 
-## Estado atual
+## Direção técnica
 
-O projeto possui um protótipo frontend em HTML, CSS e JavaScript puro. A próxima fase planejada é construir um backend em Django para atuar como CMS institucional e API pública para o site da LATEC.IN.
-
-## Direção técnica consolidada
-
-- Backend em Django.
-- API pública com Django REST Framework.
-- API pública versionada por `/api/v1/`.
+- Django e Django REST Framework.
 - Django Admin como CMS inicial.
-- Usuário padrão do Django, com autenticação básica por usuário e senha.
-- PostgreSQL como banco-alvo para homologação e produção.
-- SQLite aceitável apenas para desenvolvimento local inicial.
-- Armazenamento local em desenvolvimento e volumes no servidor em homologação e produção.
-- Documentação técnica versionada em Markdown.
-- Diagramas em Mermaid para facilitar versionamento e revisão via Git.
+- `User` padrão do Django e perfis institucionais mínimos.
+- PostgreSQL em homologação e produção; SQLite no desenvolvimento local.
+- arquivos nos campos dos próprios domínios e volumes persistentes fora do desenvolvimento.
+- navegação por slugs devolvidos pela API e API mantida em `/api/v1/`.
+
+O corte final corrigiu dois slugs de notícias que continham `latecin`; as URLs antigas não possuem alias nem redirecionamento. O frontend deve sempre usar o slug recebido da API.
+
+## Fora do escopo
+
+Continuam fora desta entrega o frontend, a expansão da Home, autenticação pública, inscrições completas, presença, certificados, pagamentos, agenda de eventos e reservas de laboratório ou equipamentos.

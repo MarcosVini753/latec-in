@@ -4,23 +4,35 @@
 
 Aceita
 
+## Estado atual
+
+O workflow está consolidado exclusivamente em `editorial_status`; não existe fallback editorial para um campo genérico `status` nem flag `is_published` paralela nos conteúdos editoriais. `HeroBanner` e `InstitutionalSection` mantêm publicação estrutural simples. A menção à uniformização gradual abaixo descreve a etapa de transição já concluída.
+
 ## Contexto
 
-A LATEC.IN terá publicações feitas por coordenadora, editores e mentores. Conteúdos não devem ficar públicos automaticamente antes de revisão.
+O portal LABTEC.IN terá publicações criadas por coordenação, pesquisadores, professores e mentores da LATEC. Conteúdos não devem ficar públicos antes de revisão.
+
+A hierarquia institucional também exige que cada usuário atue somente nas unidades autorizadas.
 
 ## Decisão
 
-Adotar os status editoriais `draft`, `in_review`, `published` e `archived`.
+Manter os status `draft`, `in_review`, `published` e `archived`.
 
-Mentores podem criar e enviar conteúdos para revisão. A publicação final fica sob responsabilidade da coordenação.
+- autores criam e enviam conteúdo para revisão;
+- a coordenação competente realiza a publicação final;
+- a coordenação do LABTEC.IN pode atuar na raiz e em unidades descendentes;
+- coordenadores de unidade atuam somente em seu escopo;
+- mentores da LATEC atuam nos próprios eixos;
+- a API pública mostra somente conteúdos publicados.
 
 ## Consequências positivas
 
-- Separa cadastro de conteúdo de publicação pública.
-- Permite revisão pela coordenação.
-- Mantém API pública restrita a conteúdos publicados.
+- Separa criação de publicação.
+- Mantém revisão final pela coordenação.
+- Acrescenta escopo institucional sem criar outro workflow.
 
 ## Riscos e cuidados
 
-- O Django Admin deve facilitar mudança de status.
-- A API pública deve filtrar corretamente conteúdos não publicados.
+- Aplicar filtros por unidade no Django Admin e na API.
+- Não conceder herança de acesso a todos os papéis.
+- Uniformizar gradualmente o uso de `status` e `editorial_status`.

@@ -6,19 +6,25 @@ Aceita
 
 ## Contexto
 
-O formulário público de contato coletará nome, e-mail, assunto e mensagem. Esses dados não devem ser públicos.
+O formulário público de contato do portal LABTEC.IN coleta nome, e-mail, assunto, tipo de contato e mensagem. Esses dados não são públicos.
 
 ## Decisão
 
-Na primeira versão, mensagens de contato serão mantidas por tempo indeterminado e acessadas funcionalmente apenas pela coordenadora.
+Na fase inicial:
+
+- mensagens serão armazenadas por tempo indeterminado;
+- o acesso funcional será restrito à coordenação do LABTEC.IN;
+- coordenadores de unidades filhas não receberão acesso automático;
+- superusuários técnicos poderão ter acesso operacional ao admin ou banco.
 
 ## Consequências positivas
 
-- Simplifica a gestão inicial das mensagens.
-- Reduz exposição de dados pessoais.
-- Mantém rastreabilidade de contatos recebidos.
+- Gestão inicial simples.
+- Menor exposição de dados pessoais.
+- Rastreabilidade dos contatos recebidos pelo laboratório.
 
 ## Riscos e cuidados
 
-- A política de retenção deve ser revisada no futuro.
-- Superusuários técnicos podem ter acesso operacional ao admin ou banco, mas a regra funcional deve restringir o uso à coordenação.
+- Revisar futuramente a política de retenção.
+- Aplicar o escopo institucional no Django Admin.
+- Distinguir acesso técnico de autorização funcional de uso.

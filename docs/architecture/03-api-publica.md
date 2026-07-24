@@ -1,77 +1,107 @@
-# API pública — LATEC.IN
+# API pública do portal LABTEC.IN
 
-A API pública deve permitir que o frontend substitua gradualmente os arrays simulados de `js/data.js` por chamadas HTTP.
+O backend expõe recursos anônimos e predominantemente somente leitura em `/api/v1/`, além do envio público de mensagens de contato. Conteúdos institucionais retornam uma unidade resumida:
 
-## Política de versionamento
+```json
+{
+  "name": "LABTEC.IN",
+  "acronym": "LABTEC.IN",
+  "slug": "labtec-in",
+  "unit_type": "laboratory"
+}
+```
 
-A API pública será versionada desde a primeira versão usando o prefixo `/api/v1/`.
-
-A versão deve aparecer no caminho da URL para simplificar roteamento, documentação, testes e compatibilidade com o frontend. Versões futuras poderão usar `/api/v2/`, mantendo `/api/v1/` estável pelo tempo necessário.
-
-## Diretrizes
-
-- Usar Django REST Framework.
-- Expor somente conteúdos publicados e ativos.
-- Usar `slug` em páginas públicas.
-- Manter endpoints administrativos separados da API pública.
-- Documentar a API com OpenAPI.
-- Preservar, quando possível, campos próximos aos objetos atuais do protótipo para reduzir retrabalho no frontend.
-
-## Endpoints iniciais previstos
+## Endpoints principais
 
 ```txt
-GET  /api/v1/site/settings/
-GET  /api/v1/site/home/
-
-GET  /api/v1/people/
-GET  /api/v1/people/{slug}/
-
-GET  /api/v1/axes/
-GET  /api/v1/axes/{slug}/
-
-GET  /api/v1/projects/
-GET  /api/v1/projects/{slug}/
-GET  /api/v1/projects/categories/
-
-GET  /api/v1/scientific-outputs/
-GET  /api/v1/scientific-outputs/{slug}/
-
-GET  /api/v1/posts/
-GET  /api/v1/posts/{slug}/
-GET  /api/v1/posts/tags/
-
-GET  /api/v1/courses/
-GET  /api/v1/courses/{slug}/
-
-GET  /api/v1/transparency-documents/
-GET  /api/v1/partners/
-GET  /api/v1/metrics/impact/
-
+GET /api/v1/site/home/
+GET /api/v1/institutional-units/
+GET /api/v1/institutional-units/{slug}/
+GET /api/v1/people/
+GET /api/v1/axes/
+GET /api/v1/projects/categories/
+GET /api/v1/projects/
+GET /api/v1/projects/{slug}/
+GET /api/v1/research-projects/
+GET /api/v1/research-projects/{slug}/
+GET /api/v1/academic-works/
+GET /api/v1/academic-works/{slug}/
+GET /api/v1/scientific-outputs/
+GET /api/v1/scientific-outputs/{slug}/
+GET /api/v1/posts/
+GET /api/v1/posts/{slug}/
+GET /api/v1/courses/
+GET /api/v1/courses/{slug}/
+GET /api/v1/transparency-documents/
+GET /api/v1/partners/
+GET /api/v1/metrics/impact/
 POST /api/v1/contact/
 ```
 
-## Filtros públicos previstos
+Não existem endpoints de tags de notícia, eventos, trilhas, MediaHub, memberships ou snapshots de métricas.
 
-Projetos, posts, cursos e produções científicas devem aceitar filtros por eixo, categoria, status, ano/data, destaque e busca textual quando aplicável.
+`institutional-units` lista todas as unidades cadastradas. Unidades são sempre públicas e o payload não possui `is_active` ou `is_public`; a unidade pai é resumida sempre que existir.
 
-Exemplos:
+## Publicação
+
+Projetos, pesquisas, trabalhos, produções, notícias, cursos e documentos de transparência aparecem publicamente somente quando `editorial_status=published`. `published_at` registra o momento editorial, mas não é um segundo interruptor.
+
+Banners e seções institucionais continuam usando a flag simples `is_published`, pois não participam do workflow editorial completo.
+
+## Filtro por unidade e ecossistema
+
+Os endpoints de conteúdo aceitam `?unit=<slug>`:
 
 ```txt
-GET /api/v1/projects/?axis=producao-vegetal-e-biotecnologia
-GET /api/v1/posts/?axis=redacao-cientifica
-GET /api/v1/scientific-outputs/?axis=praticas-em-laboratorio-e-nanotecnologia
-GET /api/v1/courses/?axis=agroindustrializacao
+GET /api/v1/projects/?unit=latec
+GET /api/v1/posts/?unit=labtec-in
+GET /api/v1/research-projects/?unit=latec
 ```
 
-## Migração do protótipo
+O resultado contém:
 
-- `members` será substituído por `/api/v1/people/`.
-- `projects` será substituído por `/api/v1/projects/`.
-- `news` será substituído por `/api/v1/posts/`.
-- `courses` será substituído por `/api/v1/courses/`.
-- `materials` será substituído por vínculos entre cursos e `mediahub`.
-- `impactNumbers` será substituído por `/api/v1/metrics/impact/`.
+1. registros cuja unidade proprietária é a unidade consultada;
+2. registros de filhas diretas com `include_in_parent_ecosystem=True`.
 
-## Restrições
+A agregação não percorre netos, não altera a unidade serializada e não duplica propriedade. Sem `?unit`, a lista inclui conteúdo publicado de todas as unidades.
 
-A API pública não deve expor mensagens de contato, rascunhos, dados internos de auditoria ou informações administrativas.
+A regra de ecossistema vale para projetos, notícias, cursos, pesquisas, trabalhos acadêmicos, produções científicas e documentos de transparência. Parceiros são filtrados por sua relação M2M explícita; métricas e demais recursos usam somente propriedade direta.
+
+## Filtros
+
+| Endpoint | Filtros específicos |
+| --- | --- |
+| `projects` | `unit`, `axis`, `category`, `status`, `year`, `search` |
+| `posts` | `unit`, `axis`, `year`, `search` |
+| `courses` | `unit`, `axis`, `year`, `search` |
+| `research-projects` | `unit`, `axis`, `project_status`, `year`, `search` |
+| `academic-works` | `unit`, `work_type`, `year`, `search` |
+| `scientific-outputs` | `unit`, `axis`, `year`, `search` |
+| `transparency-documents` | `unit`, `year`, `search` |
+
+Não existe filtro `featured`.
+
+## Contratos resumidos
+
+- Pessoas expõem memberships públicos ativos no formato `[{unit, role}]`; não existe papel público global.
+- Notícias expõem unidade, eixo, título, slug, resumo, conteúdo, capa e data de publicação; não expõem categoria, tags, autores nem controles administrativos.
+- Cursos expõem instrutores e todos os materiais ordenados. Material não possui privacidade própria e herda a publicação do curso.
+- Pesquisas expõem metadados, arquivo/URL, eixo e equipe ordenada.
+- Trabalhos expõem metadados bibliográficos, arquivo/URL, pesquisa resumida e contribuidores.
+- Produções expõem metadados bibliográficos, arquivo/URL, relações resumidas e autoria interna ordenada.
+- `include_in_parent_ecosystem` é administrativo e não integra os payloads públicos.
+
+Representações aninhadas de pessoas são resumidas para evitar ciclos e consultas desnecessárias.
+
+## Slugs corrigidos
+
+O frontend deve usar o `slug` devolvido pela API. O corte final substituiu, sem aliases ou redirecionamentos:
+
+- `coordenadora-do-latecin-e-premiada-por-inovacao-tecnologica` por `coordenadora-da-latec-e-premiada-por-inovacao-tecnologica`;
+- `latecin-participa-do-congresso-nacional-de-inovacao` por `latec-participa-do-congresso-nacional-de-inovacao`.
+
+As duas URLs antigas retornam `404`.
+
+## Home
+
+`/api/v1/site/home/` retorna somente configurações, banners, seções e links sociais vinculados diretamente a `labtec-in`. O opt-in de ecossistema não amplia esse payload. Pesquisas, projetos, notícias e cursos continuam disponíveis em seus endpoints próprios.

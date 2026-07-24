@@ -1,71 +1,75 @@
-# Visão geral da arquitetura — LATEC.IN
+# Visão geral da arquitetura — Portal LABTEC.IN
 
-A LATEC.IN é a Liga Acadêmica de Biotecnologia, Biodiversidade e Inovação. O portal deve funcionar como site institucional, vitrine de projetos e canal de comunicação entre a liga, a comunidade acadêmica, parceiros, setor produtivo e sociedade.
+O LABTEC.IN — Laboratório de Biotecnologia, Biodiversidade e Inovação — é a instituição raiz, proprietária do portal, do backend e dos conteúdos institucionais.
 
-O projeto atual possui um protótipo frontend em HTML, CSS e JavaScript puro. O frontend simula uma SPA com rotas por hash e dados locais em `js/data.js`. A próxima etapa é criar um backend em Django para persistir os dados e permitir administração de conteúdo.
+A LATEC é uma liga acadêmica vinculada ao LABTEC.IN. Ela é uma unidade filha e uma seção do mesmo portal, não uma aplicação independente.
+
+## Estado implementado
+
+O repositório possui frontend estático e backend Django com Django REST Framework, Django Admin e API `/api/v1/`. O backend organiza identidade institucional, pessoas, eixos, pesquisas, trabalhos acadêmicos, portfólio, produção científica, notícias, cursos, transparência, parcerias e métricas.
+
+O app `institutional` modela LABTEC.IN como raiz e LATEC como filha. O seed cria 43 memberships, associa os sete eixos e os nove mentores à LATEC e classifica os conteúdos iniciais por unidade. Hierarquia e memberships possuem validações no modelo e no banco.
+
+Toda unidade cadastrada é pública por definição; `InstitutionalUnit` não possui estados de ativação ou ocultação. A exposição de uma pessoa continua sendo controlada separadamente pelos campos e datas de seu membership.
+
+Todo conteúdo institucional possui `unit` obrigatória. Parceiros são a exceção de cardinalidade: podem se relacionar com mais de uma unidade. A API aceita `?unit=<slug>` e pode agregar conteúdo de filhas diretas que tenha optado pelo ecossistema da mãe.
+
+## Estrutura institucional
+
+```txt
+LABTEC.IN
+├── conteúdos institucionais do laboratório
+├── pessoas e memberships
+├── pesquisas e trabalhos acadêmicos
+├── produções científicas
+├── projetos e soluções
+├── notícias e cursos
+├── transparência, parceiros e métricas
+└── LATEC
+    ├── ligantes e mentores
+    ├── sete eixos de atuação
+    └── conteúdos próprios da Liga
+```
+
+Cada registro tem uma única unidade proprietária. A opção `include_in_parent_ecosystem` controla apenas sua presença no recorte público da mãe; ela não transfere propriedade nem cria copropriedade.
 
 ## Objetivo do backend
 
-Construir uma plataforma backend para atuar como CMS institucional e API pública da LATEC.IN.
+Atuar como CMS institucional e API pública, permitindo administrar:
 
-O backend deverá permitir gerenciar informações institucionais, membros, professores, coordenadores, ligantes, pesquisadores, eixos de atuação, projetos, produções científicas, notícias, cursos, eventos, materiais, arquivos, parceiros, documentos de transparência, mensagens de contato, métricas e permissões administrativas.
+- identidade, missão, visão, histórico e canais institucionais;
+- pessoas e seus vínculos por unidade;
+- pesquisas, TCCs, trabalhos e produções científicas;
+- projetos, soluções, notícias e cursos;
+- transparência, parceiros, métricas e mensagens de contato;
+- conteúdo específico da LATEC, seus ligantes, mentores e eixos.
 
-## Áreas públicas previstas
+## Áreas públicas
 
-- Home, com hero section, destaques e números de impacto.
-- Quem Somos, com histórico, propósito, missão, visão, valores, linhas de atuação e equipe.
-- Eixos de Atuação, com os sete eixos institucionais e suas mentorias.
-- Portfólio, como vitrine central de projetos, pesquisas, extensão, produção científica, startups e premiações.
-- Repositório Científico, com artigos, resumos, patentes e produções vinculadas aos eixos.
-- Transparência, com editais, atas, homologações, julgamentos de recursos, resultados e comunicados.
-- Capacitação & Cursos, com trilhas, bootcamps, workshops, simpósios, palestras e materiais.
-- Notícias / Blog / Jornal Trimestral, com artigos, eventos, premiações e registros da rotina da liga.
-- Contato & Parcerias, com formulário parametrizado e canais oficiais.
+- Home direta do LABTEC.IN.
+- Institucional, pessoas e unidades.
+- Pesquisas e trabalhos acadêmicos.
+- Produções científicas.
+- Portfólio de soluções e iniciativas práticas.
+- Notícias e cursos.
+- Transparência, parceiros e contato.
+- Seção LATEC com seus vínculos, eixos e conteúdos.
 
 ## Eixos de atuação
 
-Os eixos de atuação são parte central da arquitetura informacional da plataforma. Eles devem organizar projetos, publicações, cursos, eventos e produções científicas.
+Os sete eixos pertencem à LATEC e organizam prioritariamente as atividades da Liga. Pesquisas ou conteúdos de outra unidade podem se relacionar com um eixo quando houver vínculo acadêmico explícito; eixo não substitui unidade.
 
-Eixos iniciais:
+## Regras consolidadas
 
-1. Etnobotânica e Pós-Colheita.
-2. Práticas em Laboratório e Nanotecnologia.
-3. Nutrição e Ciências dos Alimentos.
-4. Saúde e bem-estar.
-5. Produção Vegetal e Biotecnologia.
-6. Agroindustrialização.
-7. Redação Científica.
+- LABTEC.IN é raiz; LATEC é filha.
+- Uma pessoa pode possuir múltiplos memberships na mesma unidade ou em unidades diferentes.
+- Todo conteúdo possui uma unidade proprietária obrigatória protegida por `PROTECT`.
+- A Home usa somente configurações, banners, seções e links diretamente do LABTEC.IN.
+- Todos os materiais de um curso publicado são públicos; materiais não possuem visibilidade própria.
+- `?unit=<slug>` retorna a unidade consultada e, em um único nível, conteúdos de filhas diretas marcados para integrar seu ecossistema.
+- O workflow editorial usa apenas `draft`, `in_review`, `published` e `archived`.
+- Somente superusuários e a coordenação do LABTEC.IN publicam, arquivam, excluem ou alteram conteúdo final.
+- Coordenadores de unidade e mentores atuam em rascunhos e revisões dentro do próprio escopo.
+- Slugs identificam páginas públicas e o frontend deve usar os valores entregues pela API. Os dois slugs históricos com `latecin` foram substituídos sem redirecionamento.
 
-## Papel da plataforma web
-
-A plataforma web deve cumprir quatro funções institucionais:
-
-- Transparência: editais, atas, homologações e julgamentos de recursos.
-- Repositório científico: artigos, resumos, patentes e produções vinculadas aos eixos.
-- Vitrine biotecnológica: patentes, bioprodutos e soluções das startups ou projetos parceiros.
-- Difusão e extensão: inscrições e divulgação de simpósios, cursos e palestras abertas.
-
-## Direção técnica
-
-- Linguagem principal: Python.
-- Framework backend: Django.
-- API: Django REST Framework.
-- API pública versionada em `/api/v1/`.
-- Administração inicial: Django Admin.
-- Autenticação administrativa com usuário padrão do Django.
-- Banco de dados em produção: PostgreSQL.
-- Banco de dados local inicial: SQLite.
-- Armazenamento local em desenvolvimento.
-- Volumes persistentes no servidor para homologação e produção.
-- Documentação de API: OpenAPI, preferencialmente com `drf-spectacular`.
-
-## Premissas
-
-- O Django Admin será suficiente para o CMS inicial.
-- Nem toda pessoa cadastrada como membro da liga será usuária administrativa.
-- Professores, orientadores e mentores poderão cadastrar publicações referentes aos seus eixos de atuação.
-- A publicação final ficará sob responsabilidade da coordenação.
-- Conteúdos públicos devem possuir controle de publicação.
-- Conteúdos com página própria devem possuir `slug`.
-- Arquivos e imagens devem ser tratados como parte relevante da plataforma.
-- A API pública deve facilitar a migração do atual `js/data.js` para chamadas HTTP.
+O frontend e a ampliação da Home com conteúdos editoriais permanecem fora desta entrega.

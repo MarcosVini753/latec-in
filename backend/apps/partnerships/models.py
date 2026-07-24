@@ -11,6 +11,11 @@ class Partner(BaseModel):
         COMMUNITY = "community", "Comunidade"
         OTHER = "other", "Outro"
 
+    units = models.ManyToManyField(
+        "institutional.InstitutionalUnit",
+        related_name="partners",
+        blank=True,
+    )
     name = models.CharField(max_length=160)
     slug = models.SlugField(max_length=180, unique=True)
     partner_type = models.CharField(max_length=40, choices=PartnerType.choices, default=PartnerType.INSTITUTIONAL)

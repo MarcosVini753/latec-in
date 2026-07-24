@@ -1,16 +1,43 @@
+from drf_spectacular.utils import extend_schema_field
+from django.db.models import Q
+from django.utils import timezone
 from rest_framework import serializers
 
-from apps.people.models import Person, Role
+from apps.institutional.models import InstitutionMembership
+from apps.institutional.serializers import InstitutionalUnitSummarySerializer
+from apps.people.models import Person
 
 
-class RoleSerializer(serializers.ModelSerializer):
+class PersonMembershipSerializer(serializers.ModelSerializer):
+    unit = InstitutionalUnitSummarySerializer(read_only=True)
+
     class Meta:
-        model = Role
-        fields = ("name", "slug", "description", "display_order")
+        model = InstitutionMembership
+        fields = ("unit", "role")
+
+
+class PersonSummarySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Person
+        fields = ("id", "full_name", "slug", "photo")
 
 
 class PersonSerializer(serializers.ModelSerializer):
-    role = RoleSerializer(read_only=True)
+    memberships = serializers.SerializerMethodField()
+
+    @extend_schema_field(PersonMembershipSerializer(many=True))
+    def get_memberships(self, obj):
+        memberships = getattr(obj, "public_memberships", None)
+        if memberships is None:
+            today = timezone.localdate()
+            memberships = obj.institution_memberships.filter(
+                is_active=True,
+                is_public=True,
+            ).filter(
+                Q(start_date__isnull=True) | Q(start_date__lte=today),
+                Q(end_date__isnull=True) | Q(end_date__gte=today),
+            ).select_related("unit")
+        return PersonMembershipSerializer(memberships, many=True, context=self.context).data
 
     class Meta:
         model = Person
@@ -18,13 +45,12 @@ class PersonSerializer(serializers.ModelSerializer):
             "id",
             "full_name",
             "slug",
-            "role",
+            "memberships",
             "short_bio",
             "photo",
             "email",
             "lattes_url",
             "linkedin_url",
             "website_url",
-            "is_featured",
             "display_order",
         )

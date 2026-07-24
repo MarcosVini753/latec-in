@@ -31,9 +31,10 @@ INSTALLED_APPS = [
     "apps.accounts",
     "apps.core",
     "apps.people",
+    "apps.institutional",
     "apps.axes",
-    "apps.mediahub",
     "apps.portfolio",
+    "apps.research",
     "apps.scientific",
     "apps.news",
     "apps.learning",
@@ -101,7 +102,7 @@ REST_FRAMEWORK = {
 }
 
 SPECTACULAR_SETTINGS = {
-    "TITLE": "LATEC.IN API",
-    "DESCRIPTION": "API pública versionada do portal institucional LATEC.IN.",
+    "TITLE": "LABTEC.IN API",
+    "DESCRIPTION": "API pública versionada do portal institucional LABTEC.IN.",
     "VERSION": "1.0.0",
 }

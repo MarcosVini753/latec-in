@@ -1,58 +1,39 @@
 from django.contrib import admin
 
 from apps.common.admin_actions import EDITORIAL_ADMIN_ACTIONS
-from apps.learning.models import Course, CourseMaterial, Event, LearningTrack
+from apps.common.admin_scoping import UnitScopedAdminMixin, UnitScopedInlineMixin
+from apps.learning.models import Course, CourseMaterial
 
 
-@admin.register(LearningTrack)
-class LearningTrackAdmin(admin.ModelAdmin):
-    list_display = ("title", "is_active", "display_order")
-    list_filter = ("is_active",)
-    search_fields = ("title", "description")
-    prepopulated_fields = {"slug": ("title",)}
-
-
-class CourseMaterialInline(admin.TabularInline):
+class CourseMaterialInline(UnitScopedInlineMixin, admin.TabularInline):
     model = CourseMaterial
     extra = 0
 
 
 @admin.register(Course)
-class CourseAdmin(admin.ModelAdmin):
-    list_display = ("title", "track", "axis", "enrollment_status", "editorial_status", "is_published", "is_featured", "start_date")
-    list_filter = ("track", "axis", "enrollment_status", "editorial_status", "is_published", "is_featured")
-    search_fields = ("title", "description")
+class CourseAdmin(UnitScopedAdminMixin, admin.ModelAdmin):
+    axis_lookup = "axis"
+    list_display = ("title", "unit", "axis", "enrollment_status", "editorial_status", "include_in_parent_ecosystem", "start_date")
+    list_filter = ("unit", "axis", "enrollment_status", "editorial_status", "include_in_parent_ecosystem")
+    search_fields = ("title", "description", "unit__name", "unit__acronym")
     prepopulated_fields = {"slug": ("title",)}
-    autocomplete_fields = ("track", "axis", "instructors")
+    autocomplete_fields = ("unit", "axis", "instructors")
+    list_select_related = ("unit", "axis")
     actions = EDITORIAL_ADMIN_ACTIONS
     fieldsets = (
-        ("Identificação", {"fields": ("title", "slug", "track", "axis", "instructors")}),
+        ("Identificação", {"fields": ("unit", "title", "slug", "axis", "instructors")}),
         ("Conteúdo", {"fields": ("description", "cover_image")}),
         ("Agenda e inscrição", {"fields": ("start_date", "end_date", "workload_hours", "enrollment_status", "registration_url")}),
-        ("Publicação", {"fields": ("editorial_status", "is_published", "published_at", "is_featured", "display_order")}),
+        ("Publicação", {"fields": ("editorial_status", "published_at", "include_in_parent_ecosystem")}),
     )
     inlines = (CourseMaterialInline,)
 
 
 @admin.register(CourseMaterial)
-class CourseMaterialAdmin(admin.ModelAdmin):
-    list_display = ("title", "course", "is_public", "display_order")
-    list_filter = ("is_public",)
+class CourseMaterialAdmin(UnitScopedAdminMixin, admin.ModelAdmin):
+    unit_lookup = "course__unit"
+    axis_lookup = "course__axis"
+    publication_lookup = "course"
+    list_display = ("title", "course", "display_order")
     search_fields = ("title", "description", "course__title")
     autocomplete_fields = ("course",)
-
-
-@admin.register(Event)
-class EventAdmin(admin.ModelAdmin):
-    list_display = ("title", "event_type", "axis", "event_status", "editorial_status", "is_published", "is_featured", "start_date")
-    list_filter = ("event_type", "axis", "event_status", "editorial_status", "is_published", "is_featured")
-    search_fields = ("title", "description", "location")
-    prepopulated_fields = {"slug": ("title",)}
-    autocomplete_fields = ("axis",)
-    actions = EDITORIAL_ADMIN_ACTIONS
-    fieldsets = (
-        ("Identificação", {"fields": ("title", "slug", "event_type", "axis")}),
-        ("Conteúdo", {"fields": ("description",)}),
-        ("Agenda e inscrição", {"fields": ("start_date", "end_date", "location", "event_status", "registration_url")}),
-        ("Publicação", {"fields": ("editorial_status", "is_published", "published_at", "is_featured", "display_order")}),
-    )
